@@ -1,56 +1,109 @@
-# Welcome to your Expo app 👋
+# Bible Unlock App (Frontend)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Bible Unlock is a cross-platform React Native / Expo application built on the React Native New Architecture, inspired by QuranUnlock. It helps users replace mindless phone doom-scrolling with mindful Scripture reading by blocking distracting apps until daily Scripture reading goals are met.
 
-## Get started
+---
 
-1. Install dependencies
+## 📋 Prerequisites
 
-   ```bash
-   npm install
-   ```
+Before running the project locally or building the native Android app, ensure your workstation has:
 
-2. Start the app
+1. **Node.js**: Version 20.x or 22.x LTS (Recommended).
+2. **Java Development Kit (JDK)**: **JDK 21 (LTS)** is **strictly required**.
+   > ⚠️ **IMPORTANT**: Do **NOT** use Java 25 or Gradle auto-downloaded JVMs. Newer preview JVMs (like Java 25) output restricted native access warnings to `stderr` that break CMake and Prefab builds for New Architecture native modules (`react-native-nitro-modules`, `react-native-reanimated`, `react-native-mmkv`).
+3. **Android Studio**: Android SDK Build-Tools 36.0.0 (or 35.0.0), NDK 27.x, and Android Platform SDK 36 installed.
+4. **Android Device**: Connected via USB or **Wireless Debugging** (`adb connect <ip>:<port>`).
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🚀 Daily Development Workflow
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+### Step 1: Verify Wireless ADB Connection
+If you are developing over Wi-Fi, verify that your Android phone is recognized:
 
 ```bash
-npm run reset-project
+adb devices
+```
+*You should see your device listed, e.g.: `192.168.0.x:xxxx device`.*
+
+### Step 2: Start the Metro Dev Server
+Run Metro with cache clearing:
+
+```bash
+cd frontend
+npx expo start --clear
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- Press `a` in the terminal to launch the app on your connected Android device.
+- Alternatively, if the development build APK is already installed on your device, just open the **Bible Unlock** app from your phone's home screen. It will automatically connect to your Metro server.
 
-### Other setup steps
+---
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## 🛠️ Native Android Build Procedures
 
-## Learn more
+If you update native modules, add native dependencies, or need to rebuild the APK from scratch:
 
-To learn more about developing your project with Expo, look at the following resources:
+### Procedure A: Full Clean Build via Gradle (Recommended for debugging)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+1. Open a terminal in `frontend/android`:
+   ```bash
+   cd frontend/android
+   ```
+2. Verify `gradle.properties` has the pinned JDK 21 path:
+   ```properties
+   org.gradle.java.home=C:/Program Files/Java/jdk-21.0.12
+   org.gradle.java.installations.auto-download=false
+   ```
+3. Run the assemble task:
+   ```bash
+   ./gradlew app:assembleDebug
+   ```
+4. Install the newly generated APK onto your phone:
+   ```bash
+   adb install -r app/build/outputs/apk/debug/app-debug.apk
+   ```
+5. Launch the app on your device:
+   ```bash
+   adb shell am start -n com.bibleunlock.app/.MainActivity
+   ```
 
-## Join the community
+### Procedure B: Standard Expo Run Command
 
-Join our community of developers creating universal apps.
+From the `frontend` folder:
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+cd frontend
+npm run android
+# Or: npx expo run:android
+```
+
+---
+
+## 🔍 Common Errors & How They Are Resolved
+
+### 1. "Tried to access storage on the server... Node.js"
+- **Why it happens**: Expo Router evaluates route files on Node.js during Metro startup/SSR. If native-only libraries (such as `react-native-mmkv` JSI bindings) are instantiated at the root of a file (`import time`), Node.js crashes because the native module doesn't exist on the host machine.
+- **Solution**: Native storage modules in `src/lib/mmkv.ts` use **lazy initialization** (`getInstance()`). Never call `createMMKV()` in module global scope.
+
+### 2. CMake / Prefab Native Compilation Failure with Java 25
+- **Why it happens**: Gradle daemon running on Java 25 causes AGP / CMake to fail during `:react-native-nitro-modules:configureCMakeDebug` due to stderr warnings treated as errors.
+- **Solution**: Keep `org.gradle.java.home` pinned to JDK 21 in `frontend/android/gradle.properties` and do not allow Gradle to auto-provision Java 25.
+
+### 3. Route Collision in Expo Router
+- **Why it happens**: Having both `src/app/index.tsx` and `src/app/(tabs)/index.tsx` causes Expo Router to attempt registering `/` twice, crashing the navigation tree in React Fabric.
+- **Solution**: The single canonical home screen is located at `src/app/(tabs)/index.tsx`. Do not add an un-nested `src/app/index.tsx`.
+
+---
+
+## 📂 Project Architecture
+
+- **`src/app/`**: Expo Router file-based routes (`(auth)`, `(tabs)`, and `paywall.tsx`).
+- **`src/lib/`**:
+  - `mmkv.ts`: High-performance local storage (with memory fallback and lazy initialization).
+  - `auth.tsx`: Supabase OAuth & Guest session provider.
+  - `bible.ts`: Offline Scripture parsing for WEB & KJV translations.
+  - `readingTimer.ts`: Session tracking and daily goal progression.
+  - `appBlocker.ts`: Cross-platform app blocking abstraction (Screen Time API on iOS, Accessibility Service on Android).
+  - `purchases.ts`: RevenueCat integration for In-App Purchases.
+- **`modules/android-blocker/`**: Native Android Expo Module implementing the Accessibility Service redirect overlay.
+

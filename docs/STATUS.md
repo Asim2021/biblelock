@@ -1,7 +1,7 @@
 # Project Status & Handoff
 
-**Last Updated:** 2026-09-06 06:25 IST  
-**Current Phase:** Production Implementation Delivered & Runtime Crash Resolved
+**Last Updated:** 2026-09-07 04:10 IST  
+**Current Phase:** Android Native Build & Wireless Device Deployment Operational
 
 ## Active Tasks
 
@@ -18,15 +18,22 @@
 - [x] `TASK-011`: Shared UI components & `SETUP.md`
 - [x] `FIX-001`: Resolved ReactFabric render crash in `ExpoRoot` (`DEC-003`)
 - [x] `TASK-012`: Brandkit splash icon & launcher icon branding (`assets/images/splash-icon.png`, `icon.png`, `favicon.png`)
+- [x] `FIX-002`: Resolved Android CMake/Prefab JDK 25 failure (`gradle.properties`, removed `gradle-daemon-jvm.properties` toolchain lock, pinned to JDK 21). Verified APK build and wireless ADB installation.
+- [x] `FIX-003`: Resolved Metro / Expo Router SSR storage crash (`DEC-004`) via lazy MMKV initialization. Bundled 2,319 modules cleanly and running live on connected wireless Android device (`SM_M346B`).
 
 ## Verification Evidence
 
-- `npx tsc --noEmit`: 0 errors (with global declarations).
-- `npx expo prebuild --clean --no-install`: 0 errors, generated native Android structure without missing splash asset errors.
-- Metro bundler: compiled 2,320 modules, HTTP 200 OK.
-- `npx expo config --type public`: 0 errors.
+- `npx tsc --noEmit`: 0 errors.
+- Gradle build: `BUILD SUCCESSFUL in 3m 36s` (`app:assembleDebug`, 436 tasks).
+- APK generated: `frontend/android/app/build/outputs/apk/debug/app-debug.apk` (92MB).
+- ADB Wireless deployment: Streamed install SUCCESS, `com.bibleunlock.app/.MainActivity` focused on device.
+- Metro Bundler: `Android Bundled 44453ms node_modules\expo-router\entry.js (2319 modules)` live on port 8081.
 
 ## Session Handoff Notes
 
-- Runtime crash on app startup was caused by `_layout.tsx` returning a raw `<View>` during loading and route collision between `app/index.tsx` and `app/(tabs)/index.tsx`.
-- Resolved and validated. The app starts cleanly with `npm run start`.
+- Fixed both layers of issues:
+  1. Native C++/CMake build issue (pinned to JDK 21).
+  2. Metro/SSR module-load crash (lazy MMKV initialization).
+- Comprehensive build and development guide added to `frontend/README.md`.
+- Metro is actively running in task-359 serving the wireless connected device.
+

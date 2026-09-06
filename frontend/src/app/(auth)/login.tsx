@@ -3,10 +3,10 @@ import {
   View,
   Text,
   ScrollView,
-  SafeAreaView,
   Platform,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../lib/auth';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
@@ -42,8 +42,8 @@ export default function LoginScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface-dark">
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        className="px-6 py-8 justify-between"
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between' }}
+        className="px-6 py-8"
       >
         {/* Header Branding */}
         <View className="items-center mt-6">

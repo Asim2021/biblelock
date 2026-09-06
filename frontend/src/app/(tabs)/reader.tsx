@@ -3,11 +3,11 @@ import {
   View,
   Text,
   FlatList,
-  SafeAreaView,
   Pressable,
   ScrollView,
   Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { getBooks, getChapter, Verse } from '../../lib/bible';
 import { useReadingTimer } from '../../lib/readingTimer';

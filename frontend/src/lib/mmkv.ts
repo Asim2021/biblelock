@@ -1,6 +1,6 @@
-import { createMMKV } from 'react-native-mmkv';
+import { Platform } from 'react-native';
 
-// ponytail: fallback storage in memory for web/testing/unbuilt environments
+// ponytail: fallback storage in memory for web/testing/server environments
 class MemoryStorage {
   private store = new Map<string, string | number | boolean>();
 
@@ -46,23 +46,43 @@ export type StorageInterface = {
   clearAll?(): void;
 };
 
-let rawInstance: any;
+// Lazy-init: defer createMMKV() to first actual use so server-side rendering
+// (Expo Router on Node.js) never triggers the native module at import time.
+let _instance: any = null;
 
-try {
-  rawInstance = createMMKV({ id: 'bibleunlock-storage' });
-} catch (e) {
-  console.warn('[MMKV] Native module unavailable, using memory fallback:', e);
-  rawInstance = new MemoryStorage();
+function getInstance(): any {
+  if (_instance) return _instance;
+
+  // On server/web, skip native MMKV entirely
+  if (typeof window === 'undefined' && Platform.OS === 'web') {
+    _instance = new MemoryStorage();
+    return _instance;
+  }
+
+  try {
+    const { createMMKV } = require('react-native-mmkv');
+    _instance = createMMKV({ id: 'bibleunlock-storage' });
+  } catch (e) {
+    console.warn('[MMKV] Native module unavailable, using memory fallback:', e);
+    _instance = new MemoryStorage();
+  }
+  return _instance;
 }
 
 export const storage: StorageInterface = {
-  set: (k, v) => rawInstance.set(k, v),
-  getString: (k) => rawInstance.getString(k),
-  getNumber: (k) => rawInstance.getNumber(k),
-  getBoolean: (k) => rawInstance.getBoolean(k),
-  remove: (k) => (typeof rawInstance.remove === 'function' ? rawInstance.remove(k) : rawInstance.delete(k)),
-  delete: (k) => (typeof rawInstance.remove === 'function' ? rawInstance.remove(k) : rawInstance.delete(k)),
-  clearAll: () => rawInstance.clearAll?.(),
+  set: (k, v) => getInstance().set(k, v),
+  getString: (k) => getInstance().getString(k),
+  getNumber: (k) => getInstance().getNumber(k),
+  getBoolean: (k) => getInstance().getBoolean(k),
+  remove: (k) => {
+    const inst = getInstance();
+    return typeof inst.remove === 'function' ? inst.remove(k) : inst.delete(k);
+  },
+  delete: (k) => {
+    const inst = getInstance();
+    return typeof inst.remove === 'function' ? inst.remove(k) : inst.delete(k);
+  },
+  clearAll: () => getInstance().clearAll?.(),
 };
 
 // Storage Keys

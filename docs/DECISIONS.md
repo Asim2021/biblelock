@@ -76,3 +76,34 @@ Modified `src/app/_layout.tsx`, deleted `src/app/index.tsx`, updated `src/compon
 ### 5. Proof of Improvement
 - Metro bundled 2,320 modules with HTTP 200 OK.
 - `npx tsc --noEmit` passing with 0 errors.
+
+---
+
+## [DEC-004] Lazy-Initialization for MMKV Native Storage (SSR / Metro Bundler Crash Fix)
+
+- **Date:** 2026-09-07
+- **Status:** Validated
+- **Related Task / Baseline:** Metro Bundler SSR Crash (`Error: Tried to access storage on the server... Node.js v24.11.0`)
+
+### 1. Problem / Trigger
+During development startup via `npx expo start`, Expo Router executes server-side/bundler pre-evaluation in a Node.js environment. Because `react-native-mmkv` relies on C++ JSI bindings that only exist inside the native React Native Android/iOS runtime, calling `createMMKV({ id: '...' })` at the top level of `src/lib/mmkv.ts` crashed the bundler with `Error: Tried to access storage on the server`.
+
+### 2. Alternatives Evaluated
+- **Option A (Conditionally mock MMKV based on `Platform.OS` or `typeof window`):** Hard to maintain across web, Android, and testing environments; might return null or uninitialized storage on mobile if timing is off.
+- **Option B (Lazy Instance Pattern with `getInstance()`):** Defer `createMMKV()` execution until the first storage method (`get`, `set`, `delete`) is actually invoked. If executed in a non-native / server environment, gracefully fallback to `MemoryStorage`.
+
+### 3. Decision & Trade-offs
+Selected **Option B**. The storage interface remains 100% backward-compatible and synchronous (`storage.getString(...)`), but native initialization only occurs when the mobile app runtime actually attempts to read or write data.
+
+### 4. Implementation Details
+Refactored `src/lib/mmkv.ts`:
+- Added `_instance` reference and `getInstance()` helper.
+- Guarded `createMMKV` inside `try / catch` with `MemoryStorage` fallback.
+- Exported wrapper methods invoking `getInstance()` on demand.
+
+### 5. Proof of Improvement
+- Metro Bundler booted with cleared cache without any server-side exceptions.
+- Android app bundled **2,319 modules in 44,453ms** and opened successfully on device `SM_M346B` over wireless debugging.
+
+### 6. Lessons & Downstream Impact
+In Expo Router with New Architecture, never execute native C++ / JSI module instantiations in module-level global scope; always use lazy getters to protect Node.js bundling and SSR passes.

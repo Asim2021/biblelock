@@ -13,14 +13,30 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native builds & caches (including modules)
+build/
+**/build/
+.gradle/
+**/.gradle/
+.cxx/
+**/.cxx/
+local.properties
+**/local.properties
 .kotlin/
 *.orig.*
 *.jks
+*.keystore
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.apk
+*.aab
+*.aar
+
+# IDE & Editor
+.idea/
+*.iml
 
 # Metro
 .metro-health-check*
@@ -45,3 +61,4 @@ example
 # generated native folders
 /ios
 /android
+
