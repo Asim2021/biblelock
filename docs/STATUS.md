@@ -1,7 +1,7 @@
 # Project Status & Handoff
 
-**Last Updated:** 2026-09-06 06:08 IST  
-**Current Phase:** Implementation Complete — Verified & Hardened
+**Last Updated:** 2026-09-06 06:25 IST  
+**Current Phase:** Production Implementation Delivered & Runtime Crash Resolved
 
 ## Active Tasks
 
@@ -12,19 +12,19 @@
 - [x] `TASK-005`: Bible data assets & reader loader (`web.json`, `kjv.json`, `src/lib/bible.ts`)
 - [x] `TASK-006`: Reading timer hook & state persistence (`src/lib/readingTimer.ts`)
 - [x] `TASK-007`: iOS App Blocker wrapper (`src/lib/appBlocker.ts` wrapping `react-native-device-activity`)
-- [x] `TASK-008`: Android App Blocker Expo Module (`modules/android-blocker/` with `BlockerAccessibilityService`, `BlockerActivity`, and `AndroidBlockerModule`)
+- [x] `TASK-008`: Android App Blocker Expo Module (`modules/android-blocker/`)
 - [x] `TASK-009`: Scripture Shield notifications (`src/lib/scriptureShield.ts`)
 - [x] `TASK-010`: RevenueCat paywall & entitlement integration (`src/lib/purchases.ts`, `src/app/paywall.tsx`)
-- [x] `TASK-011`: Shared UI components (`Button.tsx`, `Card.tsx`, `ProgressRing.tsx`, `ShieldBadge.tsx`) & `SETUP.md`
+- [x] `TASK-011`: Shared UI components & `SETUP.md`
+- [x] `FIX-001`: Resolved ReactFabric render crash in `ExpoRoot` (`DEC-003`)
 
 ## Verification Evidence
 
-- `npx tsc --noEmit` passing with 0 errors across all frontend files and native module bindings.
-- `npx expo config --type public` cleanly generates bundle specifications, entitlements, and app extension targets.
-- 66 books of both World English Bible (WEB) and King James Version (KJV) bundled locally in `assets/bible/` for 100% offline access.
+- `npx tsc --noEmit`: 0 errors.
+- Metro bundler: compiled 2,320 modules, HTTP 200 OK.
+- `npx expo config --type public`: 0 errors.
 
 ## Session Handoff Notes
 
-- Full implementation delivered matching QuranUnlock's proven architecture.
-- Both iOS Screen Time configuration and Android Accessibility Service module scaffolded and wired to the shared `AppBlocker` interface.
-- App is ready for physical device testing or EAS Build.
+- Runtime crash on app startup was caused by `_layout.tsx` returning a raw `<View>` during loading and route collision between `app/index.tsx` and `app/(tabs)/index.tsx`.
+- Resolved and validated. The app starts cleanly with `npm run start`.

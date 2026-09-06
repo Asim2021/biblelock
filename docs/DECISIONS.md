@@ -47,3 +47,32 @@ Initial DESIGN.md referenced Anthropic proprietary fonts (Copernicus & StyreneB)
 
 ### 3. Decision & Trade-offs
 Selected **Option B** (EB Garamond + Inter + JetBrains Mono). Installed via `@expo-google-fonts/*`.
+
+---
+
+## [DEC-003] Root Layout Navigator Hierarchy & Route Collision Fix
+
+- **Date:** 2026-09-06
+- **Status:** Validated
+- **Related Task / Baseline:** Startup Runtime Error in ReactFabric
+
+### 1. Problem / Trigger
+Initial app launch threw a fatal React Fabric render error inside `ExpoRoot` (`performUnitOfWork` / `renderRootSync`).
+
+### 2. Alternatives Evaluated
+- **Root Cause 1:** `_layout.tsx` returned a raw `<View>` with an `ActivityIndicator` during `isLoading` instead of rendering `<Stack>`. In Expo Router, root layouts must always render a navigator or `<Slot />`.
+- **Root Cause 2:** Route collision between `src/app/index.tsx` (redirecting to `/(tabs)`) and `src/app/(tabs)/index.tsx`, both attempting to resolve to URL `/`.
+- **Root Cause 3:** `src/components/SafeAreaView.tsx` wrapped `RN` with NativeWind's legacy `styled()` instead of exporting `SafeAreaView` directly from `react-native-safe-area-context`.
+
+### 3. Decision & Trade-offs
+1. Removed the conditional `<View>` in `_layout.tsx`, allowing `<Stack>` to stay permanently mounted.
+2. Deleted colliding `src/app/index.tsx` so `src/app/(tabs)/index.tsx` is the single canonical home route (`/`).
+3. Re-exported standard `SafeAreaView` from `react-native-safe-area-context`.
+4. Created `expo-env.d.ts` for CSS module declarations.
+
+### 4. Implementation Details
+Modified `src/app/_layout.tsx`, deleted `src/app/index.tsx`, updated `src/components/SafeAreaView.tsx`, created `frontend/expo-env.d.ts`.
+
+### 5. Proof of Improvement
+- Metro bundled 2,320 modules with HTTP 200 OK.
+- `npx tsc --noEmit` passing with 0 errors.
