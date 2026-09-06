@@ -106,7 +106,7 @@ export default function HomeScreen() {
             variant="primary"
             size="lg"
             className="w-11/12 shadow-sm"
-            onPress={() => router.push('/(tabs)/reader' as any)}
+            onPress={() => router.push('/reader' as any)}
           />
         </Card>
 
@@ -172,7 +172,7 @@ export default function HomeScreen() {
               title="Read Chapter →"
               variant="ghost"
               size="sm"
-              onPress={() => router.push('/(tabs)/reader' as any)}
+              onPress={() => router.push('/reader' as any)}
             />
           </View>
         </Card>

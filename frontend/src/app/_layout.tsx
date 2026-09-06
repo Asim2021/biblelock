@@ -48,14 +48,6 @@ function RootNavigation() {
     }
   }, [user, isLoading, segments]);
 
-  if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-canvas dark:bg-surface-dark">
-        <ActivityIndicator size="large" color="#cc785c" />
-      </View>
-    );
-  }
-
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
