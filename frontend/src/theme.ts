@@ -287,25 +287,20 @@ export type Shadows = typeof shadows;
  */
 
 export const fontNames = {
-  // Scripture & Display Serif (Equivalents to Copernicus / Tiempos)
-  serifRegular: 'Lora_400Regular',
-  serifItalic: 'Lora_400Regular_Italic',
-  serifSemiBold: 'Lora_600SemiBold',
-  serifBold: 'Lora_700Bold',
+  // Scripture & Display Serif (EB Garamond)
+  serifRegular: 'EBGaramond_400Regular',
+  serifItalic: 'EBGaramond_400Regular_Italic',
+  serifMedium: 'EBGaramond_500Medium',
+  serifSemiBold: 'EBGaramond_600SemiBold',
+  serifBold: 'EBGaramond_700Bold',
 
-  // Alternate Scripture Serif (Source Serif 4)
-  sourceSerifRegular: 'SourceSerif4_400Regular',
-  sourceSerifItalic: 'SourceSerif4_400Italic',
-  sourceSerifSemiBold: 'SourceSerif4_600SemiBold',
-  sourceSerifBold: 'SourceSerif4_700Bold',
-
-  // Humanist Sans UI (Equivalents to StyreneB)
+  // Humanist Sans UI (Inter)
   sansRegular: 'Inter_400Regular',
   sansMedium: 'Inter_500Medium',
   sansSemiBold: 'Inter_600SemiBold',
   sansBold: 'Inter_700Bold',
 
-  // Monospace
+  // Monospace (JetBrains Mono)
   monoRegular: 'JetBrainsMono_400Regular',
   monoMedium: 'JetBrainsMono_500Medium',
 } as const;
@@ -313,7 +308,7 @@ export const fontNames = {
 /**
  * Font definitions map for expo-font (use with Font.loadAsync or useFonts hook).
  * When installing Google font packages:
- *   npx expo install @expo-google-fonts/lora @expo-google-fonts/inter @expo-google-fonts/source-serif-4 @expo-google-fonts/jetbrains-mono
+ *   npx expo install @expo-google-fonts/eb-garamond @expo-google-fonts/inter @expo-google-fonts/jetbrains-mono
  * Or bundle custom TTF/OTF files under assets/fonts/
  */
 export const fontFallbacks = {
@@ -381,7 +376,7 @@ export const typography = {
   } as TextStyle,
 
   scriptureVerseAlt: {
-    fontFamily: fontNames.sourceSerifRegular,
+    fontFamily: fontNames.serifItalic,
     fontSize: 18,
     lineHeight: 30,
     letterSpacing: 0,

@@ -1,12 +1,5 @@
-import { Text, View } from 'react-native';
-import SafeAreaView from '@/components/SafeAreaView';
+import { Redirect } from 'expo-router';
 
 export default function Index() {
-	return (
-		<SafeAreaView>
-			<View className='bg-white'>
-				<Text className='text-xl font-bold text-blue-500'>Welcome Asim Shah!</Text>
-			</View>
-		</SafeAreaView>
-	);
+  return <Redirect href={'/(tabs)' as any} />;
 }

@@ -1,0 +1,7 @@
+{
+  "name": "android-blocker",
+  "platforms": ["android"],
+  "android": {
+    "modules": ["com.bibleunlock.blocker.AndroidBlockerModule"]
+  }
+}

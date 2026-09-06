@@ -48,10 +48,6 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 
 ---
 
-# Feature Flag Gating Mandate (MANDATORY)
-
-**Every new feature added to this codebase MUST be hidden behind a feature flag with a default value of `false`.**
-
 ### Mandatory Implementation Steps for New Features:
 
 1. **Declare in Shared Types (`packages/types/src/featureFlags.ts`)**:
@@ -70,13 +66,15 @@ Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
 ---
 
 # Project Work Protocol: High-Signal Living Documentation System
-*(Optimized for Fullstack JavaScript / TypeScript Development)*
+
+_(Optimized for Fullstack JavaScript / TypeScript Development)_
 
 ## Purpose
 
 This repository operates on a **living project-memory and documentation framework**.
 
 The primary objective is to maintain an unbroken, auditable chain of causality:
+
 1. **Where we started**: The baseline origin, initial architecture, PRD requirements, and data models.
 2. **Why plans changed**: The concrete triggers, bottlenecks, and alternatives evaluated when a technical pivot occurred.
 3. **Proof of improvement**: Verifiable evidence, benchmarks, or test results proving that the pivot made the application better.
@@ -85,7 +83,7 @@ This protocol applies to **every agent, human developer, and work session** acro
 
 > [!IMPORTANT]
 > **Documentation is part of the definition of done.**
-> The codebase is the physical source of truth, but the `docs/` system is the long-term memory that explains *why* the codebase is in its current state.
+> The codebase is the physical source of truth, but the `docs/` system is the long-term memory that explains _why_ the codebase is in its current state.
 
 ---
 
@@ -105,13 +103,13 @@ project-root/
 
 ## Source of Truth Mapping
 
-| Document | Primary Responsibility | When to Read | When to Update |
-| :--- | :--- | :--- | :--- |
-| **`AGENTS.md`** | Agent operating rules & quality gates | At the start of every session | When engineering protocols change |
-| **`docs/CHARTER.md`** | Baseline PRD, initial architecture, Prisma/DB schema | When onboarding or checking scope limits | Never rewrite; only append scope amendments |
-| **`docs/STATUS.md`** | Active sprint, immediate tasks, handoff context | Before starting any work | At the end of every session or task completion |
-| **`docs/DECISIONS.md`** | Architectural decisions, plan pivots, impact proof | When designing features or hitting blockers | Whenever a plan changes or a technical choice is made |
-| **`docs/CHANGELOG.md`** | Chronological log of shipped work & lessons | When reviewing recent history | When meaningful features, fixes, or refactors land |
+| Document                | Primary Responsibility                               | When to Read                                | When to Update                                        |
+| :---------------------- | :--------------------------------------------------- | :------------------------------------------ | :---------------------------------------------------- |
+| **`AGENTS.md`**         | Agent operating rules & quality gates                | At the start of every session               | When engineering protocols change                     |
+| **`docs/CHARTER.md`**   | Baseline PRD, initial architecture, Prisma/DB schema | When onboarding or checking scope limits    | Never rewrite; only append scope amendments           |
+| **`docs/STATUS.md`**    | Active sprint, immediate tasks, handoff context      | Before starting any work                    | At the end of every session or task completion        |
+| **`docs/DECISIONS.md`** | Architectural decisions, plan pivots, impact proof   | When designing features or hitting blockers | Whenever a plan changes or a technical choice is made |
+| **`docs/CHANGELOG.md`** | Chronological log of shipped work & lessons          | When reviewing recent history               | When meaningful features, fixes, or refactors land    |
 
 ---
 
@@ -120,13 +118,13 @@ project-root/
 To avoid context fragmentation and unnecessary token consumption:
 
 1. **Default (Inline First)**:
-   - **PRD (Product Requirements)** $\rightarrow$ Resides in `docs/CHARTER.md §2`.
-   - **System Architecture** $\rightarrow$ Resides in `docs/CHARTER.md §3`.
-   - **Database & Data Models** $\rightarrow$ Resides in `docs/CHARTER.md §4`.
+    - **PRD (Product Requirements)** $\rightarrow$ Resides in `docs/CHARTER.md §2`.
+    - **System Architecture** $\rightarrow$ Resides in `docs/CHARTER.md §3`.
+    - **Database & Data Models** $\rightarrow$ Resides in `docs/CHARTER.md §4`.
 2. **Scale-Out Threshold (When to Extract)**:
-   - If the database schema exceeds **10+ Prisma models/tables** or requires extensive migration notes $\rightarrow$ extract to `docs/DATABASE_SCHEMA.md` and link it from `CHARTER.md`.
-   - If architecture spans **microservices, background workers, or event queues** $\rightarrow$ extract to `docs/ARCHITECTURE.md`.
-   - If product requirements exceed **5+ pages of user flows and compliance** $\rightarrow$ extract to `docs/PRD.md`.
+    - If the database schema exceeds **10+ Prisma models/tables** or requires extensive migration notes $\rightarrow$ extract to `docs/DATABASE_SCHEMA.md` and link it from `CHARTER.md`.
+    - If architecture spans **microservices, background workers, or event queues** $\rightarrow$ extract to `docs/ARCHITECTURE.md`.
+    - If product requirements exceed **5+ pages of user flows and compliance** $\rightarrow$ extract to `docs/PRD.md`.
 
 ---
 
@@ -138,8 +136,8 @@ Before executing any code changes or proposing architectural shifts, every agent
 2. **Inspect `docs/STATUS.md`** to understand the active milestone, current blockers, and last handoff context.
 3. **Reference `docs/CHARTER.md`** if the task touches core data models, API contracts, or baseline requirements.
 4. **Inspect the actual repository state**:
-   - Check `package.json`, TypeScript definitions, Prisma/ORM schemas, and test suites.
-   - Ground truth is in the code, not in outdated verbal summaries.
+    - Check `package.json`, TypeScript definitions, Prisma/ORM schemas, and test suites.
+    - Ground truth is in the code, not in outdated verbal summaries.
 5. **Formulate the plan**: Verify whether the proposed task adheres to current decisions or requires a documented pivot in `docs/DECISIONS.md`.
 
 ---
@@ -170,24 +168,31 @@ Every entry in `docs/DECISIONS.md` MUST include the following 6 sections:
 - **Related Task / Baseline:** Reference to CHARTER.md or STATUS.md
 
 ### 1. Problem / Trigger (Why the Original Plan Changed)
+
 Describe the exact failure, bottleneck, unexpected behavior, or new requirement that made the previous approach unviable (e.g., ORM N+1 query stalling endpoint, client bundle too large).
 
 ### 2. Alternatives Evaluated
+
 - **Option A:** Summary, pros, cons, and reasons for rejection.
 - **Option B:** Summary, pros, cons, and reasons for rejection.
 
 ### 3. Decision & Trade-offs
+
 State the selected approach and the explicit trade-offs accepted (e.g., added dependency, extra build complexity, migration cost).
 
 ### 4. Implementation Details
+
 Key files modified, new npm packages added, or database migrations executed.
 
 ### 5. Proof of Improvement (Evidence & Metrics)
+
 Concrete, verifiable proof showing that the change improved the application:
+
 - **Quantitative Metrics:** (e.g., Endpoint latency reduced from 850ms to 42ms; bundle size reduced by 60KB; memory usage reduced by 40%).
 - **Verification Commands / Tests:** Exact automated test (`npm test`, `vitest`, `playwright`) or benchmark script validating the fix.
 
 ### 6. Lessons & Downstream Impact
+
 What was learned that future developers/agents must know to prevent repeating the original mistake.
 ```
 
@@ -208,9 +213,11 @@ At the conclusion of any meaningful work session, the agent MUST execute this ch
 # 5. Core Rules of Truth & Traceability
 
 ### A. Never Claim Unverified Progress
+
 Documentation MUST reflect verified reality. Never label a task as `Complete` or `Working` without verifiable evidence.
 
 Use unambiguous status states:
+
 - `Planned` — Specified in Charter/Status, no code written yet.
 - `In Progress` — Active development underway.
 - `Implemented (Unverified)` — Code written, but tests or validation not yet executed.
@@ -219,7 +226,9 @@ Use unambiguous status states:
 - `Superseded` — Replaced by a newer decision (`DEC-XXX`).
 
 ### B. Stable Identifiers
+
 Use structured IDs to link problems, decisions, and commits across files:
+
 - `DEC-001`, `DEC-002`: Architectural decisions and plan pivots.
 - `TASK-001`, `TASK-002`: Discrete implementation tasks in `STATUS.md`.
 - `BENCH-001`: Performance benchmarks and experiment results.
@@ -238,23 +247,30 @@ Copy and paste these templates directly when initializing a new JavaScript/TypeS
 # Agent Working Protocol
 
 ## 1. Documentation Architecture
+
 This project uses a 4-file documentation memory system in `docs/`:
+
 - `docs/CHARTER.md`: Baseline PRD, initial fullstack architecture, Prisma/DB schemas.
 - `docs/STATUS.md`: Living state, active tasks, blockers, handoff notes.
 - `docs/DECISIONS.md`: Plan pivots & ADRs with full proof-of-improvement loops.
 - `docs/CHANGELOG.md`: Chronological release log with verified outcomes.
 
 ## 2. Start-of-Work Checklist
+
 1. Read `AGENTS.md` and `docs/STATUS.md`.
 2. Review `docs/CHARTER.md` if working on core data models or architecture.
 3. Inspect `package.json`, schema definitions, and actual codebase (code is ground truth).
 
 ## 3. Plan-Change Rule
+
 Never silently alter plans. If an approach fails or needs a pivot:
+
 - Document the trigger, alternatives, decision, and proof of improvement in `docs/DECISIONS.md`.
 
 ## 4. Definition of Done
+
 A task is complete ONLY when:
+
 1. Implementation is verified (`npm test`, `npx tsc --noEmit`, or validation tests).
 2. `docs/STATUS.md` reflects current task state and next handoff.
 3. Any architectural decisions are logged in `docs/DECISIONS.md`.
@@ -269,17 +285,20 @@ A task is complete ONLY when:
 # Project Charter & Baseline Specifications
 
 ## 1. Project Overview & Origin
+
 - **Project Name:** [Project Name]
 - **Created Date:** YYYY-MM-DD
 - **Target Audience:** [Target users]
 - **Core Value Proposition:** [Primary problem this project solves]
 
 ## 2. Product Requirements (PRD)
+
 - **Core Feature 1:** [User flow & acceptance criteria]
 - **Core Feature 2:** [User flow & acceptance criteria]
 - **Non-Goals (Out of Scope):** [Explicit list of features we will NOT build initially]
 
 ## 3. Starting Architecture & Tech Stack
+
 - **Frontend / Client:** React / Next.js / Vite / Tailwind CSS / Vanilla CSS
 - **Backend / API:** Node.js / Fastify / Hono / Express / Next.js Server Actions / tRPC
 - **Data Persistence & ORM:** PostgreSQL / SQLite / Redis / Prisma / Drizzle ORM
@@ -287,13 +306,15 @@ A task is complete ONLY when:
 - **Runtime & Tooling:** Node.js / Bun / pnpm / Docker
 
 ## 4. Database Schema & Core Models (Prisma / SQL)
-| Model / Table | Key Fields | Relationships / Notes |
-| :--- | :--- | :--- |
-| `User` | `id` (CUID/UUID), `email` (Unique), `role` | Has many `Projects` |
-| `Project` | `id`, `title`, `userId` (FK -> User.id) | Belongs to `User` |
-| `Task` | `id`, `projectId` (FK), `status` (Enum) | Indexed on `(projectId, status)` |
+
+| Model / Table | Key Fields                                 | Relationships / Notes            |
+| :------------ | :----------------------------------------- | :------------------------------- |
+| `User`        | `id` (CUID/UUID), `email` (Unique), `role` | Has many `Projects`              |
+| `Project`     | `id`, `title`, `userId` (FK -> User.id)    | Belongs to `User`                |
+| `Task`        | `id`, `projectId` (FK), `status` (Enum)    | Indexed on `(projectId, status)` |
 
 ## 5. Invariant Constraints & Standards
+
 - Strict TypeScript types across all API contracts and data models (no `any`).
 - p95 API response time under 100ms for core endpoints.
 ```
@@ -309,18 +330,21 @@ A task is complete ONLY when:
 **Current Phase:** [Phase 1: Foundation / Phase 2: Core Features / Phase 3: Hardening]
 
 ## Active Tasks
+
 - [ ] `TASK-003`: [Description of current task in progress]
 - [x] `TASK-002`: [Description of completed task]
 - [x] `TASK-001`: [Description of completed task]
 
 ## Current Blockers & Risks
+
 - **Blocker:** [None / Description of blocking issue]
 - **Risk:** [Potential dependency issue or performance concern]
 
 ## Session Handoff Notes (For Next Agent / Session)
+
 - **Current Objective:** [What was being worked on]
 - **Files Modified in Last Session:**
-  - `src/routes/items.ts` — [Added pagination with Zod query validation]
+    - `src/routes/items.ts` — [Added pagination with Zod query validation]
 - **Recommended Next Action:** [Immediate first step for the incoming agent]
 ```
 
@@ -342,23 +366,29 @@ This file tracks every architectural decision, pivot away from original plans, a
 - **Related Task / Baseline:** CHARTER.md §3
 
 ### 1. Problem / Trigger
+
 Need high-throughput REST API layer with end-to-end type safety from database models to HTTP serialization.
 
 ### 2. Alternatives Evaluated
+
 - **Option A (Express + Mongoose):** Familiar but lacks native schema validation performance and type generation.
 - **Option B (Fastify + Prisma + Zod):** High throughput, automated OpenAPI generation, and strictly typed ORM queries.
 
 ### 3. Decision & Trade-offs
+
 Selected **Option B**. Accepted trade-off: Prisma query engine binary overhead in container environments.
 
 ### 4. Implementation Details
+
 Configured Fastify server with `@fastify/swagger` and Prisma client singleton in `src/lib/db.ts`.
 
 ### 5. Proof of Improvement (Evidence & Metrics)
+
 - Route schema validation throughput: ~22,000 req/sec in benchmark test (`npm run bench`).
 - Type safety verified with `npx tsc --noEmit` passing with 0 errors.
 
 ### 6. Lessons & Downstream Impact
+
 Always wrap Prisma queries with connection pooling handlers in serverless/container restarts.
 ```
 
@@ -376,9 +406,11 @@ All notable changes, bug fixes, and verifiable improvements to this project are 
 ## [Unreleased]
 
 ### Added
+
 - User authentication routes with JWT verification (`TASK-002`).
 
 ### Fixed
+
 - Fixed N+1 query issue on dashboard project listing (`DEC-002`).
 
 ---
@@ -386,10 +418,12 @@ All notable changes, bug fixes, and verifiable improvements to this project are 
 ## [0.1.0] - YYYY-MM-DD
 
 ### Added
+
 - Initial fullstack project scaffolding (`CHARTER.md`).
 - Established Prisma database schema and migration scripts.
 
 ### Verified Impact
+
 - Automated test suite operational with Vitest (100% pass rate).
 - TypeScript strict typecheck clean (`npx tsc --noEmit`).
 - Baseline API health endpoint latency: 12ms.
