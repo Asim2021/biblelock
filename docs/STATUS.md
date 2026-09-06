@@ -17,10 +17,12 @@
 - [x] `TASK-010`: RevenueCat paywall & entitlement integration (`src/lib/purchases.ts`, `src/app/paywall.tsx`)
 - [x] `TASK-011`: Shared UI components & `SETUP.md`
 - [x] `FIX-001`: Resolved ReactFabric render crash in `ExpoRoot` (`DEC-003`)
+- [x] `TASK-012`: Brandkit splash icon & launcher icon branding (`assets/images/splash-icon.png`, `icon.png`, `favicon.png`)
 
 ## Verification Evidence
 
-- `npx tsc --noEmit`: 0 errors.
+- `npx tsc --noEmit`: 0 errors (with global declarations).
+- `npx expo prebuild --clean --no-install`: 0 errors, generated native Android structure without missing splash asset errors.
 - Metro bundler: compiled 2,320 modules, HTTP 200 OK.
 - `npx expo config --type public`: 0 errors.
 
