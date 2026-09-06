@@ -103,9 +103,13 @@ export default function SettingsScreen() {
   const userEmail = profile?.email || user?.email || 'Guest Disciple';
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-dark">
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: '#181715' }}
+      edges={['top', 'left', 'right']}
+    >
       <ScrollView
-        className="flex-1 px-5"
+        style={{ flex: 1 }}
+        className="px-5"
         contentContainerStyle={{ paddingBottom: 48 }}
       >
         <Text className="text-2xl font-sans-bold text-on-dark pt-4 pb-4">

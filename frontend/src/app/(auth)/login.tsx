@@ -40,8 +40,12 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-dark">
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: '#181715' }}
+      edges={['top', 'bottom', 'left', 'right']}
+    >
       <ScrollView
+        style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between' }}
         className="px-6 py-8"
       >

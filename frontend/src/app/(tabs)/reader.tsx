@@ -79,7 +79,10 @@ export default function ReaderScreen() {
   const currentBook = allBooks[bookIndex] || allBooks[0];
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-dark">
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: '#181715' }}
+      edges={['top', 'left', 'right']}
+    >
       {/* Top Active Reading Timer Bar */}
       <View className="px-5 py-3 bg-surface-dark-elevated border-b border-hairline/10">
         <View className="flex-row items-center justify-between mb-2">

@@ -59,9 +59,13 @@ export default function HomeScreen() {
   const displayName = profile?.display_name || user?.user_metadata?.full_name || 'Disciple';
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-dark">
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: '#181715' }}
+      edges={['top', 'left', 'right']}
+    >
       <ScrollView
-        className="flex-1 px-5"
+        style={{ flex: 1 }}
+        className="px-5"
         contentContainerStyle={{ paddingBottom: 36 }}
         refreshControl={
           <RefreshControl
