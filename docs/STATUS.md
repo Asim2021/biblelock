@@ -20,20 +20,18 @@
 - [x] `TASK-012`: Brandkit splash icon & launcher icon branding (`assets/images/splash-icon.png`, `icon.png`, `favicon.png`)
 - [x] `FIX-002`: Resolved Android CMake/Prefab JDK 25 failure (`gradle.properties`, removed `gradle-daemon-jvm.properties` toolchain lock, pinned to JDK 21). Verified APK build and wireless ADB installation.
 - [x] `FIX-003`: Resolved Metro / Expo Router SSR storage crash (`DEC-004`) via lazy MMKV initialization. Bundled 2,319 modules cleanly and running live on connected wireless Android device (`SM_M346B`).
+- [x] `FIX-004`: Resolved Android edge-to-edge bottom tab bar overlap and blank screen via `SafeAreaProvider`, `DarkTheme` wrapper, and dynamic insets.
+- [x] `TASK-013`: Designed master app icon and brandkit guidelines board via `/brandkit` inspired by Quran Unlock. Generated production icon assets (`icon.png`, `splash-icon.png`, `android-icon-foreground.png`, `favicon.png`).
+- [x] `TASK-014`: Implemented UI-thread Reanimated 4 animations via `/expo-animation` (`ProgressRing` animated arc & unlock bounce, `Button` physical press feedback, `ShieldBadge` spring state transition).
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors.
-- Gradle build: `BUILD SUCCESSFUL in 3m 36s` (`app:assembleDebug`, 436 tasks).
-- APK generated: `frontend/android/app/build/outputs/apk/debug/app-debug.apk` (92MB).
-- ADB Wireless deployment: Streamed install SUCCESS, `com.bibleunlock.app/.MainActivity` focused on device.
-- Metro Bundler: `Android Bundled 44453ms node_modules\expo-router\entry.js (2319 modules)` live on port 8081.
+- Master app icons updated in `assets/images/`.
+- UI-thread animations verified with `react-native-reanimated` Worklets and reduced-motion fallbacks.
 
 ## Session Handoff Notes
 
-- Fixed both layers of issues:
-  1. Native C++/CMake build issue (pinned to JDK 21).
-  2. Metro/SSR module-load crash (lazy MMKV initialization).
-- Comprehensive build and development guide added to `frontend/README.md`.
-- Metro is actively running in task-359 serving the wireless connected device.
+- Master icon and brand guidelines generated.
+- All animations keep work on the UI thread without crossing the bridge or causing React re-renders.
 
