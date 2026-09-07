@@ -21,6 +21,7 @@ import {
   setBlockedApps,
   setReadingProgress,
 } from '../../lib/mmkv';
+import { SyncService } from '../../lib/sync';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 
@@ -56,11 +57,17 @@ export default function SettingsScreen() {
   const handleSelectGoal = (minutes: number) => {
     setDailyGoal(minutes);
     setDailyGoalMinutes(minutes);
+    if (user?.id) {
+      SyncService.syncSettings(user.id, { daily_goal_minutes: minutes });
+    }
   };
 
   const handleSelectTranslation = (tr: 'WEB' | 'KJV') => {
     setTranslationState(tr);
     setBibleTranslation(tr);
+    if (user?.id) {
+      SyncService.syncSettings(user.id, { translation: tr });
+    }
   };
 
   const handleToggleApp = (pkgName: string) => {
@@ -73,6 +80,9 @@ export default function SettingsScreen() {
     setBlockedListState(next);
     setBlockedApps(next);
     AppBlocker.shieldApps(next);
+    if (user?.id) {
+      SyncService.syncSettings(user.id, { blocked_apps: next });
+    }
   };
 
   const handleRequestPermissions = async () => {

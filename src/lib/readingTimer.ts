@@ -9,6 +9,8 @@ import {
   updateStreakOnGoalMet,
 } from './mmkv';
 import { AppBlocker } from './appBlocker';
+import { supabase } from './supabase';
+import { SyncService } from './sync';
 
 export interface ReadingTimerState {
   secondsRead: number;
@@ -49,9 +51,21 @@ export function useReadingTimer(isScreenFocused: boolean = true): ReadingTimerSt
       const { currentStreak } = updateStreakOnGoalMet();
       setStreak(currentStreak);
       AppBlocker.unshieldApps();
+
+      // Push completed streak to Supabase
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session?.user?.id) {
+          SyncService.syncReadingProgress(
+            data.session.user.id,
+            secondsRead,
+            goalMinutes,
+            true
+          );
+        }
+      });
     }
     prevGoalMetRef.current = isGoalMet;
-  }, [isGoalMet]);
+  }, [isGoalMet, secondsRead, goalMinutes]);
 
   // Tick reading timer when reader screen is actively focused
   useEffect(() => {
@@ -61,12 +75,25 @@ export function useReadingTimer(isScreenFocused: boolean = true): ReadingTimerSt
       setSecondsRead((prev) => {
         const next = prev + 1;
         setReadingProgress(next);
+
+        // Sync progress debounced in background
+        supabase.auth.getSession().then(({ data }) => {
+          if (data.session?.user?.id) {
+            SyncService.syncReadingProgress(
+              data.session.user.id,
+              next,
+              goalMinutes,
+              next >= goalMinutes * 60
+            );
+          }
+        });
+
         return next;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isScreenFocused]);
+  }, [isScreenFocused, goalMinutes]);
 
   const setGoalMinutes = useCallback((minutes: number) => {
     saveGoalMinutes(minutes);

@@ -2,6 +2,24 @@
 
 ---
 
+## [1.0.5] - 2026-09-07
+
+### Added
+- **Supabase PostgreSQL Schema Migration (`TASK-015` / `DEC-005`):** Created `supabase/migrations/20260907000000_supabase_schema.sql` defining `profiles` and `reading_sessions` tables, Row-Level Security (RLS) policies, automated `updated_at` trigger, and `handle_new_user()` trigger for automated OAuth user provisioning.
+- **Database TypeScript Types:** Created `src/types/database.ts` with complete `GenericTable` definitions and foreign-key relationships for full type safety.
+- **Offline-First Synchronization (`src/lib/sync.ts`):** Built bi-directional sync engine that preserves instant 0ms local response via MMKV while debouncing updates to Supabase in the background.
+- **Deep-Link Auth Callback Route:** Created `src/app/auth/callback.tsx` handling `bibleunlock://auth/callback` redirects cleanly in Expo Router.
+
+### Fixed
+- **Supabase URL Suffix Bug:** Removed trailing `/rest/v1/` from `EXPO_PUBLIC_SUPABASE_URL` in `.env` and added runtime URL sanitization in `src/lib/supabase.ts`.
+- **SSO PKCE Code Exchange:** Updated `src/lib/auth.tsx` to handle PKCE `code` query parameters and implicit hash fragments (`#access_token=...`) with foreground/background deep link listeners.
+
+### Verified Impact
+- `npx tsc --noEmit` passing with 0 errors.
+- Supabase live endpoint verified with Google and Apple SSO provider configurations.
+
+---
+
 ## [1.0.4] - 2026-09-07
 
 ### Fixed

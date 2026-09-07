@@ -1,7 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { storage } from './mmkv';
+import { Database, UserProfile, ReadingSession } from '../types/database';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://placeholder-project.supabase.co';
+// Normalize URL to guard against trailing slashes or /rest/v1 suffixes in env variables
+const rawUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://placeholder-project.supabase.co';
+const supabaseUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.placeholder';
 
 const MMKVStorageAdapter = {
@@ -17,22 +20,14 @@ const MMKVStorageAdapter = {
   },
 };
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: MMKVStorageAdapter,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false,
+    flowType: 'pkce',
   },
 });
 
-export type UserProfile = {
-  id: string;
-  email?: string;
-  display_name?: string;
-  avatar_url?: string;
-  is_premium?: boolean;
-  daily_goal_minutes?: number;
-  created_at?: string;
-  updated_at?: string;
-};
+export { UserProfile, ReadingSession };

@@ -107,3 +107,38 @@ Refactored `src/lib/mmkv.ts`:
 
 ### 6. Lessons & Downstream Impact
 In Expo Router with New Architecture, never execute native C++ / JSI module instantiations in module-level global scope; always use lazy getters to protect Node.js bundling and SSR passes.
+
+---
+
+## [DEC-005] Supabase Full Database, PKCE SSO Authentication, and Offline-First Sync
+
+- **Date:** 2026-09-07
+- **Status:** Validated
+- **Related Task / Baseline:** TASK-015, CHARTER.md §3
+
+### 1. Problem / Trigger
+The application required a production-ready Supabase backend for PostgreSQL storage and Single Sign-On (Google & Apple). The previous client configuration had a malformed URL with a trailing `/rest/v1/`, lacked PKCE OAuth redirect code exchange and hash parsing, had no deep-link handling for OAuth return flows, and lacked a two-way synchronization layer with local MMKV storage.
+
+### 2. Alternatives Evaluated
+- **Option A (Separate heavy native auth libraries like `@react-native-google-signin/google-signin` and `expo-apple-authentication`):** Adds significant native build complexity, Podfile modifications, and Google Play Services coupling.
+- **Option B (Ponytail + Senior Architect: Supabase Unified PKCE OAuth with `expo-web-browser` and `Linking`):** Uses existing installed dependencies (`expo-web-browser`, `expo-linking`, `@supabase/supabase-js`), handles PKCE code exchange and implicit hash tokens, and recovers sessions via deep-link listeners across iOS, Android, and web.
+
+### 3. Decision & Trade-offs
+Selected **Option B**. Implemented:
+1. Production PostgreSQL migration (`supabase/migrations/20260907000000_supabase_schema.sql`) with `profiles` and `reading_sessions` tables, Row Level Security, automatic user provisioning triggers, and `updated_at` triggers.
+2. Full TypeScript schema in `src/types/database.ts` satisfying Supabase `GenericTable` with foreign key relationships.
+3. URL normalization in `src/lib/supabase.ts` and `.env` to prevent path malformation.
+4. Robust OAuth flow in `src/lib/auth.tsx` supporting PKCE exchange (`exchangeCodeForSession`), hash parsing, and deep linking (`bibleunlock://auth/callback`).
+5. Offline-first two-way sync engine in `src/lib/sync.ts` that provides 0ms local response via MMKV and debounces cloud writes.
+
+### 4. Implementation Details
+- Created: `supabase/migrations/20260907000000_supabase_schema.sql`, `src/types/database.ts`, `src/lib/sync.ts`, `src/app/auth/callback.tsx`.
+- Updated: `.env`, `src/lib/supabase.ts`, `src/lib/auth.tsx`, `src/lib/readingTimer.ts`, `src/app/(tabs)/settings.tsx`, `SETUP.md`.
+
+### 5. Proof of Improvement
+- Supabase Auth Service connectivity verified via Node test script (`external providers: google, apple`).
+- Full project typecheck clean (`npx tsc --noEmit` exited with code 0).
+- Deep link route `/auth/callback` mounted in Expo Router to prevent unhandled routing warnings.
+
+### 6. Lessons & Downstream Impact
+Always define `Relationships: []` on Supabase database table definitions in TypeScript; otherwise, `@supabase/postgrest-js` treats the schema as non-conforming and infers table operations as `never`.

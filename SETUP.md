@@ -17,62 +17,164 @@ Bible Unlock helps users replace social media doomscrolling with daily Scripture
 
 ## 2. Supabase Backend Setup
 
-Bible Unlock uses Supabase for user authentication (Google & Apple SSO) and syncing reading streaks, goals, and profiles.
+Bible Unlock uses Supabase for user authentication (Google & Apple SSO) and syncing reading streaks, goals, profiles, and daily reading sessions.
 
 ### Step 2.1: Run the Database Migration
-In your Supabase project dashboard, navigate to the **SQL Editor** and run the following schema:
+You can run the migration via Supabase CLI (`npx supabase db push`) or copy and paste the migration script from [supabase/migrations/20260907000000_supabase_schema.sql](file:///d:/My%20Projects/bibleunlock.app/supabase/migrations/20260907000000_supabase_schema.sql) directly into the **SQL Editor** in your Supabase project dashboard:
 
 ```sql
 -- 1. Create Profiles Table
-CREATE TABLE public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT,
   display_name TEXT,
   avatar_url TEXT,
-  is_premium BOOLEAN DEFAULT FALSE,
-  daily_goal_minutes INTEGER DEFAULT 10,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  is_premium BOOLEAN DEFAULT FALSE NOT NULL,
+  daily_goal_minutes INTEGER DEFAULT 10 NOT NULL,
+  translation TEXT DEFAULT 'WEB' NOT NULL CHECK (translation IN ('WEB', 'KJV')),
+  blocked_apps JSONB DEFAULT '["com.instagram.android","com.zhiliaoapp.musically","com.google.android.youtube","com.twitter.android","com.reddit.frontpage"]'::jsonb NOT NULL,
+  current_streak INTEGER DEFAULT 0 NOT NULL,
+  last_read_date DATE,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- 2. Enable Row Level Security (RLS)
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+-- 2. Create Reading Sessions Table (Daily Reading History & Streaks)
+CREATE TABLE IF NOT EXISTS public.reading_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  seconds_read INTEGER DEFAULT 0 NOT NULL,
+  goal_minutes INTEGER DEFAULT 10 NOT NULL,
+  is_goal_met BOOLEAN DEFAULT FALSE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  CONSTRAINT unique_user_reading_date UNIQUE (user_id, date)
+);
 
+-- 3. Optimization Indexes
+CREATE INDEX IF NOT EXISTS idx_reading_sessions_user_date 
+  ON public.reading_sessions(user_id, date DESC);
+
+CREATE INDEX IF NOT EXISTS idx_profiles_streak 
+  ON public.profiles(current_streak DESC);
+
+-- 4. Enable Row Level Security (RLS)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reading_sessions ENABLE ROW LEVEL SECURITY;
+
+-- 5. Profiles RLS Policies (Tenant Isolation)
 CREATE POLICY "Users can view own profile"
   ON public.profiles FOR SELECT
   USING (auth.uid() = id);
 
 CREATE POLICY "Users can update own profile"
   ON public.profiles FOR UPDATE
-  USING (auth.uid() = id);
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 
--- 3. Automatic User Creation Trigger
-CREATE OR REPLACE FUNCTION public.handle_new_user()
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+-- 6. Reading Sessions RLS Policies
+CREATE POLICY "Users can view own reading sessions"
+  ON public.reading_sessions FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own reading sessions"
+  ON public.reading_sessions FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own reading sessions"
+  ON public.reading_sessions FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- 7. Automated Timestamps Function & Triggers
+CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO public.profiles (id, email, display_name, avatar_url)
-  VALUES (
-    NEW.id,
-    NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', 'Disciple'),
-    NEW.raw_user_meta_data->>'avatar_url'
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS tr_profiles_updated_at ON public.profiles;
+CREATE TRIGGER tr_profiles_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS tr_reading_sessions_updated_at ON public.reading_sessions;
+CREATE TRIGGER tr_reading_sessions_updated_at
+  BEFORE UPDATE ON public.reading_sessions
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- 8. Automatic Profile Provisioning on User Signup / SSO Login
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_display_name TEXT;
+  v_avatar_url TEXT;
+BEGIN
+  v_display_name := COALESCE(
+    NEW.raw_user_meta_data->>'full_name',
+    NEW.raw_user_meta_data->>'name',
+    NEW.raw_user_meta_data->>'user_name',
+    SPLIT_PART(NEW.email, '@', 1),
+    'Disciple'
   );
+
+  v_avatar_url := COALESCE(
+    NEW.raw_user_meta_data->>'avatar_url',
+    NEW.raw_user_meta_data->>'picture',
+    NULL
+  );
+
+  INSERT INTO public.profiles (
+    id, email, display_name, avatar_url, is_premium, daily_goal_minutes, translation, current_streak, created_at, updated_at
+  )
+  VALUES (
+    NEW.id, NEW.email, v_display_name, v_avatar_url, FALSE, 10, 'WEB', 0, NOW(), NOW()
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    display_name = COALESCE(public.profiles.display_name, EXCLUDED.display_name),
+    avatar_url = COALESCE(public.profiles.avatar_url, EXCLUDED.avatar_url),
+    updated_at = NOW();
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 ```
 
-### Step 2.2: Configure Authentication Providers
+### Step 2.2: Configure URL Redirects for SSO
+In your Supabase project dashboard:
+1. Navigate to **Authentication** → **URL Configuration**.
+2. Set **Site URL** to:
+   ```text
+   bibleunlock://auth/callback
+   ```
+3. In **Redirect URLs**, add:
+   - `bibleunlock://*`
+   - `bibleunlock://auth/callback`
+   - `https://bkhldxyzmwgrybozqqve.supabase.co/auth/v1/callback`
+
+### Step 2.3: Configure Google & Apple Authentication Providers
 1. Go to **Authentication** → **Providers**.
-2. Enable **Google**:
-   - Client ID & Client Secret from Google Cloud Console.
-3. Enable **Apple**:
-   - Service ID, Team ID, Key ID, and Private Key from Apple Developer Portal.
-4. Add your redirect URI: `bibleunlock://auth/callback` in **URL Configuration** → **Redirect URLs**.
+2. **Google**:
+   - Enable Google provider.
+   - Enter **Client ID** and **Client Secret** from your Google Cloud Console OAuth 2.0 Client.
+   - Add Supabase's callback URL (`https://bkhldxyzmwgrybozqqve.supabase.co/auth/v1/callback`) to your Google Cloud Console "Authorized redirect URIs".
+3. **Apple**:
+   - Enable Apple provider.
+   - Enter **Service ID** (e.g., `com.bibleunlock.app.signin`), **Team ID**, **Key ID**, and **Private Key** (.p8 file) from Apple Developer Portal.
+   - In Apple Developer Portal under "Sign in with Apple", add `https://bkhldxyzmwgrybozqqve.supabase.co/auth/v1/callback` as an Authorized Return URL.
 
 ---
 

@@ -23,15 +23,18 @@
 - [x] `FIX-004`: Resolved Android edge-to-edge bottom tab bar overlap and blank screen via `SafeAreaProvider`, `DarkTheme` wrapper, and dynamic insets.
 - [x] `TASK-013`: Designed master app icon and brandkit guidelines board via `/brandkit` inspired by Quran Unlock. Generated production icon assets (`icon.png`, `splash-icon.png`, `android-icon-foreground.png`, `favicon.png`).
 - [x] `TASK-014`: Implemented UI-thread Reanimated 4 animations via `/expo-animation` (`ProgressRing` animated arc & unlock bounce, `Button` physical press feedback, `ShieldBadge` spring state transition).
+- [x] `TASK-015`: Supabase full Database schema migration, Google & Apple SSO PKCE authentication, and offline-first MMKV sync (`DEC-005`).
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors.
-- Master app icons updated in `assets/images/`.
-- UI-thread animations verified with `react-native-reanimated` Worklets and reduced-motion fallbacks.
+- Supabase Auth Service & providers verified live (`apple`, `google`).
+- Database schema migration created with idempotent RLS policies and user profile triggers.
+- Dynamic deep-link listener configured for `bibleunlock://auth/callback`.
 
 ## Session Handoff Notes
 
-- Master icon and brand guidelines generated.
-- All animations keep work on the UI thread without crossing the bridge or causing React re-renders.
+- Supabase Database migration ready at `supabase/migrations/20260907000000_supabase_schema.sql` and documented in `SETUP.md`.
+- PKCE code exchange and implicit hash token parsing implemented in `src/lib/auth.tsx`.
+- Offline-first synchronization engine (`src/lib/sync.ts`) bridges local MMKV reading progress and remote PostgreSQL tables.
 
