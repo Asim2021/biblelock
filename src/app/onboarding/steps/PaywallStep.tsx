@@ -1,6 +1,14 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import {
+  Sparkles,
+  Lock,
+  Shield,
+  Sun,
+  Flame,
+  Rocket,
+} from 'lucide-react-native';
 
 interface PaywallStepProps {
   onBack: () => void;
@@ -8,12 +16,12 @@ interface PaywallStepProps {
 }
 
 const PRO_FEATURES = [
-  { icon: '🔒', text: 'Unlimited App Blocking' },
-  { icon: '🛡️', text: 'Strict Devotional Mode' },
-  { icon: '✨', text: 'Premium Audio & Scripture Commentary' },
-  { icon: '🌅', text: 'Morning & Evening Watch Targets' },
-  { icon: '🔥', text: 'Pause Streak (Streak Freeze Protection)' },
-  { icon: '🚀', text: 'And much more...' },
+  { Icon: Lock, text: 'Unlimited App Blocking' },
+  { Icon: Shield, text: 'Strict Devotional Mode' },
+  { Icon: Sparkles, text: 'Premium Audio & Scripture Commentary' },
+  { Icon: Sun, text: 'Morning & Evening Watch Targets' },
+  { Icon: Flame, text: 'Pause Streak (Streak Freeze Protection)' },
+  { Icon: Rocket, text: 'And much more...' },
 ];
 
 export const PaywallStep: React.FC<PaywallStepProps> = ({ onBack, onNext }) => {
@@ -45,7 +53,9 @@ export const PaywallStep: React.FC<PaywallStepProps> = ({ onBack, onNext }) => {
         </Text>
 
         <View className="items-center my-4">
-          <Text className="text-4xl mb-3">✨</Text>
+          <View className="w-14 h-14 rounded-full bg-[#f5b800]/15 border border-[#f5b800]/30 items-center justify-center mb-3">
+            <Sparkles size={28} color="#f5b800" strokeWidth={2} />
+          </View>
           <Text
             className="text-3xl font-serif-bold text-[#faf9f5] text-center mb-2 tracking-tight"
             style={{ fontFamily: 'EBGaramond_700Bold' }}
@@ -59,14 +69,19 @@ export const PaywallStep: React.FC<PaywallStepProps> = ({ onBack, onNext }) => {
 
         {/* Feature List Card */}
         <View className="p-6 rounded-3xl bg-[#143e32] border border-[#265e4d] my-4 space-y-4">
-          {PRO_FEATURES.map((item, idx) => (
-            <View key={idx} className="flex-row items-center mb-3">
-              <Text className="text-lg mr-3">{item.icon}</Text>
-              <Text className="text-sm font-sans-medium text-[#faf9f5]">
-                {item.text}
-              </Text>
-            </View>
-          ))}
+          {PRO_FEATURES.map((item, idx) => {
+            const IconComp = item.Icon;
+            return (
+              <View key={idx} className="flex-row items-center mb-3.5">
+                <View className="w-8 h-8 rounded-lg bg-[#1a4a3c] items-center justify-center mr-3.5">
+                  <IconComp size={16} color="#f5b800" strokeWidth={2} />
+                </View>
+                <Text className="text-sm font-sans-medium text-[#faf9f5] flex-1">
+                  {item.text}
+                </Text>
+              </View>
+            );
+          })}
         </View>
 
         {/* CTAs */}

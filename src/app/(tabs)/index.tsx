@@ -7,8 +7,20 @@ import {
   Pressable,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import {
+  Settings,
+  ShieldCheck,
+  ShieldAlert,
+  Clock,
+  BookOpen,
+  Sparkles,
+  Flame,
+  Pause,
+  Trophy,
+  ChevronRight,
+} from 'lucide-react-native';
 import { useAuth } from '../../lib/auth';
 import { useReadingTimer } from '../../lib/readingTimer';
 import { AppBlocker } from '../../lib/appBlocker';
@@ -31,6 +43,7 @@ import { BadgeItem, HabitDay, ImpactStats } from '../../types/onboarding';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, profile } = useAuth();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -172,7 +185,7 @@ export default function HomeScreen() {
       <ScrollView
         style={{ flex: 1 }}
         className="px-5"
-        contentContainerStyle={{ paddingBottom: 48 }}
+        contentContainerStyle={{ paddingBottom: 60 + insets.bottom }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -198,25 +211,31 @@ export default function HomeScreen() {
           {/* Quick Settings & Status Badge */}
           <View className="flex-row items-center">
             {isPaused ? (
-              <View className="px-2.5 py-1 rounded-full bg-[#342e18] border border-[#f5b800] mr-2">
+              <View className="flex-row items-center px-2.5 py-1 rounded-full bg-[#342e18] border border-[#f5b800] mr-2">
+                <Pause size={12} color="#f5b800" style={{ marginRight: 4 }} />
                 <Text className="text-[10px] font-sans-bold text-[#f5b800]">
-                  ⏸ Paused ({remainingMins}m)
+                  Paused ({remainingMins}m)
                 </Text>
               </View>
             ) : (
               <View
-                className={`px-2.5 py-1 rounded-full border mr-2 ${
+                className={`flex-row items-center px-2.5 py-1 rounded-full border mr-2 ${
                   isShielded
                     ? 'bg-[#18261e] border-[#385e48]'
                     : 'bg-[#291b1b] border-[#5e3838]'
                 }`}
               >
+                {isShielded ? (
+                  <ShieldCheck size={12} color="#5db872" style={{ marginRight: 4 }} />
+                ) : (
+                  <ShieldAlert size={12} color="#ff7b72" style={{ marginRight: 4 }} />
+                )}
                 <Text
                   className={`text-[10px] font-sans-bold ${
                     isShielded ? 'text-[#5db872]' : 'text-[#ff7b72]'
                   }`}
                 >
-                  {isShielded ? '🛡️ Shielded' : '🔓 Unshielded'}
+                  {isShielded ? 'Shielded' : 'Unshielded'}
                 </Text>
               </View>
             )}
@@ -225,7 +244,7 @@ export default function HomeScreen() {
               onPress={() => router.push('/settings' as any)}
               className="w-10 h-10 rounded-full bg-[#18231c] border border-[#273d30] items-center justify-center active:opacity-80"
             >
-              <Text className="text-lg">⚙️</Text>
+              <Settings size={18} color="#f5b800" />
             </Pressable>
           </View>
         </View>
@@ -235,7 +254,7 @@ export default function HomeScreen() {
           {/* Header Row */}
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center">
-              <Text className="text-sm mr-1.5">⏱️</Text>
+              <Clock size={14} color="#f5b800" style={{ marginRight: 6 }} />
               <Text className="text-xs font-sans-bold text-[#f5b800] uppercase tracking-widest">
                 Time to Read
               </Text>
@@ -274,10 +293,11 @@ export default function HomeScreen() {
           {/* Golden Radiant Button */}
           <Pressable
             onPress={() => router.push('/reader' as any)}
-            className="w-full py-4 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg"
+            className="w-full py-4 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg flex-row"
           >
+            <BookOpen size={18} color="#141413" style={{ marginRight: 8 }} />
             <Text className="text-base font-sans-bold text-[#141413]">
-              {timer.isGoalMet ? 'Continue in Scripture 📖' : "Amen, Let's Read 📖"}
+              {timer.isGoalMet ? 'Continue in Scripture' : "Amen, Let's Read"}
             </Text>
           </Pressable>
         </View>
@@ -286,7 +306,7 @@ export default function HomeScreen() {
         <View className="mb-4 p-5 rounded-3xl bg-[#141b17] border border-[#202e25]">
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-row items-center">
-              <Text className="text-sm mr-2">🏆</Text>
+              <Sparkles size={15} color="#d4a359" style={{ marginRight: 6 }} />
               <Text className="text-xs font-sans-bold text-[#d4a359] uppercase tracking-wider">
                 Daily Devotional
               </Text>
@@ -313,11 +333,12 @@ export default function HomeScreen() {
             </Text>
             <Pressable
               onPress={() => router.push('/reader' as any)}
-              className="py-1 px-2.5 rounded-lg active:opacity-75"
+              className="py-1 px-2.5 rounded-lg active:opacity-75 flex-row items-center"
             >
-              <Text className="text-xs font-sans-bold text-[#78a898]">
-                Read Chapter →
+              <Text className="text-xs font-sans-bold text-[#78a898] mr-1">
+                Read Chapter
               </Text>
+              <ChevronRight size={14} color="#78a898" />
             </Pressable>
           </View>
         </View>
@@ -326,7 +347,7 @@ export default function HomeScreen() {
         <View className="mb-4 p-5 rounded-3xl bg-[#151e18] border border-[#223328] flex-row items-center justify-between">
           <View className="flex-1 pr-3">
             <View className="flex-row items-center mb-1">
-              <Text className="text-2xl mr-2">🔥</Text>
+              <Flame size={22} color="#ff7b42" style={{ marginRight: 8 }} />
               <Text className="text-xl font-sans-bold text-[#faf9f5]">
                 {timer.streak} {timer.streak === 1 ? 'Day' : 'Days'} Streak
               </Text>
@@ -338,10 +359,11 @@ export default function HomeScreen() {
 
           <Pressable
             onPress={() => setIsPauseModalVisible(true)}
-            className="px-3.5 py-2.5 rounded-xl bg-[#223126] border border-[#354f3c] active:opacity-80"
+            className="px-3.5 py-2.5 rounded-xl bg-[#223126] border border-[#354f3c] active:opacity-80 flex-row items-center"
           >
+            <Pause size={13} color="#f5b800" style={{ marginRight: 6 }} />
             <Text className="text-xs font-sans-bold text-[#f5b800]">
-              {isPaused ? `⏸ Paused (${remainingMins}m)` : '⏸ Pause Blocking [NEW]'}
+              {isPaused ? `Paused (${remainingMins}m)` : 'Pause Blocking'}
             </Text>
           </Pressable>
         </View>
@@ -358,7 +380,9 @@ export default function HomeScreen() {
           <View className="flex-row justify-between">
             {/* Minutes Read */}
             <View className="flex-1 mr-2 p-4 rounded-2xl bg-[#141a16] border border-[#202a22] items-center">
-              <Text className="text-2xl mb-1">📖</Text>
+              <View className="w-10 h-10 rounded-xl bg-[#1c2921] items-center justify-center mb-2">
+                <BookOpen size={20} color="#f5b800" />
+              </View>
               <Text className="text-lg font-sans-bold text-[#faf9f5]">
                 {impact.minutesRead}m
               </Text>
@@ -369,7 +393,9 @@ export default function HomeScreen() {
 
             {/* Screen Time Saved */}
             <View className="flex-1 mx-1 p-4 rounded-2xl bg-[#141a16] border border-[#202a22] items-center">
-              <Text className="text-2xl mb-1">⏳</Text>
+              <View className="w-10 h-10 rounded-xl bg-[#1c2921] items-center justify-center mb-2">
+                <Clock size={20} color="#f5b800" />
+              </View>
               <Text className="text-lg font-sans-bold text-[#f5b800]">
                 {impact.hoursSaved}h
               </Text>
@@ -380,7 +406,9 @@ export default function HomeScreen() {
 
             {/* Total Sessions */}
             <View className="flex-1 ml-2 p-4 rounded-2xl bg-[#141a16] border border-[#202a22] items-center">
-              <Text className="text-2xl mb-1">🕊️</Text>
+              <View className="w-10 h-10 rounded-xl bg-[#1c2921] items-center justify-center mb-2">
+                <Trophy size={20} color="#f5b800" />
+              </View>
               <Text className="text-lg font-sans-bold text-[#faf9f5]">
                 {impact.sessions}
               </Text>

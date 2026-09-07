@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, Modal } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pause, Play, Clock, Check } from 'lucide-react-native';
 
 interface PauseBlockingModalProps {
   visible: boolean;
@@ -18,6 +20,7 @@ export const PauseBlockingModal: React.FC<PauseBlockingModalProps> = ({
   onPause,
   onResume,
 }) => {
+  const insets = useSafeAreaInsets();
   const [selectedMins, setSelectedMins] = useState<number>(30);
 
   const remainingMinutes = pauseUntilMs
@@ -26,10 +29,18 @@ export const PauseBlockingModal: React.FC<PauseBlockingModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade">
-      <View className="flex-1 bg-black/80 justify-center items-center px-6">
-        <View className="w-full bg-[#131c17] border border-[#273a2e] rounded-3xl p-6 shadow-2xl">
+      <View
+        className="flex-1 bg-black/80 justify-center items-center px-6"
+        style={{
+          paddingTop: Math.max(20, insets.top + 10),
+          paddingBottom: Math.max(20, insets.bottom + 10),
+        }}
+      >
+        <View className="w-full max-w-sm bg-[#131c17] border border-[#273a2e] rounded-3xl p-6 shadow-2xl">
           <View className="items-center mb-4">
-            <Text className="text-4xl mb-2">⏸️</Text>
+            <View className="w-14 h-14 rounded-2xl bg-[#1f2e24] items-center justify-center mb-3">
+              <Pause size={28} color="#f5b800" />
+            </View>
             <Text
               className="text-2xl font-serif-bold text-[#faf9f5] text-center tracking-tight"
               style={{ fontFamily: 'EBGaramond_700Bold' }}
@@ -51,8 +62,9 @@ export const PauseBlockingModal: React.FC<PauseBlockingModalProps> = ({
               </Text>
               <Pressable
                 onPress={onResume}
-                className="w-full py-3 rounded-xl bg-[#5db872] items-center active:opacity-90"
+                className="w-full py-3 rounded-xl bg-[#5db872] items-center active:opacity-90 flex-row justify-center"
               >
+                <Play size={16} color="#ffffff" style={{ marginRight: 6 }} />
                 <Text className="text-sm font-sans-bold text-white">
                   Resume Blocking Now
                 </Text>
@@ -100,8 +112,9 @@ export const PauseBlockingModal: React.FC<PauseBlockingModalProps> = ({
 
               <Pressable
                 onPress={() => onPause(selectedMins)}
-                className="w-full py-3.5 rounded-xl bg-[#ff5c5c] items-center active:opacity-90 shadow-md mb-2"
+                className="w-full py-3.5 rounded-xl bg-[#ff5c5c] items-center active:opacity-90 shadow-md mb-2 flex-row justify-center"
               >
+                <Clock size={16} color="#ffffff" style={{ marginRight: 6 }} />
                 <Text className="text-sm font-sans-bold text-white">
                   Pause Blocking for {selectedMins === 60 ? '1 Hour' : `${selectedMins}m`}
                 </Text>

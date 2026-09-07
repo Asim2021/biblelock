@@ -16,6 +16,13 @@ import {
   setBibleTranslation,
 } from '../../lib/mmkv';
 import { Button } from '../../components/Button';
+import {
+  Clock,
+  Unlock,
+  Sparkles,
+  ChevronDown,
+  Check,
+} from 'lucide-react-native';
 
 export default function ReaderScreen() {
   const [isFocused, setIsFocused] = useState(true);
@@ -87,7 +94,13 @@ export default function ReaderScreen() {
       <View className="px-5 py-3 bg-surface-dark-elevated border-b border-hairline/10">
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center">
-            <Text className="text-sm mr-2">{timer.isGoalMet ? '🔓' : '⏱️'}</Text>
+            <View className="mr-2">
+              {timer.isGoalMet ? (
+                <Unlock size={14} color="#22c55e" />
+              ) : (
+                <Clock size={14} color="#f5b800" />
+              )}
+            </View>
             <Text className="text-xs font-sans-semibold uppercase tracking-wider text-on-dark-soft">
               {timer.isGoalMet ? 'Apps Unlocked' : 'Reading Timer Active'}
             </Text>
@@ -114,10 +127,10 @@ export default function ReaderScreen() {
           onPress={() => setShowBookModal(true)}
           className="flex-row items-center bg-surface-dark-elevated px-3.5 py-2 rounded-md border border-hairline/20"
         >
-          <Text className="text-sm font-sans-bold text-on-dark mr-1.5">
+          <Text className="text-sm font-sans-bold text-on-dark mr-2">
             {currentBook.name} {chapterNumber}
           </Text>
-          <Text className="text-xs text-on-dark-soft">▼</Text>
+          <ChevronDown size={14} color="#9e9488" />
         </Pressable>
 
         {/* Translation Toggle Pill */}
@@ -187,7 +200,9 @@ export default function ReaderScreen() {
       {/* Goal Achieved Toast Banner */}
       {timer.isGoalMet && (
         <View className="bg-success/15 px-4 py-2.5 border-b border-success/30 flex-row items-center justify-center">
-          <Text className="text-sm mr-2">🎉</Text>
+          <View className="mr-2">
+            <Sparkles size={16} color="#22c55e" />
+          </View>
           <Text className="text-xs font-sans-medium text-success">
             Daily goal met! Distracting apps are unlocked for the day.
           </Text>
@@ -304,9 +319,12 @@ export default function ReaderScreen() {
                     >
                       {item.name}
                     </Text>
-                    <Text className="text-xs text-on-dark-soft font-mono">
-                      {item.chapterCount} {item.chapterCount === 1 ? 'ch' : 'chs'}
-                    </Text>
+                    <View className="flex-row items-center">
+                      <Text className="text-xs text-on-dark-soft font-mono mr-2">
+                        {item.chapterCount} {item.chapterCount === 1 ? 'ch' : 'chs'}
+                      </Text>
+                      {isSelected && <Check size={16} color="#f5b800" />}
+                    </View>
                   </Pressable>
                 </View>
               );

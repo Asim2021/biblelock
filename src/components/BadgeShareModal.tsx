@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, Modal, Share, Alert } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Share2 } from 'lucide-react-native';
 import { BadgeItem } from '../types/onboarding';
 
 interface BadgeShareModalProps {
@@ -15,6 +17,7 @@ export const BadgeShareModal: React.FC<BadgeShareModalProps> = ({
   streak,
   onClose,
 }) => {
+  const insets = useSafeAreaInsets();
   if (!badge) return null;
 
   const handleShare = async () => {
@@ -29,7 +32,10 @@ export const BadgeShareModal: React.FC<BadgeShareModalProps> = ({
 
   return (
     <Modal visible={!!badge} transparent animationType="slide">
-      <View className="flex-1 bg-black/85 justify-center items-center px-6">
+      <View
+        className="flex-1 bg-black/85 justify-center items-center px-6"
+        style={{ paddingBottom: Math.max(16, insets.bottom + 16), paddingTop: Math.max(16, insets.top + 16) }}
+      >
         <View className="w-full bg-[#141e18] border border-[#2b4434] rounded-3xl p-6 shadow-2xl items-center">
           {/* Top Badge Icon */}
           <View className="w-24 h-24 rounded-full bg-[#203126] border-2 border-[#f5b800] items-center justify-center mb-4 shadow-lg">
@@ -75,10 +81,11 @@ export const BadgeShareModal: React.FC<BadgeShareModalProps> = ({
           {/* Action Buttons */}
           <Pressable
             onPress={handleShare}
-            className="w-full py-4 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg mb-3"
+            className="w-full py-4 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg mb-3 flex-row"
           >
+            <Share2 size={18} color="#141413" style={{ marginRight: 8 }} />
             <Text className="text-base font-sans-bold text-[#141413]">
-              Share with Friends 🚀
+              Share with Friends
             </Text>
           </Pressable>
 

@@ -1,5 +1,21 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.7] - 2026-09-08
+
+### Fixed
+- **Duplicate Key Warning & Hour Selector (`1a.png`, `1b.png`):** Replaced static hour preset array in `PlanStep.tsx` with unique 12-hour grid `['01'..'12']`, resolved duplicate `'08'` key warning, and fixed greeting title trailing space (`"When do you want to read Scripture, Asim?"`).
+- **Android 3-Button Navigation Bar Overlap:** Injected dynamic safe-area insets (`useSafeAreaInsets().bottom`) across `AppPickerStep.tsx`, `PermissionStep.tsx`, `PauseBlockingModal.tsx`, `settings.tsx`, and `BadgeShareModal.tsx` so bottom action buttons stay elevated above the system navigation bar (`||| <`).
+- **"5 Apps Picked" Confusion (`what 5 apps.png`):** Changed default `blockedApps` list from hardcoded 5 presets to empty `[]`, adding 5 quick-add suggestion chips (Instagram, TikTok, YouTube, X, Reddit) in `AppPickerStep.tsx`.
+- **Android Splashscreen Drawables (`why old logo.png`):** Generated and replaced all Android density drawables (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`) in `android/app/src/main/res/drawable-*/splashscreen_logo.png` directly from the 3D brandmark (`assets/images/splash-icon.png`).
+
+### Added
+- **Modern Vector Icons (`lucide-react-native`):** Installed `lucide-react-native` and migrated all tabs, headers, modal buttons, progress indicators, feature lists, and badges to sleek, customizable vector icons, eliminating raw emojis and unicode characters throughout the entire application.
+
+### Verified Impact
+- `npx tsc --noEmit` passing with 0 errors.
+- Bottom action buttons dynamically elevated with `useSafeAreaInsets().bottom` across all modals and steps.
+- Splash logo rendered crisp and high-res on cold boot across all Android screen densities.
+
 ---
 
 ## [1.0.6] - 2026-09-08

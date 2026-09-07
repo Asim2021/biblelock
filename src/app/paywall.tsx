@@ -12,6 +12,7 @@ import { useRouter } from 'expo-router';
 import { usePurchases } from '../lib/purchases';
 import { Button } from '../components/Button';
 import { Card } from '../components/Card';
+import { X, Crown, Check } from 'lucide-react-native';
 
 const FEATURES = [
   {
@@ -91,7 +92,7 @@ export default function PaywallScreen() {
           onPress={() => router.back()}
           className="w-8 h-8 items-center justify-center rounded-full bg-surface-dark-elevated"
         >
-          <Text className="text-on-dark font-sans-bold text-sm">✕</Text>
+          <X size={16} color="#faf9f5" />
         </Pressable>
       </View>
 
@@ -101,7 +102,9 @@ export default function PaywallScreen() {
       >
         {/* Hero Title */}
         <View className="items-center my-6">
-          <Text className="text-4xl mb-2">👑</Text>
+          <View className="w-16 h-16 rounded-full bg-primary/10 border border-primary/30 items-center justify-center mb-3">
+            <Crown size={32} color="#f5b800" strokeWidth={2} />
+          </View>
           <Text
             className="text-3xl text-on-dark text-center font-serif"
             style={{ fontFamily: 'EBGaramond_700Bold' }}
@@ -126,11 +129,14 @@ export default function PaywallScreen() {
               <Text className="text-sm font-sans-semibold text-on-dark mb-1">
                 {feat.title}
               </Text>
-              <View className="flex-row justify-between">
+              <View className="flex-row justify-between items-center">
                 <Text className="text-xs text-on-dark-soft">Free: {feat.free}</Text>
-                <Text className="text-xs text-primary font-sans-medium">
-                  ✓ {feat.pro}
-                </Text>
+                <View className="flex-row items-center">
+                  <Check size={12} color="#f5b800" strokeWidth={2.5} />
+                  <Text className="text-xs text-primary font-sans-medium ml-1">
+                    {feat.pro}
+                  </Text>
+                </View>
               </View>
             </View>
           ))}

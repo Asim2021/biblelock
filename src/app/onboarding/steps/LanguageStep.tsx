@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
+import { Check } from 'lucide-react-native';
 import { LanguageCode } from '../../../types/onboarding';
 
 interface LanguageStepProps {
@@ -62,7 +63,7 @@ export const LanguageStep: React.FC<LanguageStepProps> = ({
                 </View>
 
                 {isSelected && (
-                  <Text className="text-[#d4a359] text-lg font-bold">✓</Text>
+                  <Check size={20} color="#f5b800" strokeWidth={3} />
                 )}
               </Pressable>
             );

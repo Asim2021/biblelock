@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
   useReducedMotion,
 } from 'react-native-reanimated';
+import { Lock, Unlock } from 'lucide-react-native';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -42,17 +43,19 @@ export function ShieldBadge({ isShielded, onPress, className = '' }: ShieldBadge
           : 'bg-success/10 border-success/40'
       } ${className}`}
     >
-      <View
-        className={`w-2 h-2 rounded-full mr-2 ${
-          isShielded ? 'bg-primary' : 'bg-success'
-        }`}
-      />
+      <View className="mr-1.5">
+        {isShielded ? (
+          <Lock size={12} color="#f5b800" strokeWidth={2.5} />
+        ) : (
+          <Unlock size={12} color="#22c55e" strokeWidth={2.5} />
+        )}
+      </View>
       <Text
         className={`text-xs font-sans-medium ${
           isShielded ? 'text-primary' : 'text-success'
         }`}
       >
-        {isShielded ? '🔒 Apps Shielded' : '🔓 Apps Unlocked'}
+        {isShielded ? 'Apps Shielded' : 'Apps Unlocked'}
       </Text>
     </Animated.View>
   );

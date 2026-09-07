@@ -1,28 +1,30 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Home, BookOpen, Settings } from 'lucide-react-native';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(8, insets.bottom);
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#181715',
-          borderTopColor: '#252320',
+          backgroundColor: '#0d120f',
+          borderTopColor: '#1a261f',
           borderTopWidth: 1,
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+          height: 56 + bottomInset,
+          paddingBottom: bottomInset,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: '#cc785c',
-        tabBarInactiveTintColor: '#8e8b82',
+        tabBarActiveTintColor: '#f5b800',
+        tabBarInactiveTintColor: '#6b8277',
         tabBarLabelStyle: {
           fontFamily: 'Inter_500Medium',
-          fontSize: 12,
+          fontSize: 11,
+          marginTop: 2,
         },
       }}
     >
@@ -30,8 +32,8 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ focused }) => (
-            <Text className="text-xl">{focused ? '📊' : '📈'}</Text>
+          tabBarIcon: ({ color, focused }) => (
+            <Home size={22} color={color} strokeWidth={focused ? 2.5 : 1.8} />
           ),
         }}
       />
@@ -39,8 +41,8 @@ export default function TabLayout() {
         name="reader"
         options={{
           title: 'Reader',
-          tabBarIcon: ({ focused }) => (
-            <Text className="text-xl">{focused ? '📖' : '📕'}</Text>
+          tabBarIcon: ({ color, focused }) => (
+            <BookOpen size={22} color={color} strokeWidth={focused ? 2.5 : 1.8} />
           ),
         }}
       />
@@ -48,8 +50,8 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: 'Settings',
-          tabBarIcon: ({ focused }) => (
-            <Text className="text-xl">{focused ? '⚙️' : '🔧'}</Text>
+          tabBarIcon: ({ color, focused }) => (
+            <Settings size={22} color={color} strokeWidth={focused ? 2.5 : 1.8} />
           ),
         }}
       />

@@ -7,8 +7,9 @@ import {
   Switch,
   Alert,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Crown, Shield, Clock, BookOpen, Smartphone, Bell, User, LogOut, Check, Lock } from 'lucide-react-native';
 import { useAuth } from '../../lib/auth';
 import { usePurchases } from '../../lib/purchases';
 import { AppBlocker } from '../../lib/appBlocker';
@@ -37,6 +38,7 @@ const PRESET_APP_LABELS: Record<string, { name: string; icon: string }> = {
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, profile, signOut } = useAuth();
   const { isPremium, toggleDevPremium } = usePurchases();
 
@@ -114,13 +116,13 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: '#181715' }}
+      style={{ flex: 1, backgroundColor: '#0d120f' }}
       edges={['top', 'left', 'right']}
     >
       <ScrollView
         style={{ flex: 1 }}
         className="px-5"
-        contentContainerStyle={{ paddingBottom: 48 }}
+        contentContainerStyle={{ paddingBottom: 60 + insets.bottom }}
       >
         <Text className="text-2xl font-sans-bold text-on-dark pt-4 pb-4">
           Settings & Blocking
@@ -133,7 +135,9 @@ export default function SettingsScreen() {
         >
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-row items-center">
-              <Text className="text-2xl mr-2.5">👑</Text>
+              <View className="mr-3">
+                <Crown size={26} color="#f5b800" />
+              </View>
               <View>
                 <Text className="text-base font-sans-bold text-on-dark">
                   {isPremium ? 'Bible Unlock Pro' : 'Unlock Pro Access'}
@@ -226,10 +230,11 @@ export default function SettingsScreen() {
             <Text className="text-xs font-sans-semibold uppercase tracking-wider text-on-dark-soft">
               Shielded Applications
             </Text>
-            <Pressable onPress={handleCustomApps}>
-              <Text className="text-xs text-primary font-sans-semibold">
-                + Custom Apps {!isPremium && '🔒'}
+            <Pressable onPress={handleCustomApps} className="flex-row items-center">
+              <Text className="text-xs text-primary font-sans-semibold mr-1">
+                + Custom Apps
               </Text>
+              {!isPremium && <Lock size={12} color="#f5b800" strokeWidth={2.2} />}
             </Pressable>
           </View>
 

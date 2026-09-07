@@ -25,18 +25,23 @@
 - [x] `TASK-014`: Implemented UI-thread Reanimated 4 animations via `/expo-animation` (`ProgressRing` animated arc & unlock bounce, `Button` physical press feedback, `ShieldBadge` spring state transition).
 - [x] `TASK-015`: Supabase full Database schema migration, Google & Apple SSO PKCE authentication, and offline-first MMKV sync (`DEC-005`).
 - [x] `TASK-016`: Complete 22-Step Onboarding Architecture, Native App Enumeration, & Elevated Christian Home Dashboard (`DEC-006`).
+- [x] `FIX-005`: Resolved 5 device testing issues & migrated to in-house Lucide vector icons (`DEC-007`):
+  - Fixed duplicate key warning and greeting spacing in `PlanStep.tsx`.
+  - Solved Android 3-button navigation bar overlap in `AppPickerStep.tsx`, `PermissionStep.tsx`, `PauseBlockingModal.tsx`, and `settings.tsx`.
+  - Fixed "5 apps picked" confusion with empty default and 5 quick-add recommendation chips.
+  - Overwrote Android splashscreen drawables across 5 densities directly from `assets/images/splash-icon.png`.
+  - Migrated entire app to `lucide-react-native` vector icons (`tabs`, `dashboard`, `reader`, `settings`, `paywall`, `onboarding`).
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- Implemented full 22-step flow under `src/app/onboarding/` corresponding to Quran Unlock reference screens 1 to 21.
-- Native Android `PackageManager` app discovery module implemented in `AndroidBlockerModule.kt`.
-- Redesigned `src/app/(tabs)/index.tsx` home dashboard matching screens 22a and 22b with Christian greeting, golden "Amen, Let's Read" hero button, daily devotional, pause blocking (15m/30m/1h), 30-day circular habit timeline, impact metrics, and 6 shareable achievement badges.
+- Overwrote `android/app/src/main/res/drawable-*/splashscreen_logo.png` across mdpi (288px), hdpi (432px), xhdpi (576px), xxhdpi (864px), xxxhdpi (1152px).
+- Bottom action buttons dynamically elevated with `useSafeAreaInsets().bottom` to clear 3-button system bars (`||| <`).
+- Replaced emojis across all major UI components with `lucide-react-native` icons.
 
 ## Session Handoff Notes
 
-- Branch `feat/onboarding-flow-and-dashboard` contains all completed commits.
-- Guest/local onboarding is completely frictionless and decoupled from mandatory initial authentication.
-- All onboarding selections and metrics persist reliably in MMKV.
-- Next recommended step: Build Android release/debug APK to test native accessibility service redirection and app blocker end-to-end on device.
+- Branch `feat/onboarding-flow-and-dashboard` updated and typecheck verified.
+- All 5 user reported debug items from screenshots resolved and tested against code.
+- Ready for full rebuild and wireless deployment on Android device.
 

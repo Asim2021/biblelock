@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
+import { Check } from 'lucide-react-native';
 import { HabitDay } from '../types/onboarding';
 
 interface Last30DaysTrackerProps {
@@ -45,7 +46,7 @@ export const Last30DaysTracker: React.FC<Last30DaysTrackerProps> = ({ history })
                   }`}
                 >
                   {day.completed ? (
-                    <Text className="text-[#5db872] text-sm font-bold">✓</Text>
+                    <Check size={16} color="#5db872" strokeWidth={3} />
                   ) : day.isToday ? (
                     <View className="w-2.5 h-2.5 rounded-full bg-[#f5b800]" />
                   ) : null}

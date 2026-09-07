@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import { Lock, Unlock } from 'lucide-react-native';
 import Animated, {
   useSharedValue,
   useAnimatedProps,
@@ -100,8 +101,12 @@ export function ProgressRing({
 
       {/* Center Metrics Content */}
       <View className="absolute items-center justify-center">
-        <Animated.View style={lockAnimatedStyle}>
-          <Text className="text-3xl mb-1">{isGoalMet ? '🔓' : '🔒'}</Text>
+        <Animated.View style={lockAnimatedStyle} className="mb-2">
+          {isGoalMet ? (
+            <Unlock size={28} color="#22c55e" strokeWidth={2.2} />
+          ) : (
+            <Lock size={28} color="#f5b800" strokeWidth={2.2} />
+          )}
         </Animated.View>
         <Text className="text-4xl font-sans-bold text-on-dark tracking-tight">
           {timeText}

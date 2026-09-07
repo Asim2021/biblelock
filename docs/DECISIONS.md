@@ -188,3 +188,41 @@ Selected **Option B**. Accepted trade-off: Native Android module required an upd
 ### 6. Lessons & Downstream Impact
 Always perform accessibility permission checks reactively when the user returns from system settings using React Native `AppState` change listeners; this gives users instantaneous feedback with a green checkmark without requiring manual app restarts.
 
+---
+
+## [DEC-007] Migration to Lucide Vector Icons, Android 3-Button Navigation Safe Insets, and Splashscreen Drawable Generation
+
+- **Date:** 2026-09-08
+- **Status:** Validated
+- **Related Task / Baseline:** STATUS.md (Device Testing Bugfixes & Lucide Icons)
+
+### 1. Problem / Trigger (Why the Original Plan Changed)
+Device testing revealed five critical UI/UX issues:
+1. Android 3-button system navigation bar (`||| <`) overlapped bottom action buttons ("Cancel", "Save & Continue", "Pause Blocking") inside modals and steps.
+2. `PlanStep.tsx` threw a React duplicate key warning (`Encountered two children with the same key, '08'`) due to duplicate `'08'` in the preset hour list, and the title string formatted awkwardly with trailing spaces (`When do you want to read Scripture, Asim Disciple ?`).
+3. `AppPickerStep.tsx` showed "5 apps picked" by default with no installed app context, confusing users.
+4. Android splash screen displayed the old low-resolution placeholder logo because `android/app/src/main/res/drawable-*/splashscreen_logo.png` had not been regenerated from the high-res 3D master brandmark (`assets/images/splash-icon.png`).
+5. Emojis throughout the app felt playful rather than sleek, premium, and trustworthy.
+
+### 2. Alternatives Evaluated
+- **Option A (Custom SVGs for every icon):** High maintenance burden and potential bundle size bloat.
+- **Option B (Lucide Icons via `lucide-react-native`):** Industry standard, tree-shakable, sleek, customizable stroke width, perfectly suited for modern mobile apps, uses existing `react-native-svg`.
+
+### 3. Decision & Trade-offs
+Selected **Option B**. Added `lucide-react-native` for in-house modern vector icons across all screens, tabs, and modals. Overwrote Android splashscreen drawables across mdpi through xxxhdpi densities directly from the 3D brandmark. Applied dynamic bottom safe-area insets (`useSafeAreaInsets().bottom`) across all modals and onboarding steps to guarantee clearance above the Android 3-button navigation bar.
+
+### 4. Implementation Details
+- Installed `lucide-react-native`.
+- Overwrote `android/app/src/main/res/drawable-*/splashscreen_logo.png` across 5 densities: mdpi (288x288), hdpi (432x432), xhdpi (576x576), xxhdpi (864x864), and xxxhdpi (1152x1152).
+- Updated `src/app/(tabs)/_layout.tsx`, `index.tsx`, `reader.tsx`, `settings.tsx`, `paywall.tsx`, `src/app/onboarding/steps/*`, `src/components/*` to use Lucide vector icons and safe area insets.
+- Cleaned default `userName` to empty string and default `blockedApps` to `[]` with quick-add recommendation chips.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit` passing with 0 errors.
+- Bottom action buttons clear Android 3-button navigation bar by at least 16-28px.
+- Duplicate key error in `PlanStep.tsx` eliminated with a clean 12-hour unique array (`['01'..'12']`).
+- Zero raw emojis remaining in navigation bars, tabs, progress rings, and feature highlights.
+
+### 6. Lessons & Downstream Impact
+Always wrap modal content and bottom floating toolbars with dynamic `useSafeAreaInsets().bottom` rather than static bottom padding on Android, as gesture navigation and 3-button navigation have completely different insets (0px vs ~48px).
+

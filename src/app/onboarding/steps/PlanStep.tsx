@@ -6,6 +6,8 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Clock, Plus, Trash2, Timer, Check } from 'lucide-react-native';
 
 interface PlanStepProps {
   userName: string;
@@ -17,6 +19,9 @@ interface PlanStepProps {
   onNext: () => void;
 }
 
+const HOURS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
+const MINUTES = ['00', '15', '30', '45'];
+
 export const PlanStep: React.FC<PlanStepProps> = ({
   userName,
   readingTimes,
@@ -26,6 +31,7 @@ export const PlanStep: React.FC<PlanStepProps> = ({
   onBack,
   onNext,
 }) => {
+  const insets = useSafeAreaInsets();
   const [stage, setStage] = useState<'time' | 'duration'>('time');
   const [showPicker, setShowPicker] = useState(false);
   const [pickerHour, setPickerHour] = useState('07');
@@ -33,7 +39,7 @@ export const PlanStep: React.FC<PlanStepProps> = ({
   const [pickerPeriod, setPickerPeriod] = useState<'AM' | 'PM'>('AM');
 
   const handleAddTime = () => {
-    const formatted = `${pickerHour}:${pickerMin} ${pickerPeriod}`;
+    const formatted = `${parseInt(pickerHour, 10)}:${pickerMin} ${pickerPeriod}`;
     if (!readingTimes.includes(formatted)) {
       setReadingTimes([...readingTimes, formatted]);
     }
@@ -51,8 +57,13 @@ export const PlanStep: React.FC<PlanStepProps> = ({
     setStage('duration');
   };
 
+  const cleanName = userName.trim();
+
   return (
-    <View className="flex-1 justify-between px-6 py-6 bg-[#0d2e24]">
+    <View
+      className="flex-1 justify-between px-6 py-4 bg-[#0d2e24]"
+      style={{ paddingBottom: Math.max(16, insets.bottom + 8) }}
+    >
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 10, paddingBottom: 20 }}>
         {/* Top 5-segment Progress Bar */}
         <View className="flex-row space-x-1.5 pt-4 mb-4">
@@ -79,7 +90,7 @@ export const PlanStep: React.FC<PlanStepProps> = ({
               className="text-3xl font-serif-bold text-[#faf9f5] mb-2 tracking-tight"
               style={{ fontFamily: 'EBGaramond_700Bold' }}
             >
-              When do you want to read Scripture, {userName}?
+              When do you want to read Scripture{cleanName ? `, ${cleanName}` : ''}?
             </Text>
 
             <Text className="text-sm font-sans text-[#78a898] mb-6 leading-relaxed">
@@ -87,16 +98,17 @@ export const PlanStep: React.FC<PlanStepProps> = ({
             </Text>
 
             {/* Tip box */}
-            <View className="p-4 rounded-2xl bg-[#143e32] border border-[#205243] mb-6">
-              <Text className="text-xs font-sans text-[#c8ded6] leading-relaxed">
-                💡 <Text className="font-sans-bold text-[#f5b800]">Tip:</Text> You can add multiple times — most people read in the morning, afternoon, or before bed.
+            <View className="p-4 rounded-2xl bg-[#143e32] border border-[#205243] mb-6 flex-row items-start">
+              <Clock size={16} color="#f5b800" style={{ marginTop: 2, marginRight: 8 }} />
+              <Text className="text-xs font-sans text-[#c8ded6] leading-relaxed flex-1">
+                <Text className="font-sans-bold text-[#f5b800]">Tip:</Text> You can add multiple times — most disciples read in the morning, afternoon, or before bed.
               </Text>
             </View>
 
             {/* Empty or Times List Card */}
             {readingTimes.length === 0 ? (
               <View className="p-8 rounded-2xl bg-[#12382d] border border-[#1e4d3f] items-center mb-6">
-                <Text className="text-6xl mb-4">⏰</Text>
+                <Clock size={48} color="#f5b800" strokeWidth={1.5} style={{ marginBottom: 16 }} />
                 <Text className="text-lg font-sans-bold text-[#faf9f5] mb-2">
                   No times added yet
                 </Text>
@@ -108,7 +120,7 @@ export const PlanStep: React.FC<PlanStepProps> = ({
               <View className="space-y-3 mb-6">
                 {readingTimes.map((timeStr, idx) => (
                   <View
-                    key={idx}
+                    key={timeStr}
                     className="flex-row items-center justify-between p-4 rounded-2xl bg-[#174637] border border-[#265e4d] mb-3"
                   >
                     <View className="flex-row items-center">
@@ -129,9 +141,9 @@ export const PlanStep: React.FC<PlanStepProps> = ({
 
                     <Pressable
                       onPress={() => removeTime(idx)}
-                      className="w-8 h-8 rounded-full bg-[#332222] items-center justify-center active:opacity-70"
+                      className="w-9 h-9 rounded-full bg-[#332222] items-center justify-center active:opacity-70"
                     >
-                      <Text className="text-sm font-bold text-[#f26666]">✕</Text>
+                      <Trash2 size={16} color="#f26666" />
                     </Pressable>
                   </View>
                 ))}
@@ -149,10 +161,11 @@ export const PlanStep: React.FC<PlanStepProps> = ({
             {/* Add time button */}
             <Pressable
               onPress={() => setShowPicker(true)}
-              className="w-full py-4 rounded-2xl border-2 border-dashed border-[#f5b800]/50 items-center justify-center active:bg-[#1a4a3c] mb-6"
+              className="w-full py-4 rounded-2xl border-2 border-dashed border-[#f5b800]/50 items-center justify-center flex-row active:bg-[#1a4a3c] mb-6"
             >
+              <Plus size={18} color="#f5b800" style={{ marginRight: 6 }} />
               <Text className="text-sm font-sans-bold text-[#f5b800]">
-                + {readingTimes.length === 0 ? 'Add a Reading Time' : 'Add Another Time'}
+                {readingTimes.length === 0 ? 'Add a Reading Time' : 'Add Another Time'}
               </Text>
             </Pressable>
           </View>
@@ -169,7 +182,7 @@ export const PlanStep: React.FC<PlanStepProps> = ({
               className="text-3xl font-serif-bold text-[#faf9f5] mb-2 tracking-tight"
               style={{ fontFamily: 'EBGaramond_700Bold' }}
             >
-              {userName}'s reading plan is ready
+              {cleanName ? `${cleanName}'s` : 'Your'} reading plan is ready
             </Text>
 
             <Text className="text-sm font-sans text-[#78a898] mb-6">
@@ -207,17 +220,17 @@ export const PlanStep: React.FC<PlanStepProps> = ({
                 Your apps will be blocked every day at:
               </Text>
 
-              {readingTimes.map((t, i) => (
-                <View key={i} className="flex-row items-center mb-3">
-                  <Text className="text-xl mr-3">🕒</Text>
+              {readingTimes.map((t) => (
+                <View key={t} className="flex-row items-center mb-3">
+                  <Clock size={18} color="#f5b800" style={{ marginRight: 10 }} />
                   <Text className="text-lg font-sans-bold text-[#faf9f5]">{t}</Text>
                 </View>
               ))}
 
-              <View className="h-[1px] bg-[#225746] my-2" />
+              <View className="h-[1px] bg-[#225746] my-3" />
 
-              <View className="flex-row items-center mt-2">
-                <Text className="text-lg mr-3">⏱️</Text>
+              <View className="flex-row items-center">
+                <Timer size={18} color="#78a898" style={{ marginRight: 10 }} />
                 <Text className="text-sm font-sans text-[#c8ded6]">
                   {durationMinutes} minutes per session
                 </Text>
@@ -246,88 +259,116 @@ export const PlanStep: React.FC<PlanStepProps> = ({
 
       {/* Time Picker Modal */}
       <Modal visible={showPicker} transparent animationType="fade">
-        <View className="flex-1 bg-black/70 justify-center items-center px-6">
-          <View className="w-full bg-[#182e25] border border-[#2d5c4b] rounded-3xl p-6 shadow-2xl">
-            <Text className="text-xl font-sans-bold text-[#faf9f5] text-center mb-6">
+        <View className="flex-1 bg-black/75 justify-center items-center px-5">
+          <View className="w-full max-w-sm bg-[#182e25] border border-[#2d5c4b] rounded-3xl p-6 shadow-2xl">
+            <Text className="text-xl font-sans-bold text-[#faf9f5] text-center mb-5">
               Select Reading Time
             </Text>
 
-            {/* Digital selector row */}
-            <View className="flex-row justify-center items-center space-x-4 mb-8">
-              {/* Hours */}
-              <View className="items-center">
-                <Text className="text-xs text-[#78a898] mb-1">Hour</Text>
-                <View className="flex-row flex-wrap w-24 justify-center">
-                  {['06', '07', '08', '09', '12', '05', '08', '10'].map((h) => (
+            {/* Time selection container */}
+            <View className="mb-6">
+              {/* Hours Grid (1 to 12) */}
+              <Text className="text-xs font-sans-bold text-[#78a898] mb-2 text-center">
+                Select Hour
+              </Text>
+              <View className="flex-row flex-wrap justify-center mb-4">
+                {HOURS.map((h) => {
+                  const isSelected = pickerHour === h;
+                  return (
                     <Pressable
                       key={h}
                       onPress={() => setPickerHour(h)}
-                      className={`px-2 py-1 m-1 rounded-lg ${pickerHour === h ? 'bg-[#f5b800]' : 'bg-[#12382d]'}`}
+                      className={`w-10 h-10 m-1 rounded-xl items-center justify-center ${
+                        isSelected ? 'bg-[#f5b800]' : 'bg-[#12382d] border border-[#205243]'
+                      }`}
                     >
-                      <Text className={`text-sm font-sans-bold ${pickerHour === h ? 'text-black' : 'text-white'}`}>
+                      <Text
+                        className={`text-sm font-sans-bold ${
+                          isSelected ? 'text-[#141413]' : 'text-[#faf9f5]'
+                        }`}
+                      >
                         {h}
                       </Text>
                     </Pressable>
-                  ))}
-                </View>
+                  );
+                })}
               </View>
 
-              <Text className="text-2xl font-bold text-[#f5b800] mb-4">:</Text>
-
-              {/* Minutes */}
-              <View className="items-center">
-                <Text className="text-xs text-[#78a898] mb-1">Minute</Text>
-                <View className="flex-row flex-wrap w-24 justify-center">
-                  {['00', '15', '30', '45'].map((m) => (
-                    <Pressable
-                      key={m}
-                      onPress={() => setPickerMin(m)}
-                      className={`px-2 py-1 m-1 rounded-lg ${pickerMin === m ? 'bg-[#f5b800]' : 'bg-[#12382d]'}`}
-                    >
-                      <Text className={`text-sm font-sans-bold ${pickerMin === m ? 'text-black' : 'text-white'}`}>
-                        {m}
-                      </Text>
-                    </Pressable>
-                  ))}
+              {/* Minutes and Period Row */}
+              <View className="flex-row justify-between items-center px-2">
+                {/* Minute Chips */}
+                <View className="flex-1 mr-3">
+                  <Text className="text-xs font-sans-bold text-[#78a898] mb-2 text-center">
+                    Minute
+                  </Text>
+                  <View className="flex-row justify-around">
+                    {MINUTES.map((m) => {
+                      const isSelected = pickerMin === m;
+                      return (
+                        <Pressable
+                          key={m}
+                          onPress={() => setPickerMin(m)}
+                          className={`px-2.5 py-2 rounded-xl items-center justify-center ${
+                            isSelected ? 'bg-[#f5b800]' : 'bg-[#12382d] border border-[#205243]'
+                          }`}
+                        >
+                          <Text
+                            className={`text-xs font-sans-bold ${
+                              isSelected ? 'text-[#141413]' : 'text-[#faf9f5]'
+                            }`}
+                          >
+                            :{m}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                 </View>
-              </View>
 
-              {/* Period */}
-              <View className="items-center">
-                <Text className="text-xs text-[#78a898] mb-1">Period</Text>
-                <View className="space-y-2">
-                  <Pressable
-                    onPress={() => setPickerPeriod('AM')}
-                    className={`px-3 py-1.5 rounded-lg mb-2 ${pickerPeriod === 'AM' ? 'bg-[#f5b800]' : 'bg-[#12382d]'}`}
-                  >
-                    <Text className={`text-sm font-sans-bold ${pickerPeriod === 'AM' ? 'text-black' : 'text-white'}`}>
-                      AM
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setPickerPeriod('PM')}
-                    className={`px-3 py-1.5 rounded-lg ${pickerPeriod === 'PM' ? 'bg-[#f5b800]' : 'bg-[#12382d]'}`}
-                  >
-                    <Text className={`text-sm font-sans-bold ${pickerPeriod === 'PM' ? 'text-black' : 'text-white'}`}>
-                      PM
-                    </Text>
-                  </Pressable>
+                {/* Period Toggle */}
+                <View className="w-20">
+                  <Text className="text-xs font-sans-bold text-[#78a898] mb-2 text-center">
+                    Period
+                  </Text>
+                  <View className="flex-row rounded-xl bg-[#12382d] border border-[#205243] p-0.5">
+                    {(['AM', 'PM'] as const).map((period) => {
+                      const isSelected = pickerPeriod === period;
+                      return (
+                        <Pressable
+                          key={period}
+                          onPress={() => setPickerPeriod(period)}
+                          className={`flex-1 py-1.5 rounded-lg items-center ${
+                            isSelected ? 'bg-[#f5b800]' : 'bg-transparent'
+                          }`}
+                        >
+                          <Text
+                            className={`text-xs font-sans-bold ${
+                              isSelected ? 'text-[#141413]' : 'text-[#78a898]'
+                            }`}
+                          >
+                            {period}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                 </View>
               </View>
             </View>
 
+            {/* Modal Bottom Actions */}
             <View className="flex-row justify-between space-x-3">
               <Pressable
                 onPress={() => setShowPicker(false)}
-                className="flex-1 py-3 mr-2 rounded-xl bg-[#163f33] items-center"
+                className="flex-1 py-3.5 mr-2 rounded-xl bg-[#163f33] items-center"
               >
                 <Text className="text-sm font-sans-bold text-[#78a898]">Cancel</Text>
               </Pressable>
               <Pressable
                 onPress={handleAddTime}
-                className="flex-1 py-3 ml-2 rounded-xl bg-[#f5b800] items-center"
+                className="flex-1 py-3.5 ml-2 rounded-xl bg-[#f5b800] items-center shadow-md"
               >
-                <Text className="text-sm font-sans-bold text-black">OK</Text>
+                <Text className="text-sm font-sans-bold text-[#141413]">Add Time</Text>
               </Pressable>
             </View>
           </View>

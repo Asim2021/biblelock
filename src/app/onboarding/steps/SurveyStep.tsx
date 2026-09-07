@@ -8,6 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Check } from 'lucide-react-native';
 
 interface SurveyStepProps {
   userName: string;
@@ -42,6 +44,7 @@ export const SurveyStep: React.FC<SurveyStepProps> = ({
   setBiggestChallenges,
   onComplete,
 }) => {
+  const insets = useSafeAreaInsets();
   const [subStep, setSubStep] = useState<1 | 2 | 3>(1);
 
   const toggleFrequency = (item: string) => {
@@ -62,9 +65,8 @@ export const SurveyStep: React.FC<SurveyStepProps> = ({
 
   const handleNext = () => {
     if (subStep === 1) {
-      if (!userName.trim()) {
-        setUserName('Friend');
-      }
+      const trimmed = userName.trim();
+      setUserName(trimmed || 'Disciple');
       setSubStep(2);
     } else if (subStep === 2) {
       if (readingFrequency.length === 0) {
@@ -84,7 +86,10 @@ export const SurveyStep: React.FC<SurveyStepProps> = ({
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       className="flex-1 bg-[#0d2e24]"
     >
-      <View className="flex-1 justify-between px-6 py-6">
+      <View
+        className="flex-1 justify-between px-6 py-4"
+        style={{ paddingBottom: Math.max(16, insets.bottom + 8) }}
+      >
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 20 }}>
           {/* Substep indicator */}
           <Text className="text-xs font-sans-bold text-[#f5b800] mb-8">
@@ -147,7 +152,7 @@ export const SurveyStep: React.FC<SurveyStepProps> = ({
                         }`}
                       >
                         {isChecked && (
-                          <Text className="text-[#141413] text-xs font-bold">✓</Text>
+                          <Check size={14} color="#141413" strokeWidth={3.5} />
                         )}
                       </View>
                       <Text className="text-xl mr-3">{opt.emoji}</Text>
@@ -195,7 +200,7 @@ export const SurveyStep: React.FC<SurveyStepProps> = ({
                         }`}
                       >
                         {isChecked && (
-                          <Text className="text-[#141413] text-xs font-bold">✓</Text>
+                          <Check size={14} color="#141413" strokeWidth={3.5} />
                         )}
                       </View>
                       <Text className="text-xl mr-3">{opt.emoji}</Text>

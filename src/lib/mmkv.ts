@@ -225,12 +225,12 @@ export function setLastScreenTimeNotificationDate(dateStr: string): void {
 
 const DEFAULT_ONBOARDING_DATA: OnboardingData = {
   language: 'en',
-  userName: 'Disciple',
+  userName: '',
   readingFrequency: ['Every day'],
   biggestChallenges: ['Social media distractions'],
   readingTimes: ['7:00 AM'],
   durationMinutes: 10,
-  blockedApps: DEFAULT_BLOCKED_APPS,
+  blockedApps: [],
   isCompleted: false,
 };
 
@@ -275,7 +275,8 @@ export function setOnboardingCompleted(completed: boolean): void {
 }
 
 export function getUserName(): string {
-  return storage.getString(STORAGE_KEYS.USER_NAME) ?? 'Disciple';
+  const val = storage.getString(STORAGE_KEYS.USER_NAME);
+  return val && val.trim().length > 0 ? val.trim() : 'Disciple';
 }
 
 export function setUserName(name: string): void {

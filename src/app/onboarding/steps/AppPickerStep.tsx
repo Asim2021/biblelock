@@ -8,6 +8,8 @@ import {
   Modal,
   ActivityIndicator,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Lock, AlertTriangle, Check, Search, ShieldAlert, Sparkles } from 'lucide-react-native';
 import { AppBlocker } from '../../../lib/appBlocker';
 
 interface AppPickerStepProps {
@@ -23,12 +25,21 @@ interface AppItem {
   isSystemApp?: boolean;
 }
 
+const COMMON_DISTRACTIONS = [
+  { label: 'Instagram', packageName: 'com.instagram.android' },
+  { label: 'TikTok', packageName: 'com.zhiliaoapp.musically' },
+  { label: 'YouTube', packageName: 'com.google.android.youtube' },
+  { label: 'X / Twitter', packageName: 'com.twitter.android' },
+  { label: 'Reddit', packageName: 'com.reddit.frontpage' },
+];
+
 export const AppPickerStep: React.FC<AppPickerStepProps> = ({
   blockedApps,
   setBlockedApps,
   onBack,
   onNext,
 }) => {
+  const insets = useSafeAreaInsets();
   const [showModal, setShowModal] = useState(false);
   const [installedApps, setInstalledApps] = useState<AppItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,13 +74,24 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
     setShowModal(false);
   };
 
+  const toggleQuickApp = (pkg: string) => {
+    if (blockedApps.includes(pkg)) {
+      setBlockedApps(blockedApps.filter((p) => p !== pkg));
+    } else {
+      setBlockedApps([...blockedApps, pkg]);
+    }
+  };
+
   const filteredApps = installedApps.filter((app) =>
     app.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
     app.packageName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <View className="flex-1 justify-between px-6 py-6 bg-[#0d2e24]">
+    <View
+      className="flex-1 justify-between px-6 py-4 bg-[#0d2e24]"
+      style={{ paddingBottom: Math.max(16, insets.bottom + 8) }}
+    >
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 10, paddingBottom: 20 }}>
         {/* Top 5-segment Progress Bar */}
         <View className="flex-row space-x-1.5 pt-4 mb-4">
@@ -95,7 +117,7 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
         </Text>
 
         <Text className="text-sm font-sans text-[#78a898] mb-6 leading-relaxed">
-          Choose which apps to block until you complete your daily Bible reading.
+          Choose which apps to shield until you complete your daily Bible reading.
         </Text>
 
         {/* Big Interactive Lock Card */}
@@ -107,25 +129,62 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
               : 'border-[#265e4d] bg-[#12382d]'
           } active:opacity-90`}
         >
-          <Text className="text-5xl mb-3">🔒</Text>
+          <View className="w-16 h-16 rounded-2xl bg-[#1d5242] items-center justify-center mb-3">
+            <Lock size={32} color="#f5b800" strokeWidth={2} />
+          </View>
+
           <Text className="text-xl font-sans-bold text-[#faf9f5] mb-1">
             {blockedApps.length > 0
-              ? `${blockedApps.length} apps picked`
+              ? `${blockedApps.length} ${blockedApps.length === 1 ? 'app' : 'apps'} guarded`
               : 'Select Apps to Block'}
           </Text>
           <Text className="text-xs font-sans text-[#78a898]">
             {blockedApps.length > 0
-              ? 'Tap to change selection'
-              : 'Tap to choose apps'}
+              ? 'Tap to adjust your selected apps'
+              : 'Tap to browse all installed apps'}
           </Text>
         </Pressable>
+
+        {/* Quick Suggestion Chips */}
+        <View className="mb-5">
+          <Text className="text-xs font-sans-bold text-[#78a898] mb-2.5">
+            Quick Add Distractions:
+          </Text>
+          <View className="flex-row flex-wrap">
+            {COMMON_DISTRACTIONS.map((c) => {
+              const isSelected = blockedApps.includes(c.packageName);
+              return (
+                <Pressable
+                  key={c.packageName}
+                  onPress={() => toggleQuickApp(c.packageName)}
+                  className={`flex-row items-center px-3 py-2 rounded-xl mr-2 mb-2 border ${
+                    isSelected
+                      ? 'border-[#f5b800] bg-[#1d4c3d]'
+                      : 'border-[#205243] bg-[#143e32]'
+                  }`}
+                >
+                  {isSelected ? (
+                    <Check size={14} color="#f5b800" style={{ marginRight: 6 }} />
+                  ) : null}
+                  <Text
+                    className={`text-xs font-sans-bold ${
+                      isSelected ? 'text-[#f5b800]' : 'text-[#faf9f5]'
+                    }`}
+                  >
+                    {c.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
 
         {/* Selected Apps Confirmation Badge */}
         {blockedApps.length > 0 && (
           <View className="p-4 rounded-2xl bg-[#134032] border border-[#2b725c] flex-row items-center mb-5">
-            <Text className="text-[#5db872] text-lg font-bold mr-3">✓</Text>
+            <Check size={18} color="#5db872" style={{ marginRight: 10 }} />
             <Text className="text-xs font-sans text-[#aee2d1] flex-1 leading-relaxed">
-              Selected apps will be blocked until you complete your daily reading.
+              Selected apps will be shielded until you fulfill your daily reading goal.
             </Text>
           </View>
         )}
@@ -133,34 +192,34 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
         {/* Warning Card */}
         <View className="p-4 rounded-2xl bg-[#3d1a1f] border border-[#692932] mb-5">
           <View className="flex-row items-center mb-1">
-            <Text className="text-sm mr-2">⚠️</Text>
+            <AlertTriangle size={16} color="#ff7575" style={{ marginRight: 8 }} />
             <Text className="text-xs font-sans-bold text-[#ff7575] uppercase tracking-wider">
-              Important Warning
+              Safety First
             </Text>
           </View>
           <Text className="text-xs font-sans text-[#ff9999] leading-relaxed">
-            DO NOT block the Google Play Store or Phone. Blocking system apps can cause device issues.
+            Do not block system utilities like Phone, Messages, or Google Play Store.
           </Text>
         </View>
 
         {/* Instructions Card */}
         <View className="p-4 rounded-2xl bg-[#143e32] border border-[#205243] mb-6">
-          <Text className="text-xs font-sans-bold text-[#f5b800] mb-2">
-            💡 How to Select Apps:
-          </Text>
+          <View className="flex-row items-center mb-2">
+            <Sparkles size={16} color="#f5b800" style={{ marginRight: 8 }} />
+            <Text className="text-xs font-sans-bold text-[#f5b800]">
+              How App Shielding Works:
+            </Text>
+          </View>
           <Text className="text-xs font-sans text-[#c8ded6] leading-relaxed mb-1">
-            • Tap "Select Apps to Block" to find Instagram, TikTok, YouTube, etc.
-          </Text>
-          <Text className="text-xs font-sans text-[#c8ded6] leading-relaxed mb-1">
-            • Use the search bar to locate any installed app.
+            • Whenever you open shielded apps during reading times, Bible Unlock opens instead.
           </Text>
           <Text className="text-xs font-sans text-[#c8ded6] leading-relaxed">
-            • Select your distracting apps and tap "Save & Continue".
+            • After finishing your daily minutes in Scripture, all apps unlock automatically.
           </Text>
         </View>
       </ScrollView>
 
-      {/* Bottom Nav */}
+      {/* Bottom Navigation */}
       <View className="flex-row space-x-3 pt-2">
         <Pressable
           onPress={onBack}
@@ -177,9 +236,15 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
         </Pressable>
       </View>
 
-      {/* Fullscreen Selection Modal */}
+      {/* Fullscreen Selection Modal (Safe Area Aware) */}
       <Modal visible={showModal} animationType="slide">
-        <View className="flex-1 bg-[#12161f] pt-12 px-5 pb-6">
+        <View
+          className="flex-1 bg-[#12161f] px-5"
+          style={{
+            paddingTop: Math.max(24, insets.top + 16),
+            paddingBottom: Math.max(20, insets.bottom + 12),
+          }}
+        >
           <Text
             className="text-2xl font-serif-bold text-[#faf9f5] mb-1 tracking-tight"
             style={{ fontFamily: 'EBGaramond_700Bold' }}
@@ -187,17 +252,20 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
             Select Apps to Block
           </Text>
           <Text className="text-xs font-sans text-[#a09d96] mb-4">
-            Choose which apps to block until you complete your Bible reading
+            Choose which apps to guard until your daily reading is done
           </Text>
 
           {/* Search bar */}
-          <TextInput
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Search installed apps..."
-            placeholderTextColor="#6c6a64"
-            className="w-full px-4 py-3 rounded-xl bg-[#1e232d] border border-[#303642] text-[#faf9f5] font-sans mb-4"
-          />
+          <View className="flex-row items-center px-4 py-3 rounded-xl bg-[#1e232d] border border-[#303642] mb-4">
+            <Search size={18} color="#6c6a64" style={{ marginRight: 10 }} />
+            <TextInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search installed apps..."
+              placeholderTextColor="#6c6a64"
+              className="flex-1 text-[#faf9f5] font-sans text-sm p-0"
+            />
+          </View>
 
           {loading ? (
             <View className="flex-1 items-center justify-center">
@@ -244,7 +312,7 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
                       }`}
                     >
                       {isSelected && (
-                        <Text className="text-xs font-bold text-black">✓</Text>
+                        <Check size={14} color="#141413" strokeWidth={3} />
                       )}
                     </View>
                   </Pressable>
@@ -253,8 +321,8 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
             </ScrollView>
           )}
 
-          {/* Modal bottom actions */}
-          <View className="flex-row space-x-3 pt-2 border-t border-[#262c38]">
+          {/* Modal bottom actions (Cleared above Android Navigation Bar) */}
+          <View className="flex-row space-x-3 pt-3 border-t border-[#262c38]">
             <Pressable
               onPress={() => setShowModal(false)}
               className="flex-1 py-3.5 mr-2 rounded-xl bg-[#212631] items-center justify-center"
@@ -264,9 +332,11 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
 
             <Pressable
               onPress={handleSave}
-              className="flex-1 py-3.5 ml-2 rounded-xl bg-[#2f755e] items-center justify-center"
+              className="flex-1 py-3.5 ml-2 rounded-xl bg-[#f5b800] items-center justify-center shadow-md"
             >
-              <Text className="text-sm font-sans-bold text-white">Save & Continue</Text>
+              <Text className="text-sm font-sans-bold text-[#141413]">
+                Save & Continue ({tempSelected.length})
+              </Text>
             </Pressable>
           </View>
         </View>

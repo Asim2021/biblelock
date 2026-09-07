@@ -5,8 +5,10 @@ import {
   ScrollView,
   Platform,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Lock, BookOpen, Unlock } from 'lucide-react-native';
 import { useAuth } from '../../lib/auth';
 import { Button } from '../../components/Button';
 import { Card } from '../../components/Card';
@@ -51,8 +53,12 @@ export default function LoginScreen() {
       >
         {/* Header Branding */}
         <View className="items-center mt-6">
-          <View className="w-20 h-20 rounded-2xl bg-surface-dark-elevated items-center justify-center border border-hairline/20 mb-6 shadow-md">
-            <Text className="text-4xl">✝️</Text>
+          <View className="w-20 h-20 rounded-2xl bg-surface-dark-elevated items-center justify-center border border-hairline/20 mb-6 shadow-md overflow-hidden">
+            <Image
+              source={require('../../../assets/images/icon.png')}
+              style={{ width: 80, height: 80, borderRadius: 16 }}
+              resizeMode="cover"
+            />
           </View>
 
           <Text
@@ -70,8 +76,10 @@ export default function LoginScreen() {
         {/* Value Prop Highlights */}
         <View className="my-8">
           <Card variant="dark" className="p-5 mb-4">
-            <View className="flex-row items-center mb-3">
-              <Text className="text-2xl mr-3">🔒</Text>
+            <View className="flex-row items-center mb-3.5">
+              <View className="w-9 h-9 rounded-xl bg-primary/15 items-center justify-center mr-3.5">
+                <Lock size={18} color="#f5b800" strokeWidth={2.2} />
+              </View>
               <View className="flex-1">
                 <Text className="text-sm font-sans-semibold text-on-dark">
                   Smart App Shields
@@ -82,8 +90,10 @@ export default function LoginScreen() {
               </View>
             </View>
 
-            <View className="flex-row items-center mb-3">
-              <Text className="text-2xl mr-3">📖</Text>
+            <View className="flex-row items-center mb-3.5">
+              <View className="w-9 h-9 rounded-xl bg-primary/15 items-center justify-center mr-3.5">
+                <BookOpen size={18} color="#f5b800" strokeWidth={2.2} />
+              </View>
               <View className="flex-1">
                 <Text className="text-sm font-sans-semibold text-on-dark">
                   100% Offline Scripture
@@ -95,7 +105,9 @@ export default function LoginScreen() {
             </View>
 
             <View className="flex-row items-center">
-              <Text className="text-2xl mr-3">🔓</Text>
+              <View className="w-9 h-9 rounded-xl bg-success/15 items-center justify-center mr-3.5">
+                <Unlock size={18} color="#22c55e" strokeWidth={2.2} />
+              </View>
               <View className="flex-1">
                 <Text className="text-sm font-sans-semibold text-on-dark">
                   Daily Habit Unlocks
