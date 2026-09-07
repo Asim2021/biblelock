@@ -142,3 +142,49 @@ Selected **Option B**. Implemented:
 
 ### 6. Lessons & Downstream Impact
 Always define `Relationships: []` on Supabase database table definitions in TypeScript; otherwise, `@supabase/postgrest-js` treats the schema as non-conforming and infers table operations as `never`.
+
+---
+
+## [DEC-006] Complete 22-Step Onboarding Architecture, Native App Enumeration, & Elevated Christian Dashboard
+
+- **Date:** 2026-09-08
+- **Status:** Validated
+- **Related Task / Baseline:** TASK-016, 2026-09-08-bible-unlock-onboarding-flow-design.md, implementation_plan.md
+
+### 1. Problem / Trigger
+Bible Unlock needed an onboarding and daily habit loop equivalent in structure to the proven 24-step Quran Unlock flow (`1.png` - `22b.png`), but elevated and bespoke for Christian Scripture readers. The previous app had only a placeholder home screen, no onboarding flow, no native app picker, and no habit tracking or badge reward mechanisms.
+
+### 2. Alternatives Evaluated
+- **Option A (Hardcode static app lists + generic onboarding modal):** Hardcoding apps leads to poor UX if users have unlisted apps, and modal onboarding interrupts the navigation flow.
+- **Option B (Frictionless Master Wizard + Native Android App Enumeration + Christian Habit Loop):**
+  1. Decoupled guest-first onboarding without forcing upfront login, persisting data directly in MMKV.
+  2. Native Android `PackageManager` querying of launchable installed apps (`GET_META_DATA`), with fallback presets for testing/iOS.
+  3. Multi-language selection (EN, ES, PT, FR, DE), 3-slide value narrative carousel, 3-step personal survey, 5-step schedule/duration/safety review, paywall preview, and 5-step Android Accessibility Service permission onboarding with auto-detecting `AppState` checkmarks.
+  4. Rich home dashboard with Christian greeting, golden "Amen, Let's Read" hero card, daily devotional snippet, streak counter with pause blocking (15m, 30m, 1h), 30-day horizontal activity timeline, impact metrics, and viral shareable achievement badges.
+
+### 3. Decision & Trade-offs
+Selected **Option B**. Accepted trade-off: Native Android module required an updated Kotlin method `getInstalledApps()` with proper intent filtering and icon handling.
+
+### 4. Implementation Details
+- Created:
+  - `src/types/onboarding.ts`: Comprehensive types for onboarding, habit timeline, impact stats, and badges.
+  - `src/app/onboarding/index.tsx` & `src/app/onboarding/steps/*`: 7 modular step components managing the 21-step wizard.
+  - `src/components/Last30DaysTracker.tsx`: Horizontal scrollable 30-day circular habit timeline.
+  - `src/components/BadgesGrid.tsx`: 6 Christian achievement badges (Genesis, David's Courage, Solomon's Wisdom, Armor of God, Living Water, Morning Light).
+  - `src/components/PauseBlockingModal.tsx`: Pause blocking modal with duration choices and Psalm 46:10.
+  - `src/components/BadgeShareModal.tsx`: Viral Instagram/WhatsApp social share preview modal.
+- Updated:
+  - `modules/android-blocker/android/src/main/java/com/bibleunlock/blocker/AndroidBlockerModule.kt`: Added `getInstalledApps` using Android `PackageManager`.
+  - `modules/android-blocker/index.ts` & `src/lib/appBlocker.ts`: TypeScript bridge for native app discovery.
+  - `src/lib/mmkv.ts`: High-speed storage for onboarding state, guest user profile, scheduled reading times, pause blocking timestamp, 30-day history, and impact stats.
+  - `src/app/_layout.tsx`: Automatic redirection to `/onboarding` if `!isOnboardingCompleted()`.
+  - `src/app/(tabs)/index.tsx`: Redesigned elevated Christian home dashboard.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit` passing with 0 errors across all newly added modules, components, and routes.
+- Full parity with Quran Unlock reference screens 1 through 22b with tailored Christian aesthetics (Deep Celestial Navy `#0d120f`, Radiant Warm Gold `#f5b800`, and EB Garamond serif typography).
+- Zero-latency local persistence via MMKV.
+
+### 6. Lessons & Downstream Impact
+Always perform accessibility permission checks reactively when the user returns from system settings using React Native `AppState` change listeners; this gives users instantaneous feedback with a green checkmark without requiring manual app restarts.
+

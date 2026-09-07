@@ -2,6 +2,35 @@
 
 ---
 
+## [1.0.6] - 2026-09-08
+
+### Added
+- **22-Step Onboarding Architecture (`TASK-016` / `DEC-006`):** Created full 22-step onboarding wizard under `src/app/onboarding/` mirroring Quran Unlock's flow:
+  - Language selection (EN, ES, PT, FR, DE) with localized Scripture translations.
+  - 3-slide value narrative carousel explaining the Scripture Shield concept.
+  - 3-step personal survey capturing name, reading consistency goals, and digital distraction pain points.
+  - 5-step schedule, reading duration (5m/10m/15m/30m), and habit commitment plan summary.
+  - Native installed app discovery with categorized search and safety warnings for critical apps.
+  - Transparent Pro paywall preview with free limited tier continuation option.
+  - 5-step Android Accessibility Service permission flow with intent launching, privacy explanation modal, and reactive `AppState` listener for instantaneous green checkmark feedback.
+  - System notification permission prompt with biblical encouragement.
+- **Native Android App Enumeration:** Added `getInstalledApps` using Android `PackageManager` to `AndroidBlockerModule.kt` with TypeScript bridge in `src/lib/appBlocker.ts`.
+- **Elevated Christian Home Dashboard:** Redesigned `src/app/(tabs)/index.tsx` matching screens 22a and 22b:
+  - Christian greeting: *"Grace and peace to you, [Name]"* with settings shortcut.
+  - Radiant golden hero card: *"Time to Read"* with goal target and *"Amen, Let's Read 📖"* button leading to Scripture reader.
+  - Daily devotional card featuring today's verse with EB Garamond italic styling.
+  - Streak tracking with *"⏸ Pause Blocking [NEW]"* (15m, 30m, 1h pause options with Psalm 46:10).
+  - Horizontal 30-day circular habit timeline (`Last30DaysTracker.tsx`).
+  - "Your Impact" metrics: minutes read, doomscrolling hours saved, total devotional sessions.
+  - 6 unlockable Christian badges (`BadgesGrid.tsx`) with viral social share preview (`BadgeShareModal.tsx`).
+
+### Verified Impact
+- `npx tsc --noEmit` passing with 0 errors across the full workspace.
+- 0ms local persistence for guest onboarding and statistics using MMKV.
+- Seamless redirection from `_layout.tsx` when onboarding is pending.
+
+---
+
 ## [1.0.5] - 2026-09-07
 
 ### Added

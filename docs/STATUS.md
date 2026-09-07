@@ -24,17 +24,19 @@
 - [x] `TASK-013`: Designed master app icon and brandkit guidelines board via `/brandkit` inspired by Quran Unlock. Generated production icon assets (`icon.png`, `splash-icon.png`, `android-icon-foreground.png`, `favicon.png`).
 - [x] `TASK-014`: Implemented UI-thread Reanimated 4 animations via `/expo-animation` (`ProgressRing` animated arc & unlock bounce, `Button` physical press feedback, `ShieldBadge` spring state transition).
 - [x] `TASK-015`: Supabase full Database schema migration, Google & Apple SSO PKCE authentication, and offline-first MMKV sync (`DEC-005`).
+- [x] `TASK-016`: Complete 22-Step Onboarding Architecture, Native App Enumeration, & Elevated Christian Home Dashboard (`DEC-006`).
 
 ## Verification Evidence
 
-- `npx tsc --noEmit`: 0 errors.
-- Supabase Auth Service & providers verified live (`apple`, `google`).
-- Database schema migration created with idempotent RLS policies and user profile triggers.
-- Dynamic deep-link listener configured for `bibleunlock://auth/callback`.
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Implemented full 22-step flow under `src/app/onboarding/` corresponding to Quran Unlock reference screens 1 to 21.
+- Native Android `PackageManager` app discovery module implemented in `AndroidBlockerModule.kt`.
+- Redesigned `src/app/(tabs)/index.tsx` home dashboard matching screens 22a and 22b with Christian greeting, golden "Amen, Let's Read" hero button, daily devotional, pause blocking (15m/30m/1h), 30-day circular habit timeline, impact metrics, and 6 shareable achievement badges.
 
 ## Session Handoff Notes
 
-- Supabase Database migration ready at `supabase/migrations/20260907000000_supabase_schema.sql` and documented in `SETUP.md`.
-- PKCE code exchange and implicit hash token parsing implemented in `src/lib/auth.tsx`.
-- Offline-first synchronization engine (`src/lib/sync.ts`) bridges local MMKV reading progress and remote PostgreSQL tables.
+- Branch `feat/onboarding-flow-and-dashboard` contains all completed commits.
+- Guest/local onboarding is completely frictionless and decoupled from mandatory initial authentication.
+- All onboarding selections and metrics persist reliably in MMKV.
+- Next recommended step: Build Android release/debug APK to test native accessibility service redirection and app blocker end-to-end on device.
 
