@@ -1,5 +1,11 @@
 import { requireNativeModule, Platform } from 'expo-modules-core';
 
+export interface InstalledAppInfo {
+  packageName: string;
+  label: string;
+  isSystemApp: boolean;
+}
+
 interface AndroidBlockerModuleInterface {
   isAccessibilityEnabled(): Promise<boolean>;
   requestAccessibilityPermission(): Promise<void>;
@@ -7,6 +13,7 @@ interface AndroidBlockerModuleInterface {
   setGoalMet(met: boolean): Promise<void>;
   isShieldActive(): Promise<boolean>;
   setShieldActive(active: boolean): Promise<void>;
+  getInstalledApps(): Promise<InstalledAppInfo[]>;
 }
 
 let nativeModule: AndroidBlockerModuleInterface | null = null;
@@ -48,6 +55,16 @@ export const AndroidBlocker = {
   setShieldActive: async (active: boolean): Promise<void> => {
     if (Platform.OS !== 'android' || !nativeModule) return;
     return nativeModule.setShieldActive(active);
+  },
+
+  getInstalledApps: async (): Promise<InstalledAppInfo[]> => {
+    if (Platform.OS !== 'android' || !nativeModule?.getInstalledApps) return [];
+    try {
+      return await nativeModule.getInstalledApps();
+    } catch (e) {
+      console.warn('[AndroidBlocker] getInstalledApps error:', e);
+      return [];
+    }
   },
 };
 

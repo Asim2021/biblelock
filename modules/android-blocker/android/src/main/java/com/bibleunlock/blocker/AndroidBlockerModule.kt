@@ -56,5 +56,32 @@ class AndroidBlockerModule : Module() {
             val prefs = context.getSharedPreferences("BibleUnlockBlockerPrefs", Context.MODE_PRIVATE)
             prefs.edit().putBoolean("is_shield_active", active).apply()
         }
+
+        AsyncFunction("getInstalledApps") {
+            val pm = context.packageManager
+            val intent = Intent(Intent.ACTION_MAIN, null).apply {
+                addCategory(Intent.CATEGORY_LAUNCHER)
+            }
+            val resolveInfos = pm.queryIntentActivities(intent, 0)
+            val appList = mutableListOf<Map<String, Any>>()
+            val selfPackage = context.packageName
+
+            for (resolveInfo in resolveInfos) {
+                val pkgName = resolveInfo.activityInfo.packageName
+                if (pkgName == selfPackage || pkgName == "android" || pkgName.startsWith("com.android.systemui")) {
+                    continue
+                }
+                val label = resolveInfo.loadLabel(pm).toString()
+                val isSystem = (resolveInfo.activityInfo.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
+
+                appList.add(mapOf(
+                    "packageName" to pkgName,
+                    "label" to label,
+                    "isSystemApp" to isSystem
+                ))
+            }
+            appList.sortBy { (it["label"] as? String)?.lowercase() ?: "" }
+            return@AsyncFunction appList
+        }
     }
 }

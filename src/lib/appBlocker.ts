@@ -119,6 +119,32 @@ export const AppBlocker = {
       platform: Platform.OS as 'ios' | 'android' | 'web',
     };
   },
+
+  /**
+   * Query installed launchable apps on the device (with curated presets fallback)
+   */
+  getInstalledApps: async (): Promise<{ packageName: string; label: string; isSystemApp: boolean }[]> => {
+    const defaultApps = [
+      { packageName: 'com.instagram.android', label: 'Instagram', isSystemApp: false },
+      { packageName: 'com.zhiliaoapp.musically', label: 'TikTok', isSystemApp: false },
+      { packageName: 'com.google.android.youtube', label: 'YouTube', isSystemApp: false },
+      { packageName: 'com.twitter.android', label: 'X (Twitter)', isSystemApp: false },
+      { packageName: 'com.reddit.frontpage', label: 'Reddit', isSystemApp: false },
+      { packageName: 'com.facebook.katana', label: 'Facebook', isSystemApp: false },
+      { packageName: 'com.snapchat.android', label: 'Snapchat', isSystemApp: false },
+      { packageName: 'com.netflix.mediaclient', label: 'Netflix', isSystemApp: false },
+      { packageName: 'com.discord', label: 'Discord', isSystemApp: false },
+    ];
+
+    if (Platform.OS === 'android') {
+      const nativeList = await AndroidBlocker.getInstalledApps();
+      if (nativeList && nativeList.length > 0) {
+        return nativeList;
+      }
+    }
+
+    return defaultApps;
+  },
 };
 
 export default AppBlocker;
