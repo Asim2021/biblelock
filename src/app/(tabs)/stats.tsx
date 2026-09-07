@@ -31,11 +31,13 @@ import { BadgesGrid } from '../../components/BadgesGrid';
 import { BadgeShareModal } from '../../components/BadgeShareModal';
 import { DailyDevotionalCard } from '../../components/DailyDevotionalCard';
 import { BadgeItem, ImpactStats, HabitDay } from '../../types/onboarding';
+import { useTheme } from '../../lib/themeContext';
 
 export default function StatsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, profile } = useAuth();
+  const { colors, isDark } = useTheme();
 
   const [refreshing, setRefreshing] = useState(false);
   const [name, setName] = useState('Disciple');
@@ -171,7 +173,7 @@ export default function StatsScreen() {
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: '#0d120f' }}
+      style={{ flex: 1, backgroundColor: colors.background }}
       edges={['top', 'left', 'right']}
     >
       <ScrollView
@@ -182,39 +184,63 @@ export default function StatsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#f5b800"
+            tintColor={colors.accent}
           />
         }
       >
         {/* Top Header Bar */}
         <View className="flex-row items-center justify-between pt-4 pb-3">
           <Text
-            className="text-2xl font-serif-bold text-[#faf9f5]"
-            style={{ fontFamily: 'EBGaramond_700Bold' }}
+            style={{
+              fontSize: 24,
+              fontFamily: 'EBGaramond_700Bold',
+              color: colors.textPrimary,
+            }}
           >
             Stats
           </Text>
 
           <Pressable
             onPress={onRefresh}
-            className="w-10 h-10 rounded-full bg-[#18231c] border border-[#273d30] items-center justify-center active:opacity-80"
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: colors.surfaceSubtle,
+              borderWidth: 1,
+              borderColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <RotateCw size={17} color="#a3c4b6" />
+            <RotateCw size={17} color={colors.textSecondary} />
           </Pressable>
         </View>
 
         {/* User Profile Row */}
         <View className="flex-row items-center my-3">
-          <View className="w-14 h-14 rounded-full bg-[#1c2e25] border border-[#325241] items-center justify-center mr-3.5 shadow-sm">
-            <Text className="text-base font-sans-bold text-[#f5b800]">
+          <View
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              backgroundColor: colors.surfaceSubtle,
+              borderWidth: 1,
+              borderColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 14,
+            }}
+          >
+            <Text style={{ fontSize: 16, fontFamily: 'Inter_700Bold', color: colors.accent }}>
               {getInitials(name)}
             </Text>
           </View>
           <View className="flex-1">
-            <Text className="text-lg font-sans-bold text-[#faf9f5]">
+            <Text style={{ fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
               {name}
             </Text>
-            <Text className="text-xs font-sans text-[#78a898]">
+            <Text style={{ fontSize: 12, color: colors.textSecondary }}>
               Spiritual Walk Tracker
             </Text>
           </View>
@@ -222,57 +248,102 @@ export default function StatsScreen() {
 
         {/* Section Header: Bible Reading */}
         <View className="flex-row items-center justify-between mt-4 mb-2">
-          <Text className="text-xs font-sans-bold text-[#78a898] uppercase tracking-wider">
+          <Text
+            style={{
+              fontSize: 12,
+              fontFamily: 'Inter_700Bold',
+              color: colors.textSecondary,
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+            }}
+          >
             Bible Reading
           </Text>
-          <MoreHorizontal size={16} color="#5c7a6e" />
+          <MoreHorizontal size={16} color={colors.textMuted} />
         </View>
 
         {/* Card 1: Read Today & Streak with Circular Gauge */}
-        <View className="p-5 rounded-3xl bg-[#141e17] border border-[#233528] mb-3 flex-row items-center justify-between shadow-lg">
+        <View
+          style={{
+            padding: 20,
+            borderRadius: 24,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            marginBottom: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <View className="flex-1 pr-3">
-            <Text className="text-xs font-sans text-[#78a898] mb-1">
+            <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 4 }}>
               Read Today
             </Text>
             <View className="flex-row items-baseline mb-3">
-              <Text className="text-2xl font-sans-bold text-[#faf9f5]">
+              <Text style={{ fontSize: 24, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
                 {minutesToday} min{' '}
               </Text>
-              <Text className="text-sm font-sans text-[#5c7a6e]">
+              <Text style={{ fontSize: 14, color: colors.textMuted }}>
                 /{timer.goalMinutes} min
               </Text>
             </View>
 
-            <Text className="text-xs font-sans text-[#78a898] mb-1">
+            <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 4 }}>
               Current Streak
             </Text>
-            <Text className="text-xl font-sans-bold text-[#faf9f5]">
+            <Text style={{ fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
               {timer.streak} {timer.streak === 1 ? 'day' : 'days'}
             </Text>
           </View>
 
           {/* Circular Gauge */}
-          <View className="w-24 h-24 rounded-full bg-[#1c2a21] border-4 border-[#2d4637] items-center justify-center shadow-inner">
+          <View
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: 48,
+              backgroundColor: colors.surfaceSubtle,
+              borderWidth: 4,
+              borderColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <View
-              className={`w-16 h-16 rounded-full items-center justify-center border-2 ${
-                timer.isGoalMet
-                  ? 'bg-[#293d25] border-[#5db872]'
-                  : 'bg-[#18231c] border-[#f5b800]/50'
-              }`}
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: 32,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 2,
+                backgroundColor: timer.isGoalMet ? (isDark ? '#293d25' : '#edf8f0') : colors.surfaceSubtle,
+                borderColor: timer.isGoalMet ? colors.success : colors.accent,
+              }}
             >
               <Zap
                 size={24}
-                color={timer.isGoalMet ? '#5db872' : '#f5b800'}
-                fill={timer.isGoalMet ? '#5db872' : '#f5b800'}
+                color={timer.isGoalMet ? colors.success : colors.accent}
+                fill={timer.isGoalMet ? colors.success : colors.accent}
               />
             </View>
           </View>
         </View>
 
         {/* Card 2: This Week 7-Day Tracker */}
-        <View className="p-5 rounded-3xl bg-[#141e17] border border-[#233528] mb-3 shadow-lg">
+        <View
+          style={{
+            padding: 20,
+            borderRadius: 24,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            marginBottom: 12,
+          }}
+        >
           <View className="flex-row items-center justify-between mb-4">
-            <Text className="text-xs font-sans text-[#78a898]">
+            <Text style={{ fontSize: 12, color: colors.textSecondary }}>
               This Week
             </Text>
             <Flame size={16} color="#ff7b42" />
@@ -288,36 +359,56 @@ export default function StatsScreen() {
               return (
                 <View key={wd.label} className="items-center">
                   <View
-                    className={`w-9 h-9 rounded-full items-center justify-center border mb-1.5 ${
-                      isToday
-                        ? 'bg-[#273a2e] border-[#f5b800]'
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 18,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1,
+                      marginBottom: 6,
+                      backgroundColor: isToday
+                        ? colors.accentBg
                         : isPastOrToday
-                        ? 'bg-[#18231c] border-[#2d4435]'
-                        : 'bg-[#111713] border-[#1d2720]'
-                    }`}
+                        ? colors.surfaceSubtle
+                        : colors.surface,
+                      borderColor: isToday
+                        ? colors.accent
+                        : isPastOrToday
+                        ? colors.border
+                        : colors.borderSubtle,
+                    }}
                   >
                     <Text
-                      className={`text-xs font-sans-bold ${
-                        isToday ? 'text-[#f5b800]' : isPastOrToday ? 'text-[#faf9f5]' : 'text-[#4e6459]'
-                      }`}
+                      style={{
+                        fontSize: 12,
+                        fontFamily: 'Inter_700Bold',
+                        color: isToday
+                          ? colors.accent
+                          : isPastOrToday
+                          ? colors.textPrimary
+                          : colors.textMuted,
+                      }}
                     >
                       {wd.label}
                     </Text>
                   </View>
 
                   <Text
-                    className={`text-[10px] font-sans ${
-                      isToday ? 'text-[#f5b800] font-sans-bold' : 'text-[#5c7a6e]'
-                    }`}
+                    style={{
+                      fontSize: 10,
+                      fontFamily: isToday ? 'Inter_700Bold' : 'Inter_400Regular',
+                      color: isToday ? colors.accent : colors.textSecondary,
+                    }}
                   >
                     {dayMins}m
                   </Text>
 
                   {/* Active day underline marker */}
                   {isToday ? (
-                    <View className="w-5 h-0.5 bg-[#f5b800] rounded-full mt-1.5" />
+                    <View style={{ width: 20, height: 2, backgroundColor: colors.accent, borderRadius: 1, marginTop: 6 }} />
                   ) : (
-                    <View className="w-5 h-0.5 bg-transparent mt-1.5" />
+                    <View style={{ width: 20, height: 2, backgroundColor: 'transparent', marginTop: 6 }} />
                   )}
                 </View>
               );
@@ -326,32 +417,53 @@ export default function StatsScreen() {
         </View>
 
         {/* Card 3: Milestone Progress Bar */}
-        <View className="p-4 rounded-2xl bg-[#141e17] border border-[#233528] mb-4 shadow-lg">
+        <View
+          style={{
+            padding: 16,
+            borderRadius: 16,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            marginBottom: 16,
+          }}
+        >
           <View className="flex-row items-center justify-between mb-2">
             <View>
-              <Text className="text-base font-sans-bold text-[#faf9f5]">
+              <Text style={{ fontSize: 16, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
                 {timer.streak}d
               </Text>
-              <Text className="text-[10px] font-sans text-[#78a898]">
+              <Text style={{ fontSize: 10, color: colors.textSecondary }}>
                 Current Streak
               </Text>
             </View>
 
             <View className="items-end">
-              <Text className="text-base font-sans-bold text-[#f5b800]">
+              <Text style={{ fontSize: 16, fontFamily: 'Inter_700Bold', color: colors.accent }}>
                 {nextMilestone}d
               </Text>
-              <Text className="text-[10px] font-sans text-[#78a898]">
+              <Text style={{ fontSize: 10, color: colors.textSecondary }}>
                 Next Milestone
               </Text>
             </View>
           </View>
 
           {/* Progress Bar */}
-          <View className="w-full h-2 bg-[#1f2b23] rounded-full overflow-hidden">
+          <View
+            style={{
+              width: '100%',
+              height: 8,
+              backgroundColor: colors.surfaceSubtle,
+              borderRadius: 4,
+              overflow: 'hidden',
+            }}
+          >
             <View
-              className="h-full bg-[#f5b800] rounded-full"
-              style={{ width: `${Math.round(milestoneProgress * 100)}%` }}
+              style={{
+                height: '100%',
+                backgroundColor: colors.accent,
+                borderRadius: 4,
+                width: `${Math.round(milestoneProgress * 100)}%`,
+              }}
             />
           </View>
         </View>
@@ -371,46 +483,119 @@ export default function StatsScreen() {
 
         {/* Section: Lifetime Activity */}
         <View className="mt-4 mb-2">
-          <Text className="text-xs font-sans-bold text-[#78a898] uppercase tracking-wider mb-3 px-1">
+          <Text
+            style={{
+              fontSize: 12,
+              fontFamily: 'Inter_700Bold',
+              color: colors.textSecondary,
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+              marginBottom: 12,
+              paddingHorizontal: 4,
+            }}
+          >
             Lifetime Activity
           </Text>
 
           <View className="flex-row justify-between">
             {/* Verses Read */}
-            <View className="flex-1 mr-2 p-4 rounded-2xl bg-[#141a16] border border-[#202a22] items-center">
-              <View className="w-9 h-9 rounded-xl bg-[#1c2921] items-center justify-center mb-2">
-                <Zap size={18} color="#f5b800" />
+            <View
+              style={{
+                flex: 1,
+                marginRight: 6,
+                padding: 16,
+                borderRadius: 16,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+              }}
+            >
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  backgroundColor: colors.surfaceSubtle,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                <Zap size={18} color={colors.accent} />
               </View>
-              <Text className="text-lg font-sans-bold text-[#faf9f5]">
+              <Text style={{ fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
                 {totalVersesRead}
               </Text>
-              <Text className="text-[10px] font-sans text-[#78a898] mt-0.5 text-center">
+              <Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 2, textAlign: 'center' }}>
                 Verses Read
               </Text>
             </View>
 
             {/* Time Spent */}
-            <View className="flex-1 mx-1 p-4 rounded-2xl bg-[#141a16] border border-[#202a22] items-center">
-              <View className="w-9 h-9 rounded-xl bg-[#1c2921] items-center justify-center mb-2">
-                <Clock size={18} color="#f5b800" />
+            <View
+              style={{
+                flex: 1,
+                marginHorizontal: 4,
+                padding: 16,
+                borderRadius: 16,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+              }}
+            >
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  backgroundColor: colors.surfaceSubtle,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                <Clock size={18} color={colors.accent} />
               </View>
-              <Text className="text-lg font-sans-bold text-[#faf9f5]">
+              <Text style={{ fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
                 {impact.minutesRead}m
               </Text>
-              <Text className="text-[10px] font-sans text-[#78a898] mt-0.5 text-center">
+              <Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 2, textAlign: 'center' }}>
                 Time Spent
               </Text>
             </View>
 
             {/* Best Streak */}
-            <View className="flex-1 ml-2 p-4 rounded-2xl bg-[#141a16] border border-[#202a22] items-center">
-              <View className="w-9 h-9 rounded-xl bg-[#1c2921] items-center justify-center mb-2">
-                <Award size={18} color="#f5b800" />
+            <View
+              style={{
+                flex: 1,
+                marginLeft: 6,
+                padding: 16,
+                borderRadius: 16,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+              }}
+            >
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 10,
+                  backgroundColor: colors.surfaceSubtle,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                <Award size={18} color={colors.accent} />
               </View>
-              <Text className="text-lg font-sans-bold text-[#faf9f5]">
+              <Text style={{ fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
                 {Math.max(timer.streak, 1)}d
               </Text>
-              <Text className="text-[10px] font-sans text-[#78a898] mt-0.5 text-center">
+              <Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 2, textAlign: 'center' }}>
                 Best Streak
               </Text>
             </View>
@@ -418,39 +603,86 @@ export default function StatsScreen() {
         </View>
 
         {/* Section: Our Week in Review / Community Impact */}
-        <View className="mt-5 p-5 rounded-3xl bg-[#121a15] border border-[#1e2d23] shadow-lg">
-          <Text className="text-xs font-sans text-[#78a898] text-center uppercase tracking-widest mb-4">
+        <View
+          style={{
+            marginTop: 20,
+            padding: 20,
+            borderRadius: 24,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 12,
+              fontFamily: 'Inter_500Medium',
+              color: colors.textSecondary,
+              textAlign: 'center',
+              textTransform: 'uppercase',
+              letterSpacing: 1.5,
+              marginBottom: 16,
+            }}
+          >
             Our Week in Review
           </Text>
 
-          <View className="p-4 rounded-2xl bg-[#17221b] border border-[#24372a] mb-3 items-center">
-            <Text className="text-2xl font-sans-bold text-[#5db872]">
+          <View
+            style={{
+              padding: 16,
+              borderRadius: 16,
+              backgroundColor: colors.surfaceSubtle,
+              borderWidth: 1,
+              borderColor: colors.border,
+              marginBottom: 12,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ fontSize: 24, fontFamily: 'Inter_700Bold', color: colors.success }}>
               145.9M
             </Text>
-            <Text className="text-xs font-sans text-[#78a898] mt-0.5">
+            <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
               Total Verses Read
             </Text>
           </View>
 
-          <View className="p-4 rounded-2xl bg-[#17221b] border border-[#24372a] mb-4 items-center">
-            <Text className="text-2xl font-sans-bold text-[#4fa6e8]">
+          <View
+            style={{
+              padding: 16,
+              borderRadius: 16,
+              backgroundColor: colors.surfaceSubtle,
+              borderWidth: 1,
+              borderColor: colors.border,
+              marginBottom: 16,
+              alignItems: 'center',
+            }}
+          >
+            <Text style={{ fontSize: 24, fontFamily: 'Inter_700Bold', color: '#4fa6e8' }}>
               434.1M minutes
             </Text>
-            <Text className="text-xs font-sans text-[#78a898] mt-0.5">
+            <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
               Time Spent in Scripture
             </Text>
           </View>
 
-          <Text className="text-xs font-sans text-[#78a898] text-center leading-relaxed mb-4 px-2">
+          <Text style={{ fontSize: 12, color: colors.textSecondary, textAlign: 'center', lineHeight: 18, marginBottom: 16, paddingHorizontal: 8 }}>
             See the impact from disciples worldwide! Keep the momentum alive — share Bible Unlock today.
           </Text>
 
           <Pressable
             onPress={handleShareApp}
-            className="w-full py-3.5 rounded-2xl bg-[#faf9f5] items-center justify-center active:opacity-90 shadow-md flex-row"
+            style={{
+              width: '100%',
+              paddingVertical: 14,
+              borderRadius: 16,
+              backgroundColor: colors.accent,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+            }}
           >
-            <Share2 size={16} color="#0d120f" style={{ marginRight: 8 }} />
-            <Text className="text-sm font-sans-bold text-[#0d120f]">
+            <Share2 size={16} color="#141413" style={{ marginRight: 8 }} />
+            <Text style={{ fontSize: 14, fontFamily: 'Inter_700Bold', color: '#141413' }}>
               Share Bible Unlock
             </Text>
           </Pressable>

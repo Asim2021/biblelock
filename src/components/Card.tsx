@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Pressable, ViewProps } from 'react-native';
+import { useTheme } from '../lib/themeContext';
 
 export interface CardProps extends ViewProps {
   children: React.ReactNode;
   variant?: 'surface' | 'elevated' | 'outline' | 'dark';
   className?: string;
   onPress?: () => void;
+  style?: any;
 }
 
 export function Card({
@@ -13,27 +15,23 @@ export function Card({
   variant = 'surface',
   className = '',
   onPress,
+  style,
   ...props
 }: CardProps) {
-  let baseStyle = 'rounded-lg p-4';
+  const { colors } = useTheme();
 
-  if (variant === 'surface') {
-    baseStyle += ' bg-surface-card dark:bg-surface-dark-elevated border border-hairline/60 dark:border-hairline/20';
-  } else if (variant === 'elevated') {
-    baseStyle += ' bg-surface-soft dark:bg-surface-dark-elevated shadow-sm';
-  } else if (variant === 'outline') {
-    baseStyle += ' bg-transparent border border-hairline dark:border-hairline/30';
-  } else if (variant === 'dark') {
-    baseStyle += ' bg-surface-dark-soft dark:bg-surface-dark-elevated border border-surface-dark-elevated';
-  }
-
-  const combinedClass = `${baseStyle} ${className}`;
+  const cardStyle = {
+    backgroundColor: variant === 'outline' ? 'transparent' : colors.surface,
+    borderColor: colors.border,
+    borderRadius: 16,
+  };
 
   if (onPress) {
     return (
       <Pressable
         onPress={onPress}
-        className={`${combinedClass} active:opacity-90`}
+        style={[cardStyle, style]}
+        className={`p-4 border ${className} active:opacity-90`}
         {...props}
       >
         {children}
@@ -42,7 +40,7 @@ export function Card({
   }
 
   return (
-    <View className={combinedClass} {...props}>
+    <View style={[cardStyle, style]} className={`p-4 border ${className}`} {...props}>
       {children}
     </View>
   );

@@ -5,6 +5,8 @@ import { Sparkles, Share2, ExternalLink, RotateCcw } from 'lucide-react-native';
 import { getBibleTranslation } from '../lib/mmkv';
 import { getDailyVerse, getRandomVerse, DailyVerseItem } from '../lib/bible';
 
+import { useTheme } from '../lib/themeContext';
+
 interface DailyDevotionalCardProps {
   title?: string;
   showSubtitle?: boolean;
@@ -15,6 +17,7 @@ export function DailyDevotionalCard({
   showSubtitle = true,
 }: DailyDevotionalCardProps) {
   const router = useRouter();
+  const { colors } = useTheme();
   const translation = getBibleTranslation();
   const [verse, setVerse] = useState<DailyVerseItem>(() => getDailyVerse(translation));
   const [isRotating, setIsRotating] = useState(false);
@@ -50,70 +53,130 @@ export function DailyDevotionalCard({
   };
 
   return (
-    <View className="p-5 rounded-3xl bg-[#141b17] border border-[#202e25]">
+    <View
+      style={{
+        padding: 20,
+        borderRadius: 24,
+        backgroundColor: colors.surface,
+        borderWidth: 1,
+        borderColor: colors.border,
+      }}
+    >
       {/* Top Header */}
       <View className="flex-row items-center justify-between mb-2">
         <View className="flex-row items-center">
-          <Sparkles size={15} color="#d4a359" style={{ marginRight: 6 }} />
-          <Text className="text-xs font-sans-bold text-[#d4a359] uppercase tracking-wider">
+          <Sparkles size={15} color={colors.accent} style={{ marginRight: 6 }} />
+          <Text
+            style={{
+              fontSize: 12,
+              fontFamily: 'Inter_700Bold',
+              color: colors.accent,
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+            }}
+          >
             {title}
           </Text>
         </View>
-        <Text className="text-[11px] font-sans text-[#5c7a6e]">
+        <Text style={{ fontSize: 11, color: colors.textMuted }}>
           {translation}
         </Text>
       </View>
 
       {showSubtitle && (
-        <Text className="text-xs font-sans text-[#78a898] mb-3">
+        <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 12 }}>
           Build steady spiritual consistency with God's Word
         </Text>
       )}
 
       {/* Scripture Verse Text */}
       <Text
-        className="text-base text-[#faf9f5] leading-relaxed mb-4 italic"
-        style={{ fontFamily: 'EBGaramond_400Regular_Italic' }}
+        style={{
+          fontFamily: 'EBGaramond_400Regular_Italic',
+          fontSize: 16,
+          color: colors.textPrimary,
+          lineHeight: 24,
+          marginBottom: 16,
+          fontStyle: 'italic',
+        }}
       >
         "{verse.text}"
       </Text>
 
       {/* Bottom Row: Citation & 3 Action Buttons */}
-      <View className="flex-row items-center justify-between pt-2 border-t border-[#202e25]">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingTop: 10,
+          borderTopWidth: 1,
+          borderTopColor: colors.borderSubtle,
+        }}
+      >
         <Pressable onPress={handleGoto} className="active:opacity-80">
-          <Text className="text-xs font-sans-bold text-[#f5b800]">
+          <Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: colors.accent }}>
             {verse.bookName} {verse.chapter}:{verse.verseNum}
           </Text>
         </Pressable>
 
-        <View className="flex-row items-center space-x-2">
+        <View className="flex-row items-center">
           {/* Share Button */}
           <Pressable
             onPress={handleShare}
             accessibilityLabel="Share Verse"
-            className="w-9 h-9 rounded-xl bg-[#1a261f] border border-[#273d30] items-center justify-center active:opacity-75"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              backgroundColor: colors.surfaceSubtle,
+              borderWidth: 1,
+              borderColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <Share2 size={15} color="#a3c4b6" />
+            <Share2 size={15} color={colors.textSecondary} />
           </Pressable>
 
           {/* Goto Verse Button */}
           <Pressable
             onPress={handleGoto}
             accessibilityLabel="Go to Verse"
-            className="w-9 h-9 rounded-xl bg-[#1a261f] border border-[#273d30] items-center justify-center active:opacity-75 ml-2"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              backgroundColor: colors.surfaceSubtle,
+              borderWidth: 1,
+              borderColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginLeft: 8,
+            }}
           >
-            <ExternalLink size={15} color="#a3c4b6" />
+            <ExternalLink size={15} color={colors.textSecondary} />
           </Pressable>
 
           {/* Refresh Random Verse Button */}
           <Pressable
             onPress={handleRefresh}
             accessibilityLabel="Refresh Verse"
-            className="w-9 h-9 rounded-xl bg-[#1a261f] border border-[#273d30] items-center justify-center active:opacity-75 ml-2"
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 10,
+              backgroundColor: colors.surfaceSubtle,
+              borderWidth: 1,
+              borderColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginLeft: 8,
+            }}
           >
             <RotateCcw
               size={15}
-              color={isRotating ? '#f5b800' : '#a3c4b6'}
+              color={isRotating ? colors.accent : colors.textSecondary}
             />
           </Pressable>
         </View>

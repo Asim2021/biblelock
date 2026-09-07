@@ -28,8 +28,10 @@ import {
   Check,
   Bookmark as BookmarkIcon,
 } from 'lucide-react-native';
+import { useTheme } from '../../lib/themeContext';
 
 export default function ReaderScreen() {
+  const { colors, isDark } = useTheme();
   const [isFocused, setIsFocused] = useState(true);
 
   useFocusEffect(
@@ -212,88 +214,176 @@ export default function ReaderScreen() {
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: '#181715' }}
+      style={{ flex: 1, backgroundColor: colors.background }}
       edges={['top', 'left', 'right']}
     >
       {/* Top Active Reading Timer Bar */}
-      <View className="px-5 py-3 bg-surface-dark-elevated border-b border-hairline/10">
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingVertical: 12,
+          backgroundColor: colors.surface,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        }}
+      >
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center">
             <View className="mr-2">
               {timer.isGoalMet ? (
-                <Unlock size={14} color="#22c55e" />
+                <Unlock size={14} color={colors.success} />
               ) : (
-                <Clock size={14} color="#f5b800" />
+                <Clock size={14} color={colors.accent} />
               )}
             </View>
-            <Text className="text-xs font-sans-semibold uppercase tracking-wider text-on-dark-soft">
+            <Text
+              style={{
+                fontSize: 11,
+                fontFamily: 'Inter_600SemiBold',
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                color: colors.textSecondary,
+              }}
+            >
               {timer.isGoalMet ? 'Apps Unlocked' : 'Reading Timer Active'}
             </Text>
           </View>
-          <Text className="text-sm font-mono font-bold text-primary">
+          <Text
+            style={{
+              fontSize: 13,
+              fontFamily: 'Inter_700Bold',
+              color: colors.accent,
+            }}
+          >
             {timer.formattedTime} / {timer.formattedGoal}
           </Text>
         </View>
 
         {/* Progress Bar */}
-        <View className="h-1.5 w-full bg-surface-dark-soft rounded-full overflow-hidden">
+        <View
+          style={{
+            height: 6,
+            width: '100%',
+            backgroundColor: colors.surfaceSubtle,
+            borderRadius: 3,
+            overflow: 'hidden',
+          }}
+        >
           <View
-            className={`h-full ${
-              timer.isGoalMet ? 'bg-success' : 'bg-primary'
-            } rounded-full`}
-            style={{ width: `${Math.round(timer.progress * 100)}%` }}
+            style={{
+              height: '100%',
+              borderRadius: 3,
+              backgroundColor: timer.isGoalMet ? colors.success : colors.accent,
+              width: `${Math.round(timer.progress * 100)}%`,
+            }}
           />
         </View>
       </View>
 
       {/* Bookmark Feedback Toast */}
       {toastMessage && (
-        <View className="bg-primary/20 border-b border-primary/40 px-4 py-2 flex-row items-center justify-center">
-          <BookmarkIcon size={14} color="#f5b800" style={{ marginRight: 6 }} />
-          <Text className="text-xs font-sans-medium text-[#f5b800] text-center">
+        <View
+          style={{
+            backgroundColor: colors.accentBg,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.accent,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <BookmarkIcon size={14} color={colors.accent} style={{ marginRight: 6 }} />
+          <Text style={{ fontSize: 12, fontFamily: 'Inter_500Medium', color: colors.accent, textAlign: 'center' }}>
             {toastMessage}
           </Text>
         </View>
       )}
 
       {/* Book & Translation Selection Bar */}
-      <View className="px-5 py-3 flex-row items-center justify-between border-b border-hairline/10">
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        }}
+      >
         <Pressable
           onPress={() => setShowBookModal(true)}
-          className="flex-row items-center bg-surface-dark-elevated px-3.5 py-2 rounded-md border border-hairline/20"
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surface,
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
         >
-          <Text className="text-sm font-sans-bold text-on-dark mr-2">
+          <Text
+            style={{
+              fontSize: 14,
+              fontFamily: 'Inter_700Bold',
+              color: colors.textPrimary,
+              marginRight: 8,
+            }}
+          >
             {currentBook.name} {chapterNumber}
           </Text>
-          <ChevronDown size={14} color="#9e9488" />
+          <ChevronDown size={14} color={colors.textSecondary} />
         </Pressable>
 
         {/* Translation Toggle Pill */}
-        <View className="flex-row bg-surface-dark-elevated rounded-md p-1 border border-hairline/20">
+        <View
+          style={{
+            flexDirection: 'row',
+            backgroundColor: colors.surfaceSubtle,
+            borderRadius: 8,
+            padding: 3,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        >
           <Pressable
             onPress={() => handleToggleTranslation('WEB')}
-            className={`px-3 py-1 rounded ${
-              translation === 'WEB' ? 'bg-primary' : 'bg-transparent'
-            }`}
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+              borderRadius: 6,
+              backgroundColor: translation === 'WEB' ? colors.accent : 'transparent',
+            }}
           >
             <Text
-              className={`text-xs font-sans-semibold ${
-                translation === 'WEB' ? 'text-white' : 'text-on-dark-soft'
-              }`}
+              style={{
+                fontSize: 12,
+                fontFamily: 'Inter_600SemiBold',
+                color: translation === 'WEB' ? '#141413' : colors.textSecondary,
+              }}
             >
               WEB
             </Text>
           </Pressable>
           <Pressable
             onPress={() => handleToggleTranslation('KJV')}
-            className={`px-3 py-1 rounded ${
-              translation === 'KJV' ? 'bg-primary' : 'bg-transparent'
-            }`}
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+              borderRadius: 6,
+              backgroundColor: translation === 'KJV' ? colors.accent : 'transparent',
+            }}
           >
             <Text
-              className={`text-xs font-sans-semibold ${
-                translation === 'KJV' ? 'text-white' : 'text-on-dark-soft'
-              }`}
+              style={{
+                fontSize: 12,
+                fontFamily: 'Inter_600SemiBold',
+                color: translation === 'KJV' ? '#141413' : colors.textSecondary,
+              }}
             >
               KJV
             </Text>
@@ -302,7 +392,14 @@ export default function ReaderScreen() {
       </View>
 
       {/* Horizontal Chapter Picker */}
-      <View className="py-2 border-b border-hairline/10 bg-surface-dark">
+      <View
+        style={{
+          paddingVertical: 8,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          backgroundColor: colors.surface,
+        }}
+      >
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -313,16 +410,24 @@ export default function ReaderScreen() {
               <Pressable
                 key={ch}
                 onPress={() => handleSelectChapter(ch)}
-                className={`w-9 h-9 items-center justify-center rounded-full mr-2 ${
-                  chapterNumber === ch
-                    ? 'bg-primary'
-                    : 'bg-surface-dark-elevated border border-hairline/10'
-                }`}
+                style={{
+                  width: 36,
+                  height: 36,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 18,
+                  marginRight: 8,
+                  backgroundColor: chapterNumber === ch ? colors.accent : colors.surfaceSubtle,
+                  borderWidth: chapterNumber === ch ? 0 : 1,
+                  borderColor: colors.borderSubtle,
+                }}
               >
                 <Text
-                  className={`text-xs font-sans-semibold ${
-                    chapterNumber === ch ? 'text-white' : 'text-on-dark-soft'
-                  }`}
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'Inter_600SemiBold',
+                    color: chapterNumber === ch ? '#141413' : colors.textSecondary,
+                  }}
                 >
                   {ch}
                 </Text>
@@ -334,11 +439,22 @@ export default function ReaderScreen() {
 
       {/* Goal Achieved Toast Banner */}
       {timer.isGoalMet && (
-        <View className="bg-success/15 px-4 py-2.5 border-b border-success/30 flex-row items-center justify-center">
+        <View
+          style={{
+            backgroundColor: colors.successBg,
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <View className="mr-2">
-            <Sparkles size={16} color="#22c55e" />
+            <Sparkles size={16} color={colors.success} />
           </View>
-          <Text className="text-xs font-sans-medium text-success">
+          <Text style={{ fontSize: 12, fontFamily: 'Inter_500Medium', color: colors.success }}>
             Daily goal met! Distracting apps are unlocked for the day.
           </Text>
         </View>
@@ -353,12 +469,25 @@ export default function ReaderScreen() {
         ListHeaderComponent={
           <View className="mb-6 items-center">
             <Text
-              className="text-3xl text-on-dark font-serif text-center mb-1"
-              style={{ fontFamily: 'EBGaramond_600SemiBold' }}
+              style={{
+                fontFamily: 'EBGaramond_700Bold',
+                fontSize: 28,
+                color: colors.textPrimary,
+                textAlign: 'center',
+                marginBottom: 4,
+              }}
             >
               {currentBook.name}
             </Text>
-            <Text className="text-xs font-mono text-primary uppercase tracking-widest">
+            <Text
+              style={{
+                fontSize: 12,
+                fontFamily: 'Inter_600SemiBold',
+                color: colors.accent,
+                textTransform: 'uppercase',
+                letterSpacing: 2,
+              }}
+            >
               Chapter {chapterNumber} • {translation}
             </Text>
           </View>
@@ -370,23 +499,40 @@ export default function ReaderScreen() {
           return (
             <Pressable
               onLongPress={() => handleToggleBookmarkVerse(item)}
-              className={`flex-row items-baseline mb-3.5 p-2 rounded-lg ${
-                isTargeted
-                  ? 'bg-primary/15 border-l-2 border-primary'
+              style={{
+                flexDirection: 'row',
+                alignItems: 'baseline',
+                marginBottom: 14,
+                padding: 8,
+                borderRadius: 8,
+                backgroundColor: isTargeted
+                  ? colors.accentBg
                   : isBookmarked
-                  ? 'bg-surface-dark-elevated'
-                  : 'bg-transparent'
-              }`}
+                  ? colors.surface
+                  : 'transparent',
+                borderLeftWidth: isTargeted ? 3 : 0,
+                borderLeftColor: colors.accent,
+              }}
             >
-              <Text className="text-xs font-mono text-primary mr-3 w-6 text-right select-none font-bold">
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: 'Inter_700Bold',
+                  color: colors.accent,
+                  marginRight: 12,
+                  width: 24,
+                  textAlign: 'right',
+                }}
+              >
                 {item.verse}
               </Text>
               <Text
-                className="text-lg text-on-dark flex-1 leading-relaxed"
                 style={{
+                  flex: 1,
                   fontFamily: 'EBGaramond_400Regular',
                   fontSize: 18,
                   lineHeight: 30,
+                  color: colors.textPrimary,
                 }}
               >
                 {item.text}
@@ -394,19 +540,29 @@ export default function ReaderScreen() {
               <Pressable
                 onPress={() => handleToggleBookmarkVerse(item)}
                 hitSlop={8}
-                className="ml-2 p-1"
+                style={{ marginLeft: 8, padding: 4 }}
               >
                 <BookmarkIcon
-                  size={14}
-                  color={isBookmarked ? '#f5b800' : '#4a574f'}
-                  fill={isBookmarked ? '#f5b800' : 'transparent'}
+                  size={15}
+                  color={isBookmarked ? colors.accent : colors.textMuted}
+                  fill={isBookmarked ? colors.accent : 'transparent'}
                 />
               </Pressable>
             </Pressable>
           );
         }}
         ListFooterComponent={
-          <View className="mt-8 pt-6 border-t border-hairline/20 flex-row justify-between items-center">
+          <View
+            style={{
+              marginTop: 32,
+              paddingTop: 24,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
             <Button
               title="← Prev Chapter"
               variant="outline"
@@ -428,69 +584,90 @@ export default function ReaderScreen() {
       <Modal
         visible={showBookModal}
         animationType="slide"
-        presentationStyle="pageSheet"
+        transparent={false}
+        statusBarTranslucent
         onRequestClose={() => setShowBookModal(false)}
       >
-        <SafeAreaView className="flex-1 bg-surface-dark">
-          <View className="p-4 border-b border-hairline/20 flex-row items-center justify-between">
-            <Text className="text-lg font-sans-bold text-on-dark">
-              Select Book of the Bible
-            </Text>
-            <Pressable
-              onPress={() => setShowBookModal(false)}
-              className="p-2"
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+            <View
+              style={{
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.border,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
             >
-              <Text className="text-base text-primary font-sans-medium">Done</Text>
-            </Pressable>
-          </View>
+              <Text style={{ fontSize: 18, fontFamily: 'EBGaramond_700Bold', color: colors.textPrimary }}>
+                Select Book of the Bible
+              </Text>
+              <Pressable
+                onPress={() => setShowBookModal(false)}
+                style={{ padding: 8 }}
+              >
+                <Text style={{ fontSize: 15, color: colors.accent, fontFamily: 'Inter_600SemiBold' }}>Done</Text>
+              </Pressable>
+            </View>
 
-          <FlatList
-            data={allBooks}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item, index }) => {
-              const isSelected = bookIndex === index;
-              const isOldTestament = index < 39;
-              const showSectionHeader = index === 0 || index === 39;
+            <FlatList
+              data={allBooks}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item, index }) => {
+                const isSelected = bookIndex === index;
+                const isOldTestament = index < 39;
+                const showSectionHeader = index === 0 || index === 39;
 
-              return (
-                <View>
-                  {showSectionHeader && (
-                    <View className="bg-surface-dark-soft px-5 py-2.5">
-                      <Text className="text-xs font-sans-bold uppercase tracking-wider text-accent-amber">
-                        {isOldTestament ? 'Old Testament (39 Books)' : 'New Testament (27 Books)'}
-                      </Text>
-                    </View>
-                  )}
-                  <Pressable
-                    onPress={() => {
-                      setBookIndex(index);
-                      setChapterNumber(1);
-                      setShowBookModal(false);
-                      flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
-                    }}
-                    className={`px-5 py-3.5 border-b border-hairline/10 flex-row items-center justify-between ${
-                      isSelected ? 'bg-primary/10' : ''
-                    }`}
-                  >
-                    <Text
-                      className={`text-base font-sans ${
-                        isSelected ? 'text-primary font-sans-bold' : 'text-on-dark'
-                      }`}
+                return (
+                  <View>
+                    {showSectionHeader && (
+                      <View style={{ backgroundColor: colors.surfaceSubtle, paddingHorizontal: 20, paddingVertical: 10 }}>
+                        <Text style={{ fontSize: 11, fontFamily: 'Inter_700Bold', textTransform: 'uppercase', letterSpacing: 1, color: colors.accent }}>
+                          {isOldTestament ? 'Old Testament (39 Books)' : 'New Testament (27 Books)'}
+                        </Text>
+                      </View>
+                    )}
+                    <Pressable
+                      onPress={() => {
+                        setBookIndex(index);
+                        setChapterNumber(1);
+                        setShowBookModal(false);
+                        flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+                      }}
+                      style={{
+                        paddingHorizontal: 20,
+                        paddingVertical: 14,
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.borderSubtle,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        backgroundColor: isSelected ? colors.accentBg : 'transparent',
+                      }}
                     >
-                      {item.name}
-                    </Text>
-                    <View className="flex-row items-center">
-                      <Text className="text-xs text-on-dark-soft font-mono mr-2">
-                        {item.chapterCount} {item.chapterCount === 1 ? 'ch' : 'chs'}
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_400Regular',
+                          color: isSelected ? colors.accent : colors.textPrimary,
+                        }}
+                      >
+                        {item.name}
                       </Text>
-                      {isSelected && <Check size={16} color="#f5b800" />}
-                    </View>
-                  </Pressable>
-                </View>
-              );
-            }}
-          />
-        </SafeAreaView>
+                      <View className="flex-row items-center">
+                        <Text style={{ fontSize: 12, color: colors.textSecondary, marginRight: 8 }}>
+                          {item.chapterCount} {item.chapterCount === 1 ? 'ch' : 'chs'}
+                        </Text>
+                        {isSelected && <Check size={16} color={colors.accent} />}
+                      </View>
+                    </Pressable>
+                  </View>
+                );
+              }}
+            />
+          </SafeAreaView>
+        </View>
       </Modal>
     </SafeAreaView>
   );

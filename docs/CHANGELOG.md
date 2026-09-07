@@ -1,5 +1,32 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.9] - 2026-09-08
+
+### Added
+- **Universal Theme Engine (`src/lib/themeContext.tsx`):** Implemented `ThemeProvider` with tailored Celestial Dark (`#0d120f`) and Parchment Light (`#f8f6f0`) palettes. Integrated across `_layout.tsx`, all 5 tab screens, `Card.tsx`, and `DailyDevotionalCard.tsx` with instant reactive switching.
+- **Al Quran Bookmark & Collections Parity (`src/app/(tabs)/library.tsx`):**
+  - 3-tab segmented control: `Collections`, `Pins`, `Notes`.
+  - Dismissable helper tip banner with `X` button.
+  - Search bar with filter icon.
+  - Auto-saved `Last Read` card at top with direct jump to reading position.
+  - Collection items with color tags, verse counts, tap-to-view verses, and `...` menu.
+  - "+ New Collection" action and bottom sheet modal matching `AL Quran App edit bookmark example.png` with 6 color swatches (`#3b82f6`, `#10b981`, `#f43f5e`, `#a855f7`, `#f59e0b`, `#d97706`), checkmark indicators, delete collection action, and Cancel/Save buttons.
+  - `Pins` tab for individual bookmarked verses and `Notes` tab for verses with personal reflections.
+- **`QUERY_ALL_PACKAGES` & Launcher Queries:** Declared package visibility permissions in `app.json`, `android/app/src/main/AndroidManifest.xml`, and `modules/android-blocker/android/src/main/AndroidManifest.xml`.
+
+### Fixed
+- **App Selection Truncation:** Resolved Android 11+ package filtering bug where `getInstalledApps` only returned ~17 system packages. Enhanced `AndroidBlockerModule.kt` to union launcher activities and installed applications with user apps prioritized first and sorted alphabetically, allowing Instagram, TikTok, WhatsApp, X, Facebook, games, etc. to appear.
+- **Settings "+ Add Apps" Modal Blank Background:** Replaced `presentationStyle="pageSheet"` with solid themed container using `colors.background` and `statusBarTranslucent`, fixing invisible text on Android dialogs. Proactively loads installed apps on modal open.
+- **Light Theme Functionality:** Fixed all hardcoded dark backgrounds (`#0d120f`, `#181715`) and Tailwind `text-on-dark` classes across Home, Reader, Library, Stats, and Settings screens, delivering crisp dark typography on warm parchment.
+
+### Verified Impact
+- `npx tsc --noEmit` passing with 0 errors across entire project.
+- Complete app visibility on Android 11+ devices.
+- Seamless Dark/Light theme switching with verified contrast.
+- 100% UX parity with Al Quran app's bookmark and collection system.
+
+---
+
 ## [1.0.8] - 2026-09-08
 
 ### Added

@@ -273,4 +273,48 @@ Selected **Option B** for app icons. Persisted `LastReadPosition` directly in MM
 ### 6. Lessons & Downstream Impact
 Persisting reader state to synchronous storage (MMKV) on every book or chapter transition prevents state loss even during unexpected app terminations or OS memory pressure kills.
 
+---
+
+## [DEC-009] Android Package Visibility Fix (QUERY_ALL_PACKAGES), Light & Dark Theme Engine, and Al Quran Bookmark & Collection Parity
+
+- **Date:** 2026-09-08
+- **Status:** Validated
+- **Related Task / Baseline:** STATUS.md (FIX-007)
+
+### 1. Problem / Trigger (Why the Original Plan Changed)
+Device testing and user feedback surfaced four specific regressions:
+1. **App Selection Truncation (Android 11+ Package Visibility):** `getInstalledApps` only returned ~17 system packages; user-installed applications (Instagram, TikTok, WhatsApp, X, Facebook, games) were hidden because Android 11+ (API 30+) strictly filters `queryIntentActivities` without `<uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />`.
+2. **Settings "+ Add Apps" Modal Blank / Unstyled:** `presentationStyle="pageSheet"` on Android forced a default light system dialog background, clashing with dark mode text and failing to trigger proactive app reloading.
+3. **Light Mode Non-Functional:** Choosing "Light (Parchment)" in Settings left the app pitch dark because screen roots hardcoded `backgroundColor: '#0d120f'` and Tailwind `text-on-dark` classes remained white.
+4. **Bookmark & Library UX Parity with Al Quran App:** User provided reference screenshots from "Al Quran" requiring a 3-tab segmented control (`Collections`, `Pins`, `Notes`), dismissable tip banner, search bar with filter, pinned `Last Read` auto-bookmark at top with direct jump, collection list with color tags and verse count, and bottom sheet edit/new collection modal with 6 color swatches (`#3b82f6`, `#10b981`, `#f43f5e`, `#a855f7`, `#f59e0b`, `#d97706`).
+
+### 2. Alternatives Evaluated
+- **Option A (Inline Theme Flags & Basic List):** Use conditional ternary operators inside each screen and keep bookmarks as a single flat list.
+  - *Cons:* Fragile, leads to visual inconsistency across screens, and fails to deliver the organized folder structure demonstrated in the Al Quran reference.
+- **Option B (Universal ThemeContext + QUERY_ALL_PACKAGES + Full Al Quran Collections System):** Centralized `ThemeProvider` with tailored Celestial Dark (`#0d120f`) and Parchment Light (`#f8f6f0`) color tokens, native manifest permission configuration, and a full Collections / Pins / Notes architecture backed by MMKV.
+  - *Pros:* Complete visual consistency across all tabs, instant theme switching, full device app visibility, and 100% UX parity with the Al Quran reference.
+
+### 3. Decision & Trade-offs
+Selected **Option B**. Declared `QUERY_ALL_PACKAGES` in `app.json` and both `AndroidManifest.xml` files. Enhanced `AndroidBlockerModule.kt` to union launcher activities and installed applications with user apps prioritized at the top. Created `src/lib/themeContext.tsx` and connected all screens. Rebuilt `library.tsx` to match Al Quran 1:1.
+
+### 4. Implementation Details
+- `app.json`, `android/app/src/main/AndroidManifest.xml`, `modules/android-blocker/android/src/main/AndroidManifest.xml`: Added `QUERY_ALL_PACKAGES` permission and launcher `<queries>`.
+- `AndroidBlockerModule.kt`: Enriched `getInstalledApps` with `pm.getInstalledApplications`, priority sorting (`isSystemApp` false first, then alphabetical), and fallback for non-system apps.
+- `src/lib/themeContext.tsx`: Universal `ThemeProvider` providing `colors` (background, surface, border, textPrimary, textSecondary, accent, etc.) and `isDark`.
+- `src/app/_layout.tsx`: Wrapped root in `<AppThemeProvider>`.
+- `src/app/(tabs)/_layout.tsx`: Themed tab bar background, borders, and active tint.
+- `src/app/(tabs)/settings.tsx`, `index.tsx`, `stats.tsx`, `reader.tsx`, `Card.tsx`, `DailyDevotionalCard.tsx`: Dynamically adapted to `useTheme()` tokens.
+- `src/lib/mmkv.ts`: Added `VerseCollection` model, `DEFAULT_COLLECTIONS`, `getCollections`, `saveCollection`, `deleteCollection`, and updated `Bookmark`.
+- `src/app/(tabs)/library.tsx`: Built 3-tab segmented control (`Collections`, `Pins`, `Notes`), helper tip banner with dismiss, search bar, pinned `Last Read` card, collections list, and edit/create bottom modal with 6 color swatches.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit`: Passed with 0 errors across the entire codebase.
+- Package enumeration captures all installed user apps (Instagram, TikTok, WhatsApp, X, etc.) and sorts them to the top.
+- Light (Parchment) mode active across all screens with crisp dark text on `#f8f6f0` background.
+- Library screen matches the Al Quran layout and functionality 100%.
+
+### 6. Lessons & Downstream Impact
+On Android, `presentationStyle="pageSheet"` within `<Modal>` must be avoided in cross-platform React Native apps when custom theme backgrounds are desired, as Android translates it to a platform-native window theme with fixed white backgrounds.
+
+
 

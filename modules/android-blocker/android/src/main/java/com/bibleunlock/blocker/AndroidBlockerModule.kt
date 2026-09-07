@@ -81,31 +81,64 @@ class AndroidBlockerModule : Module() {
 
         AsyncFunction("getInstalledApps") {
             val pm = context.packageManager
+            val appList = mutableListOf<Map<String, Any>>()
+            val selfPackage = context.packageName
+            val seenPackages = mutableSetOf<String>()
+
+            // 1. Query launcher activities
             val intent = Intent(Intent.ACTION_MAIN, null).apply {
                 addCategory(Intent.CATEGORY_LAUNCHER)
             }
             val resolveInfos = pm.queryIntentActivities(intent, 0)
-            val appList = mutableListOf<Map<String, Any>>()
-            val selfPackage = context.packageName
-
             for (resolveInfo in resolveInfos) {
                 val pkgName = resolveInfo.activityInfo.packageName
                 if (pkgName == selfPackage || pkgName == "android" || pkgName.startsWith("com.android.systemui")) {
                     continue
                 }
-                val label = resolveInfo.loadLabel(pm).toString()
-                val isSystem = (resolveInfo.activityInfo.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
-                val iconDrawable = resolveInfo.loadIcon(pm)
-                val iconBase64 = drawableToBase64(iconDrawable) ?: ""
+                if (seenPackages.add(pkgName)) {
+                    val label = resolveInfo.loadLabel(pm).toString()
+                    val isSystem = (resolveInfo.activityInfo.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
+                    val iconDrawable = resolveInfo.loadIcon(pm)
+                    val iconBase64 = drawableToBase64(iconDrawable) ?: ""
 
-                appList.add(mapOf(
-                    "packageName" to pkgName,
-                    "label" to label,
-                    "isSystemApp" to isSystem,
-                    "icon" to iconBase64
-                ))
+                    appList.add(mapOf(
+                        "packageName" to pkgName,
+                        "label" to label,
+                        "isSystemApp" to isSystem,
+                        "icon" to iconBase64
+                    ))
+                }
             }
-            appList.sortBy { (it["label"] as? String)?.lowercase() ?: "" }
+
+            // 2. Query installed applications as fallback/union to ensure all user apps (Instagram, TikTok, X, etc.) are captured
+            try {
+                val installedApplications = pm.getInstalledApplications(0)
+                for (appInfo in installedApplications) {
+                    val pkgName = appInfo.packageName
+                    if (pkgName == selfPackage || pkgName == "android" || pkgName.startsWith("com.android.systemui")) {
+                        continue
+                    }
+                        val isSystem = (appInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
+                        val launchIntent = pm.getLaunchIntentForPackage(pkgName)
+                        if ((launchIntent != null || !isSystem) && seenPackages.add(pkgName)) {
+                            val label = pm.getApplicationLabel(appInfo).toString()
+                            val iconDrawable = pm.getApplicationIcon(appInfo)
+                            val iconBase64 = drawableToBase64(iconDrawable) ?: ""
+
+                            appList.add(mapOf(
+                                "packageName" to pkgName,
+                                "label" to label,
+                                "isSystemApp" to isSystem,
+                                "icon" to iconBase64
+                            ))
+                        }
+                    }
+                }
+            } catch (_: Exception) {
+                // Ignore if getInstalledApplications fails
+            }
+
+            appList.sortWith(compareBy({ (it["isSystemApp"] as? Boolean) ?: false }, { (it["label"] as? String)?.lowercase() ?: "" }))
             return@AsyncFunction appList
         }
     }

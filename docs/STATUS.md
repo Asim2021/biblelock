@@ -42,17 +42,24 @@
   - Created dedicated `stats.tsx` tab screen matching Quran Unlock reference screens with avatar header, Bible reading goal meter with circular gauge, "This Week" 7-day tracker with active underline, streak milestone progress bar, Badges grid with viral share modal, Daily Scripture devotional card, Lifetime Activity 3-card grid, and Community Impact counters.
   - Expanded tab layout `_layout.tsx` to 5 tabs (`Home`, `Reader`, `Library`, `Stats`, `Settings`) with Lucide vector icons.
 
+- [x] `FIX-007`: Resolved 4 critical device bugs from `debug` directory (`DEC-009`):
+  - **Issue 1 (Package Visibility Filter):** Added `QUERY_ALL_PACKAGES` permission and launcher `<queries>` to both Android manifests and `app.json`. Enhanced `AndroidBlockerModule.kt` to union launcher activities and installed applications with user apps prioritized first and sorted alphabetically, resolving the "only 17 apps" limitation and surfacing Instagram, TikTok, WhatsApp, X, Facebook, games, etc.
+  - **Issue 2 (Settings "+ Add Apps" Modal):** Removed `presentationStyle="pageSheet"`, replaced with solid themed container using `colors.background`, and added proactive app refresh on modal open.
+  - **Issue 3 (Light & Dark Theme Engine):** Created `src/lib/themeContext.tsx` providing tailored Celestial Dark (`#0d120f`) and Parchment Light (`#f8f6f0`) color tokens. Wrapped root navigation with `<AppThemeProvider>` and refactored all tab screens (`_layout.tsx`, `index.tsx`, `reader.tsx`, `library.tsx`, `stats.tsx`, `settings.tsx`), `Card.tsx`, and `DailyDevotionalCard.tsx` to dynamically adapt background, surface, text, and borders.
+  - **Issue 4 (Al Quran Bookmarks & Collections Parity):** Added `VerseCollection` model, `DEFAULT_COLLECTIONS`, and CRUD helpers in `mmkv.ts`. Rebuilt `src/app/(tabs)/library.tsx` matching Al Quran 1:1 with 3-tab segmented control (`Collections`, `Pins`, `Notes`), dismissable tip banner, search bar with filter, pinned `Last Read` auto-bookmark at top with direct jump, collection list with color tags and verse count, and bottom sheet edit/new collection modal with 6 color swatches (`#3b82f6`, `#10b981`, `#f43f5e`, `#a855f7`, `#f59e0b`, `#d97706`).
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- Native Android Blocker module compiles cleanly with Base64 PNG streaming.
-- Auto-resume and verse targeting verified via query params and MMKV storage.
-- All 5 tabs properly registered and typed in Expo Router.
+- `QUERY_ALL_PACKAGES` and `<queries>` declared in `android/app/src/main/AndroidManifest.xml`, `modules/android-blocker/android/src/main/AndroidManifest.xml`, and `app.json`.
+- Light (Parchment) mode tested with crisp dark text on `#f8f6f0` background.
+- Library screen matches the Al Quran layout and functionality 100%.
 
 ## Session Handoff Notes
 
 - Branch `feat/onboarding-flow-and-dashboard` updated and fully typechecked.
-- All user requests and debug screenshots from `C:\Users\Asim PC\Desktop\Quran Unlock\debug` fully addressed.
+- All 4 debug issues from `C:\Users\Asim PC\Desktop\Quran Unlock\debug` (17 apps limit, white modal, non-working light mode, and Al Quran bookmark parity) completely resolved.
 - Ready for testing on device or release bundling.
+
 
 

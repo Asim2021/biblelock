@@ -69,7 +69,19 @@ function RootNavigation() {
 }
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ThemeProvider, DarkTheme } from 'expo-router/react-navigation';
+import { ThemeProvider as NavigationThemeProvider, DarkTheme, DefaultTheme } from 'expo-router/react-navigation';
+import { ThemeProvider as AppThemeProvider, useTheme } from '../lib/themeContext';
+
+function ThemedNavigationWrapper() {
+  const { isDark } = useTheme();
+  return (
+    <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+      <AuthProvider>
+        <RootNavigation />
+      </AuthProvider>
+    </NavigationThemeProvider>
+  );
+}
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -100,12 +112,10 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={DarkTheme}>
-        <AuthProvider>
-          <StatusBar style="light" />
-          <RootNavigation />
-        </AuthProvider>
-      </ThemeProvider>
+      <AppThemeProvider>
+        <ThemedNavigationWrapper />
+      </AppThemeProvider>
     </SafeAreaProvider>
   );
 }
+

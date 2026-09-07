@@ -2,25 +2,27 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, BookOpen, Bookmark, BarChart2, Settings } from 'lucide-react-native';
+import { useTheme } from '../../lib/themeContext';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const bottomInset = Math.max(8, insets.bottom);
+  const { colors, isDark } = useTheme();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#0d120f',
-          borderTopColor: '#1a261f',
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
           borderTopWidth: 1,
           height: 56 + bottomInset,
           paddingBottom: bottomInset,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: '#f5b800',
-        tabBarInactiveTintColor: '#6b8277',
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: isDark ? '#6b8277' : '#7b8c82',
         tabBarLabelStyle: {
           fontFamily: 'Inter_500Medium',
           fontSize: 11,

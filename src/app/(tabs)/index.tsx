@@ -36,10 +36,13 @@ import { DailyDevotionalCard } from '../../components/DailyDevotionalCard';
 import { PauseBlockingModal } from '../../components/PauseBlockingModal';
 import { HabitDay, ImpactStats } from '../../types/onboarding';
 
+import { useTheme } from '../../lib/themeContext';
+
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, profile } = useAuth();
+  const { colors, isDark } = useTheme();
 
   const [refreshing, setRefreshing] = useState(false);
   const [isShielded, setIsShielded] = useState(true);
@@ -115,7 +118,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: '#0d120f' }}
+      style={{ flex: 1, backgroundColor: colors.background }}
       edges={['top', 'left', 'right']}
     >
       <ScrollView
@@ -126,19 +129,30 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#f5b800"
+            tintColor={colors.accent}
           />
         }
       >
         {/* Top Header Bar */}
         <View className="flex-row items-center justify-between pt-4 pb-2">
           <View className="flex-1 pr-3">
-            <Text className="text-[11px] font-sans-medium text-[#78a898] uppercase tracking-widest">
+            <Text
+              style={{
+                fontSize: 11,
+                fontFamily: 'Inter_500Medium',
+                color: colors.textSecondary,
+                textTransform: 'uppercase',
+                letterSpacing: 1.5,
+              }}
+            >
               Grace and peace to you,
             </Text>
             <Text
-              className="text-2xl font-serif-bold text-[#faf9f5]"
-              style={{ fontFamily: 'EBGaramond_700Bold' }}
+              style={{
+                fontSize: 24,
+                fontFamily: 'EBGaramond_700Bold',
+                color: colors.textPrimary,
+              }}
             >
               {name}
             </Text>
@@ -147,29 +161,49 @@ export default function HomeScreen() {
           {/* Quick Settings & Status Badge */}
           <View className="flex-row items-center">
             {isPaused ? (
-              <View className="flex-row items-center px-2.5 py-1 rounded-full bg-[#342e18] border border-[#f5b800] mr-2">
-                <Pause size={12} color="#f5b800" style={{ marginRight: 4 }} />
-                <Text className="text-[10px] font-sans-bold text-[#f5b800]">
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 20,
+                  backgroundColor: colors.accentBg,
+                  borderWidth: 1,
+                  borderColor: colors.accent,
+                  marginRight: 8,
+                }}
+              >
+                <Pause size={12} color={colors.accent} style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 10, fontFamily: 'Inter_700Bold', color: colors.accent }}>
                   Paused ({remainingMins}m)
                 </Text>
               </View>
             ) : (
               <View
-                className={`flex-row items-center px-2.5 py-1 rounded-full border mr-2 ${
-                  isShielded
-                    ? 'bg-[#18261e] border-[#385e48]'
-                    : 'bg-[#291b1b] border-[#5e3838]'
-                }`}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 20,
+                  borderWidth: 1,
+                  borderColor: isShielded ? '#385e48' : '#5e3838',
+                  backgroundColor: isShielded ? (isDark ? '#18261e' : '#edf8f0') : (isDark ? '#291b1b' : '#fdeeed'),
+                  marginRight: 8,
+                }}
               >
                 {isShielded ? (
-                  <ShieldCheck size={12} color="#5db872" style={{ marginRight: 4 }} />
+                  <ShieldCheck size={12} color={colors.success} style={{ marginRight: 4 }} />
                 ) : (
-                  <ShieldAlert size={12} color="#ff7b72" style={{ marginRight: 4 }} />
+                  <ShieldAlert size={12} color={colors.danger} style={{ marginRight: 4 }} />
                 )}
                 <Text
-                  className={`text-[10px] font-sans-bold ${
-                    isShielded ? 'text-[#5db872]' : 'text-[#ff7b72]'
-                  }`}
+                  style={{
+                    fontSize: 10,
+                    fontFamily: 'Inter_700Bold',
+                    color: isShielded ? colors.success : colors.danger,
+                  }}
                 >
                   {isShielded ? 'Shielded' : 'Unshielded'}
                 </Text>
@@ -178,25 +212,65 @@ export default function HomeScreen() {
 
             <Pressable
               onPress={() => router.push('/settings' as any)}
-              className="w-10 h-10 rounded-full bg-[#18231c] border border-[#273d30] items-center justify-center active:opacity-80"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: colors.surfaceSubtle,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <Settings size={18} color="#f5b800" />
+              <Settings size={18} color={colors.accent} />
             </Pressable>
           </View>
         </View>
 
         {/* Hero Card: "Time to Read" */}
-        <View className="my-4 p-5 rounded-3xl bg-[#141d18] border border-[#24372a] shadow-xl">
+        <View
+          style={{
+            marginVertical: 16,
+            padding: 20,
+            borderRadius: 24,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: isDark ? 0.3 : 0.05,
+            shadowRadius: 12,
+            elevation: 3,
+          }}
+        >
           {/* Header Row */}
           <View className="flex-row items-center justify-between mb-3">
             <View className="flex-row items-center">
-              <Clock size={14} color="#f5b800" style={{ marginRight: 6 }} />
-              <Text className="text-xs font-sans-bold text-[#f5b800] uppercase tracking-widest">
+              <Clock size={14} color={colors.accent} style={{ marginRight: 6 }} />
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: 'Inter_700Bold',
+                  color: colors.accent,
+                  textTransform: 'uppercase',
+                  letterSpacing: 1,
+                }}
+              >
                 Time to Read
               </Text>
             </View>
-            <View className="px-2.5 py-0.5 rounded-full bg-[#202e24] border border-[#2e4635]">
-              <Text className="text-[11px] font-sans-medium text-[#78a898]">
+            <View
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 2,
+                borderRadius: 20,
+                backgroundColor: colors.surfaceSubtle,
+                borderWidth: 1,
+                borderColor: colors.border,
+              }}
+            >
+              <Text style={{ fontSize: 11, fontFamily: 'Inter_500Medium', color: colors.textSecondary }}>
                 {timer.goalMinutes} min target
               </Text>
             </View>
@@ -204,25 +278,43 @@ export default function HomeScreen() {
 
           {/* Motivational Message */}
           <Text
-            className="text-lg font-serif text-[#faf9f5] leading-snug mb-2"
-            style={{ fontFamily: 'EBGaramond_700Bold' }}
+            style={{
+              fontFamily: 'EBGaramond_700Bold',
+              fontSize: 18,
+              color: colors.textPrimary,
+              lineHeight: 24,
+              marginBottom: 8,
+            }}
           >
             {timer.isGoalMet
               ? 'Amen! Daily reading goal completed'
               : 'Feed your spirit before feeding the scroll'}
           </Text>
 
-          <Text className="text-xs font-sans text-[#78a898] leading-relaxed mb-4">
+          <Text style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 18, marginBottom: 16 }}>
             {timer.isGoalMet
               ? 'Praise God! You have fulfilled your reading target today. All apps are unshielded.'
               : `${minutesRemainingToGoal} min remaining to unlock your guarded apps today.`}
           </Text>
 
           {/* Progress Bar */}
-          <View className="w-full h-2.5 bg-[#1f2b23] rounded-full overflow-hidden mb-5">
+          <View
+            style={{
+              width: '100%',
+              height: 10,
+              backgroundColor: colors.surfaceSubtle,
+              borderRadius: 5,
+              overflow: 'hidden',
+              marginBottom: 20,
+            }}
+          >
             <View
-              className="h-full bg-[#f5b800] rounded-full"
-              style={{ width: `${Math.round(timer.progress * 100)}%` }}
+              style={{
+                height: '100%',
+                backgroundColor: colors.accent,
+                borderRadius: 5,
+                width: `${Math.round(timer.progress * 100)}%`,
+              }}
             />
           </View>
 
@@ -239,10 +331,18 @@ export default function HomeScreen() {
                 },
               } as any);
             }}
-            className="w-full py-4 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg flex-row"
+            style={{
+              width: '100%',
+              paddingVertical: 14,
+              borderRadius: 16,
+              backgroundColor: colors.accent,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+            }}
           >
             <BookOpen size={18} color="#141413" style={{ marginRight: 8 }} />
-            <Text className="text-base font-sans-bold text-[#141413]">
+            <Text style={{ fontSize: 16, fontFamily: 'Inter_700Bold', color: '#141413' }}>
               {timer.isGoalMet ? 'Continue in Scripture' : "Amen, Let's Read"}
             </Text>
           </Pressable>
@@ -254,25 +354,46 @@ export default function HomeScreen() {
         </View>
 
         {/* Streak & Pause Blocking Card */}
-        <View className="mb-4 p-5 rounded-3xl bg-[#151e18] border border-[#223328] flex-row items-center justify-between">
+        <View
+          style={{
+            marginBottom: 16,
+            padding: 20,
+            borderRadius: 24,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <View className="flex-1 pr-3">
             <View className="flex-row items-center mb-1">
               <Flame size={22} color="#ff7b42" style={{ marginRight: 8 }} />
-              <Text className="text-xl font-sans-bold text-[#faf9f5]">
+              <Text style={{ fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
                 {timer.streak} {timer.streak === 1 ? 'Day' : 'Days'} Streak
               </Text>
             </View>
-            <Text className="text-xs font-sans text-[#78a898]">
+            <Text style={{ fontSize: 12, color: colors.textSecondary }}>
               Keep your daily spiritual flame burning
             </Text>
           </View>
 
           <Pressable
             onPress={() => setIsPauseModalVisible(true)}
-            className="px-3.5 py-2.5 rounded-xl bg-[#223126] border border-[#354f3c] active:opacity-80 flex-row items-center"
+            style={{
+              paddingHorizontal: 14,
+              paddingVertical: 10,
+              borderRadius: 12,
+              backgroundColor: colors.surfaceSubtle,
+              borderWidth: 1,
+              borderColor: colors.border,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
           >
-            <Pause size={13} color="#f5b800" style={{ marginRight: 6 }} />
-            <Text className="text-xs font-sans-bold text-[#f5b800]">
+            <Pause size={13} color={colors.accent} style={{ marginRight: 6 }} />
+            <Text style={{ fontSize: 12, fontFamily: 'Inter_700Bold', color: colors.accent }}>
               {isPaused ? `Paused (${remainingMins}m)` : 'Pause Blocking'}
             </Text>
           </Pressable>
@@ -283,46 +404,117 @@ export default function HomeScreen() {
 
         {/* Your Impact Section */}
         <View className="my-3">
-          <Text className="text-base font-sans-bold text-[#faf9f5] mb-3 px-1">
+          <Text
+            style={{
+              fontSize: 16,
+              fontFamily: 'Inter_700Bold',
+              color: colors.textPrimary,
+              marginBottom: 12,
+              paddingHorizontal: 4,
+            }}
+          >
             Your Impact
           </Text>
 
           <View className="flex-row justify-between">
             {/* Minutes Read */}
-            <View className="flex-1 mr-2 p-4 rounded-2xl bg-[#141a16] border border-[#202a22] items-center">
-              <View className="w-10 h-10 rounded-xl bg-[#1c2921] items-center justify-center mb-2">
-                <BookOpen size={20} color="#f5b800" />
+            <View
+              style={{
+                flex: 1,
+                marginRight: 6,
+                padding: 16,
+                borderRadius: 16,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+              }}
+            >
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  backgroundColor: colors.surfaceSubtle,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                <BookOpen size={20} color={colors.accent} />
               </View>
-              <Text className="text-lg font-sans-bold text-[#faf9f5]">
+              <Text style={{ fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
                 {impact.minutesRead}m
               </Text>
-              <Text className="text-[10px] font-sans text-[#78a898] mt-0.5 text-center">
+              <Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 2, textAlign: 'center' }}>
                 Minutes in Word
               </Text>
             </View>
 
             {/* Screen Time Saved */}
-            <View className="flex-1 mx-1 p-4 rounded-2xl bg-[#141a16] border border-[#202a22] items-center">
-              <View className="w-10 h-10 rounded-xl bg-[#1c2921] items-center justify-center mb-2">
-                <Clock size={20} color="#f5b800" />
+            <View
+              style={{
+                flex: 1,
+                marginHorizontal: 4,
+                padding: 16,
+                borderRadius: 16,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+              }}
+            >
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  backgroundColor: colors.surfaceSubtle,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                <Clock size={20} color={colors.accent} />
               </View>
-              <Text className="text-lg font-sans-bold text-[#f5b800]">
+              <Text style={{ fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.accent }}>
                 {impact.hoursSaved}h
               </Text>
-              <Text className="text-[10px] font-sans text-[#78a898] mt-0.5 text-center">
+              <Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 2, textAlign: 'center' }}>
                 Scroll Saved
               </Text>
             </View>
 
             {/* Total Sessions */}
-            <View className="flex-1 ml-2 p-4 rounded-2xl bg-[#141a16] border border-[#202a22] items-center">
-              <View className="w-10 h-10 rounded-xl bg-[#1c2921] items-center justify-center mb-2">
-                <Trophy size={20} color="#f5b800" />
+            <View
+              style={{
+                flex: 1,
+                marginLeft: 6,
+                padding: 16,
+                borderRadius: 16,
+                backgroundColor: colors.surface,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+              }}
+            >
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  backgroundColor: colors.surfaceSubtle,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 8,
+                }}
+              >
+                <Trophy size={20} color={colors.accent} />
               </View>
-              <Text className="text-lg font-sans-bold text-[#faf9f5]">
+              <Text style={{ fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
                 {impact.sessions}
               </Text>
-              <Text className="text-[10px] font-sans text-[#78a898] mt-0.5 text-center">
+              <Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 2, textAlign: 'center' }}>
                 Devotions
               </Text>
             </View>

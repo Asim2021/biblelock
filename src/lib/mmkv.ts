@@ -104,6 +104,7 @@ export const STORAGE_KEYS = {
   TOTAL_SESSIONS_COUNT: 'total_sessions_count',
   LAST_READ_POSITION: 'last_read_position',
   BOOKMARKS: 'user_bookmarks',
+  COLLECTIONS: 'user_collections',
   THEME_MODE: 'theme_mode',
 } as const;
 
@@ -418,7 +419,14 @@ export function setLastReadPosition(pos: LastReadPosition): void {
   storage.set(STORAGE_KEYS.LAST_READ_POSITION, JSON.stringify(pos));
 }
 
-// Bookmarks Management
+// Bookmarks & Collections Management
+export interface VerseCollection {
+  id: string;
+  name: string;
+  color: string;
+  createdAt: number;
+}
+
 export interface Bookmark {
   id: string;
   title: string;
@@ -428,9 +436,43 @@ export interface Bookmark {
   verseNumber: number;
   verseText: string;
   color: string;
+  collectionId?: string;
+  collectionName?: string;
   note?: string;
   createdAt: number;
   isPinnedLastRead?: boolean;
+}
+
+export const DEFAULT_COLLECTIONS: VerseCollection[] = [
+  { id: 'prayers', name: 'Daily Prayers', color: '#f59e0b', createdAt: 1 },
+  { id: 'peace', name: 'Peace & Comfort', color: '#d97706', createdAt: 2 },
+  { id: 'strength', name: 'Strength & Healing', color: '#10b981', createdAt: 3 },
+];
+
+export function getCollections(): VerseCollection[] {
+  const json = storage.getString(STORAGE_KEYS.COLLECTIONS);
+  if (!json) {
+    storage.set(STORAGE_KEYS.COLLECTIONS, JSON.stringify(DEFAULT_COLLECTIONS));
+    return DEFAULT_COLLECTIONS;
+  }
+  try {
+    const list = JSON.parse(json);
+    return Array.isArray(list) && list.length > 0 ? list : DEFAULT_COLLECTIONS;
+  } catch {
+    return DEFAULT_COLLECTIONS;
+  }
+}
+
+export function saveCollection(collection: VerseCollection): void {
+  const list = getCollections();
+  const filtered = list.filter((c) => c.id !== collection.id);
+  storage.set(STORAGE_KEYS.COLLECTIONS, JSON.stringify([...filtered, collection]));
+}
+
+export function deleteCollection(id: string): void {
+  const list = getCollections();
+  const filtered = list.filter((c) => c.id !== id);
+  storage.set(STORAGE_KEYS.COLLECTIONS, JSON.stringify(filtered));
 }
 
 export function getBookmarks(): Bookmark[] {
