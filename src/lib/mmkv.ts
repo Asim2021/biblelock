@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { OnboardingData, HabitDay, ImpactStats } from '../types/onboarding';
 
 // ponytail: fallback storage in memory for web/testing/server environments
 class MemoryStorage {
@@ -95,6 +96,12 @@ export const STORAGE_KEYS = {
   LAST_READ_DATE: 'last_read_date',
   LAST_SCREEN_TIME_NOTIFICATION: 'last_screentime_notification',
   READING_PROGRESS_PREFIX: 'reading_seconds_',
+  ONBOARDING_DATA: 'onboarding_data',
+  ONBOARDING_COMPLETED: 'onboarding_completed',
+  USER_NAME: 'user_name',
+  SCHEDULED_READING_TIMES: 'scheduled_reading_times',
+  PAUSE_BLOCKING_UNTIL: 'pause_blocking_until',
+  TOTAL_SESSIONS_COUNT: 'total_sessions_count',
 } as const;
 
 // Default Presets
@@ -213,3 +220,166 @@ export function getLastScreenTimeNotificationDate(): string | null {
 export function setLastScreenTimeNotificationDate(dateStr: string): void {
   storage.set(STORAGE_KEYS.LAST_SCREEN_TIME_NOTIFICATION, dateStr);
 }
+
+// Onboarding State Helpers
+
+const DEFAULT_ONBOARDING_DATA: OnboardingData = {
+  language: 'en',
+  userName: 'Disciple',
+  readingFrequency: ['Every day'],
+  biggestChallenges: ['Social media distractions'],
+  readingTimes: ['7:00 AM'],
+  durationMinutes: 10,
+  blockedApps: DEFAULT_BLOCKED_APPS,
+  isCompleted: false,
+};
+
+export function getOnboardingData(): OnboardingData {
+  const raw = storage.getString(STORAGE_KEYS.ONBOARDING_DATA);
+  if (!raw) return DEFAULT_ONBOARDING_DATA;
+  try {
+    return { ...DEFAULT_ONBOARDING_DATA, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_ONBOARDING_DATA;
+  }
+}
+
+export function setOnboardingData(data: Partial<OnboardingData>): void {
+  const current = getOnboardingData();
+  const updated = { ...current, ...data };
+  storage.set(STORAGE_KEYS.ONBOARDING_DATA, JSON.stringify(updated));
+
+  if (data.userName) {
+    setUserName(data.userName);
+  }
+  if (data.durationMinutes) {
+    setDailyGoalMinutes(data.durationMinutes);
+  }
+  if (data.blockedApps) {
+    setBlockedApps(data.blockedApps);
+  }
+  if (data.readingTimes) {
+    setScheduledReadingTimes(data.readingTimes);
+  }
+  if (typeof data.isCompleted === 'boolean') {
+    setOnboardingCompleted(data.isCompleted);
+  }
+}
+
+export function isOnboardingCompleted(): boolean {
+  return storage.getBoolean(STORAGE_KEYS.ONBOARDING_COMPLETED) ?? false;
+}
+
+export function setOnboardingCompleted(completed: boolean): void {
+  storage.set(STORAGE_KEYS.ONBOARDING_COMPLETED, completed);
+}
+
+export function getUserName(): string {
+  return storage.getString(STORAGE_KEYS.USER_NAME) ?? 'Disciple';
+}
+
+export function setUserName(name: string): void {
+  storage.set(STORAGE_KEYS.USER_NAME, name.trim());
+}
+
+export function getScheduledReadingTimes(): string[] {
+  const raw = storage.getString(STORAGE_KEYS.SCHEDULED_READING_TIMES);
+  if (!raw) return ['7:00 AM'];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return ['7:00 AM'];
+  }
+}
+
+export function setScheduledReadingTimes(times: string[]): void {
+  storage.set(STORAGE_KEYS.SCHEDULED_READING_TIMES, JSON.stringify(times));
+}
+
+// Pause Blocking Helpers (Allows pausing shields for 15m, 30m, 1h)
+
+export function getPauseBlockingUntil(): number | null {
+  const val = storage.getNumber(STORAGE_KEYS.PAUSE_BLOCKING_UNTIL);
+  return typeof val === 'number' ? val : null;
+}
+
+export function setPauseBlockingUntil(untilTimestamp: number | null): void {
+  if (untilTimestamp === null) {
+    storage.delete(STORAGE_KEYS.PAUSE_BLOCKING_UNTIL);
+  } else {
+    storage.set(STORAGE_KEYS.PAUSE_BLOCKING_UNTIL, untilTimestamp);
+  }
+}
+
+export function isBlockingPaused(): boolean {
+  const until = getPauseBlockingUntil();
+  if (!until) return false;
+  if (Date.now() > until) {
+    setPauseBlockingUntil(null);
+    return false;
+  }
+  return true;
+}
+
+// 30-Day Habit Timeline
+
+export function getReadingHistory30Days(): HabitDay[] {
+  const days: HabitDay[] = [];
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const goalSeconds = getDailyGoalMinutes() * 60;
+
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateKey = `${year}-${month}-${day}`;
+
+    const progressSec = getReadingProgress(dateKey);
+    const completed = progressSec >= goalSeconds;
+
+    days.push({
+      date: dateKey,
+      dayLabel: dayNames[d.getDay()],
+      dayNumber: d.getDate(),
+      completed,
+      isToday: i === 0,
+    });
+  }
+
+  return days;
+}
+
+// Impact Stats & Sessions
+
+export function getTotalSessionsCount(): number {
+  return storage.getNumber(STORAGE_KEYS.TOTAL_SESSIONS_COUNT) ?? 0;
+}
+
+export function incrementSessionsCount(): number {
+  const current = getTotalSessionsCount();
+  const updated = current + 1;
+  storage.set(STORAGE_KEYS.TOTAL_SESSIONS_COUNT, updated);
+  return updated;
+}
+
+export function getImpactStats(): ImpactStats {
+  const history = getReadingHistory30Days();
+  let totalSeconds = 0;
+  for (const day of history) {
+    totalSeconds += getReadingProgress(day.date);
+  }
+
+  const minutesRead = Math.floor(totalSeconds / 60);
+  // Estimate: for every 1 min of Scripture read, ~3 mins of doomscrolling saved
+  const hoursSaved = parseFloat(((totalSeconds * 3) / 3600).toFixed(1));
+  const sessions = getTotalSessionsCount();
+
+  return {
+    minutesRead,
+    hoursSaved,
+    sessions,
+  };
+}
+
