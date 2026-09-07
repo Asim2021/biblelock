@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, BookOpen, Settings } from 'lucide-react-native';
+import { Home, BookOpen, Bookmark, BarChart2, Settings } from 'lucide-react-native';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -43,6 +43,24 @@ export default function TabLayout() {
           title: 'Reader',
           tabBarIcon: ({ color, focused }) => (
             <BookOpen size={22} color={color} strokeWidth={focused ? 2.5 : 1.8} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="library"
+        options={{
+          title: 'Library',
+          tabBarIcon: ({ color, focused }) => (
+            <Bookmark size={22} color={color} strokeWidth={focused ? 2.5 : 1.8} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="stats"
+        options={{
+          title: 'Stats',
+          tabBarIcon: ({ color, focused }) => (
+            <BarChart2 size={22} color={color} strokeWidth={focused ? 2.5 : 1.8} />
           ),
         }}
       />

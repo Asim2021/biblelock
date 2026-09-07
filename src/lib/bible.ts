@@ -67,30 +67,50 @@ export function getChapter(
 }
 
 // Fixed rotation for daily verse
+// Curated inspirational verses
 const INSPIRATIONAL_VERSES = [
-  { bookIndex: 18, chapter: 23, verseNum: 1 }, // Psalm 23:1
-  { bookIndex: 42, chapter: 3, verseNum: 16 }, // John 3:16
-  { bookIndex: 49, chapter: 4, verseNum: 13 }, // Philippians 4:13
-  { bookIndex: 19, chapter: 3, verseNum: 5 },  // Proverbs 3:5
-  { bookIndex: 44, chapter: 8, verseNum: 28 }, // Romans 8:28
-  { bookIndex: 22, chapter: 40, verseNum: 31 },// Isaiah 40:31
-  { bookIndex: 23, chapter: 29, verseNum: 11 },// Jeremiah 29:11
+  { book: 'Psalms', chapter: 23, verseNum: 1 },
+  { book: 'John', chapter: 3, verseNum: 16 },
+  { book: 'Philippians', chapter: 4, verseNum: 13 },
+  { book: 'Proverbs', chapter: 3, verseNum: 5 },
+  { book: 'Romans', chapter: 8, verseNum: 28 },
+  { book: 'Isaiah', chapter: 40, verseNum: 31 },
+  { book: 'Jeremiah', chapter: 29, verseNum: 11 },
+  { book: 'Joshua', chapter: 1, verseNum: 9 },
+  { book: 'Matthew', chapter: 6, verseNum: 33 },
+  { book: 'Matthew', chapter: 11, verseNum: 28 },
+  { book: '2 Corinthians', chapter: 12, verseNum: 9 },
+  { book: 'Galatians', chapter: 5, verseNum: 22 },
+  { book: 'Ephesians', chapter: 2, verseNum: 8 },
+  { book: 'Hebrews', chapter: 11, verseNum: 1 },
+  { book: 'James', chapter: 1, verseNum: 5 },
+  { book: '1 Peter', chapter: 5, verseNum: 7 },
+  { book: 'Psalms', chapter: 46, verseNum: 1 },
+  { book: 'Psalms', chapter: 119, verseNum: 105 },
+  { book: 'Romans', chapter: 12, verseNum: 2 },
+  { book: 'Proverbs', chapter: 16, verseNum: 3 },
 ];
 
-export function getDailyVerse(translation: 'KJV' | 'WEB' = 'WEB'): {
+export interface DailyVerseItem {
   bookName: string;
   chapter: number;
   verseNum: number;
   text: string;
-} {
-  const bible = getBible(translation);
-  const today = new Date();
-  const dayOfYear = Math.floor(
-    (today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24
-  );
-  const pick = INSPIRATIONAL_VERSES[dayOfYear % INSPIRATIONAL_VERSES.length];
+  index: number;
+}
 
-  const book = bible.books[pick.bookIndex] || bible.books[0];
+function resolveVerseItem(
+  translation: 'KJV' | 'WEB',
+  index: number
+): DailyVerseItem {
+  const bible = getBible(translation);
+  const safeIdx = ((index % INSPIRATIONAL_VERSES.length) + INSPIRATIONAL_VERSES.length) % INSPIRATIONAL_VERSES.length;
+  const pick = INSPIRATIONAL_VERSES[safeIdx];
+
+  const book = bible.books.find(
+    (b) => b.name.toLowerCase() === pick.book.toLowerCase() || b.id.toLowerCase() === pick.book.toLowerCase()
+  ) || bible.books[0];
+
   const chapter = book.chapters.find((c) => c.chapter === pick.chapter) || book.chapters[0];
   const verse = chapter?.verses.find((v) => v.verse === pick.verseNum) || chapter?.verses[0];
 
@@ -99,5 +119,26 @@ export function getDailyVerse(translation: 'KJV' | 'WEB' = 'WEB'): {
     chapter: chapter?.chapter ?? 1,
     verseNum: verse?.verse ?? 1,
     text: verse?.text ?? 'In the beginning God created the heaven and the earth.',
+    index: safeIdx,
   };
 }
+
+export function getDailyVerse(translation: 'KJV' | 'WEB' = 'WEB'): DailyVerseItem {
+  const today = new Date();
+  const dayOfYear = Math.floor(
+    (today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24
+  );
+  return resolveVerseItem(translation, dayOfYear);
+}
+
+export function getRandomVerse(
+  translation: 'KJV' | 'WEB' = 'WEB',
+  excludeIndex?: number
+): DailyVerseItem {
+  let nextIdx = Math.floor(Math.random() * INSPIRATIONAL_VERSES.length);
+  if (excludeIndex !== undefined && nextIdx === excludeIndex && INSPIRATIONAL_VERSES.length > 1) {
+    nextIdx = (nextIdx + 1) % INSPIRATIONAL_VERSES.length;
+  }
+  return resolveVerseItem(translation, nextIdx);
+}
+

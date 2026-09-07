@@ -102,6 +102,9 @@ export const STORAGE_KEYS = {
   SCHEDULED_READING_TIMES: 'scheduled_reading_times',
   PAUSE_BLOCKING_UNTIL: 'pause_blocking_until',
   TOTAL_SESSIONS_COUNT: 'total_sessions_count',
+  LAST_READ_POSITION: 'last_read_position',
+  BOOKMARKS: 'user_bookmarks',
+  THEME_MODE: 'theme_mode',
 } as const;
 
 // Default Presets
@@ -382,5 +385,84 @@ export function getImpactStats(): ImpactStats {
     hoursSaved,
     sessions,
   };
+}
+
+// Last Read Position Tracking
+export interface LastReadPosition {
+  bookIndex: number;
+  bookName: string;
+  chapterNumber: number;
+  verseNumber?: number;
+  updatedAt: number;
+}
+
+export function getLastReadPosition(): LastReadPosition {
+  const json = storage.getString(STORAGE_KEYS.LAST_READ_POSITION);
+  if (json) {
+    try {
+      return JSON.parse(json);
+    } catch {
+      // ignore parse failure
+    }
+  }
+  return {
+    bookIndex: 0,
+    bookName: 'Genesis',
+    chapterNumber: 1,
+    verseNumber: 1,
+    updatedAt: Date.now(),
+  };
+}
+
+export function setLastReadPosition(pos: LastReadPosition): void {
+  storage.set(STORAGE_KEYS.LAST_READ_POSITION, JSON.stringify(pos));
+}
+
+// Bookmarks Management
+export interface Bookmark {
+  id: string;
+  title: string;
+  bookIndex: number;
+  bookName: string;
+  chapterNumber: number;
+  verseNumber: number;
+  verseText: string;
+  color: string;
+  note?: string;
+  createdAt: number;
+  isPinnedLastRead?: boolean;
+}
+
+export function getBookmarks(): Bookmark[] {
+  const json = storage.getString(STORAGE_KEYS.BOOKMARKS);
+  if (!json) return [];
+  try {
+    return JSON.parse(json);
+  } catch {
+    return [];
+  }
+}
+
+export function saveBookmark(bookmark: Bookmark): void {
+  const list = getBookmarks();
+  const filtered = list.filter((b) => b.id !== bookmark.id);
+  storage.set(STORAGE_KEYS.BOOKMARKS, JSON.stringify([bookmark, ...filtered]));
+}
+
+export function deleteBookmark(id: string): void {
+  const list = getBookmarks();
+  const filtered = list.filter((b) => b.id !== id);
+  storage.set(STORAGE_KEYS.BOOKMARKS, JSON.stringify(filtered));
+}
+
+// Theme Settings
+export type ThemeMode = 'dark' | 'light' | 'system';
+
+export function getThemeMode(): ThemeMode {
+  return (storage.getString(STORAGE_KEYS.THEME_MODE) as ThemeMode) || 'dark';
+}
+
+export function setThemeMode(theme: ThemeMode): void {
+  storage.set(STORAGE_KEYS.THEME_MODE, theme);
 }
 

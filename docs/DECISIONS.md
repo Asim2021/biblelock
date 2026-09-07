@@ -226,3 +226,51 @@ Selected **Option B**. Added `lucide-react-native` for in-house modern vector ic
 ### 6. Lessons & Downstream Impact
 Always wrap modal content and bottom floating toolbars with dynamic `useSafeAreaInsets().bottom` rather than static bottom padding on Android, as gesture navigation and 3-button navigation have completely different insets (0px vs ~48px).
 
+---
+
+## [DEC-008] Reading Position Tracking, Native App Icon Streaming, and 5-Tab Navigation Architecture (Library & Stats)
+
+- **Date:** 2026-09-08
+- **Status:** Validated
+- **Related Task / Baseline:** STATUS.md (FIX-006)
+
+### 1. Problem / Trigger (Why the Original Plan Changed)
+User reported several blocking bugs from physical device testing:
+1. Reading position was not preserved: when reading Genesis chapter 5, quitting, and re-opening from the blocker overlay or home hero button, the reader reset to Genesis chapter 1.
+2. The Android native blocker overlay (`BlockerActivity.kt`) was branded with the wrong placeholder name ("Scripture Unlock"), lacked the radiant brand color scheme (`#0D120F`, `#F5B800`), and its CTA did not resume the user's reading position.
+3. Settings showed a static list of 5 hardcoded apps (TikTok, X, etc.) with emojis even if they were not installed, and the "+ Custom Apps" button was unresponsive.
+4. The installed app list in `AppPickerStep` displayed generic letter initials (`C`, `P`, `M`) instead of real installed application icons.
+5. No theme selection option (Light/Dark/System) was available in Settings.
+6. The Home Daily Devotional card lacked Refresh, Goto, and Share capabilities.
+7. Two vital menu tabs from Quran Unlock were missing: **Library** (pinned auto-saved Last Read marker + custom color-coded bookmarks) and **Stats** (faith growth analytics, 7-day tracker, milestone bar, badges, and community impact counters).
+
+### 2. Alternatives Evaluated
+- **Option A (File system image cache for native app icons):** Write each app icon to disk cache in Android storage and pass `file://` URLs.
+  - *Cons:* High I/O overhead, potential cache invalidation bugs, and orphaned temp files.
+- **Option B (Base64 data URI streaming directly from PackageManager):** Convert native `Drawable` icons to Base64 PNG strings during enumeration and pass `data:image/png;base64,...` across the Expo bridge.
+  - *Pros:* Zero filesystem writes, instant loading in React Native `<Image source={{ uri }} />`, and automatic garbage collection.
+
+### 3. Decision & Trade-offs
+Selected **Option B** for app icons. Persisted `LastReadPosition` directly in MMKV with zero IPC latency. Updated `reader.tsx` to read query parameters (`book`, `chapter`, `verse`) and auto-scroll with visual highlight. Added interactive modals for Custom Apps and Theme Mode in Settings. Implemented a 5-tab navigation bar (`Home`, `Reader`, `Library`, `Stats`, `Settings`) with dedicated `library.tsx` and `stats.tsx` screens.
+
+### 4. Implementation Details
+- `AndroidBlockerModule.kt`: Added `drawableToBase64()` helper to encode icons into Base64 PNG data URIs.
+- `BlockerActivity.kt`: Aligned branding to "Bible Unlock", background `#0D120F`, splash logo, and CTA linking to `bibleunlock://reader`.
+- `src/lib/mmkv.ts`: Added `LAST_READ_POSITION`, `BOOKMARKS`, and `THEME_MODE` storage methods and types.
+- `src/app/(tabs)/reader.tsx`: Supported query parameter navigation, target verse scrolling, and auto-saved position tracking.
+- `src/app/(tabs)/settings.tsx`: Replaced presets with dynamic blocked apps, "+ Custom Apps" selection modal, and Theme switcher.
+- `src/components/DailyDevotionalCard.tsx`: Reusable devotional card with Refresh (random verse), Goto (reader navigation), and Share (`https://bibleunlock.app`).
+- `src/app/(tabs)/library.tsx`: Created Library tab with pinned Last Read marker and custom bookmarks list.
+- `src/app/(tabs)/stats.tsx`: Created Stats tab with avatar header, goal meter with circular gauge, 7-day tracker with active day underline, milestone progress bar, Badges grid, lifetime activity, and community impact counters.
+- `src/app/(tabs)/_layout.tsx`: Registered all 5 tabs in order.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit` passing with 0 errors across all 5 tabs and modules.
+- Quitting at Genesis 5 and clicking "Read Bible Now" or Home hero resumes directly at Genesis 5.
+- Real installed app icons render crisply in App Picker and Settings.
+- 5-tab menu bar navigation operates seamlessly with Lucide vector icons.
+
+### 6. Lessons & Downstream Impact
+Persisting reader state to synchronous storage (MMKV) on every book or chapter transition prevents state loss even during unexpected app terminations or OS memory pressure kills.
+
+

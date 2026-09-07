@@ -32,16 +32,27 @@
   - Overwrote Android splashscreen drawables across 5 densities directly from `assets/images/splash-icon.png`.
   - Migrated entire app to `lucide-react-native` vector icons (`tabs`, `dashboard`, `reader`, `settings`, `paywall`, `onboarding`).
 
+- [x] `FIX-006`: Resolved 7 screenshot bugs, native app icons, reading progress tracking, and 5-tab menu expansion (`DEC-008`):
+  - Added native Base64 icon extraction (`drawableToBase64`) to `AndroidBlockerModule.kt` and updated `InstalledAppInfo` so real installed app icons render in `AppPickerStep.tsx` and `settings.tsx`.
+  - Implemented reading position persistence in MMKV (`getLastReadPosition`, `setLastReadPosition`), deep-linking navigation in `reader.tsx` (`useLocalSearchParams<{ book, chapter, verse }>()`), verse targeting with auto-scroll and highlight, and resuming from Genesis/any page.
+  - Aligned native Android blocker overlay (`BlockerActivity.kt`) with brand title "Bible Unlock", background `#0D120F`, high-res splash logo, and radiant gold CTA linking to `bibleunlock://reader`.
+  - Replaced hardcoded apps in `settings.tsx` with dynamic blocked apps list, interactive "+ Custom Apps" picker modal with search, and Appearance & Theme switcher (Dark / Light / System).
+  - Added 3 action buttons on Daily Devotional card (Refresh for new random verse, Goto for instant verse reading, Share with citation and `https://bibleunlock.app`).
+  - Created dedicated `library.tsx` tab screen with pinned non-deletable "Last Read" marker, custom bookmarks list with color coding and notes, and Scripture jump navigation.
+  - Created dedicated `stats.tsx` tab screen matching Quran Unlock reference screens with avatar header, Bible reading goal meter with circular gauge, "This Week" 7-day tracker with active underline, streak milestone progress bar, Badges grid with viral share modal, Daily Scripture devotional card, Lifetime Activity 3-card grid, and Community Impact counters.
+  - Expanded tab layout `_layout.tsx` to 5 tabs (`Home`, `Reader`, `Library`, `Stats`, `Settings`) with Lucide vector icons.
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- Overwrote `android/app/src/main/res/drawable-*/splashscreen_logo.png` across mdpi (288px), hdpi (432px), xhdpi (576px), xxhdpi (864px), xxxhdpi (1152px).
-- Bottom action buttons dynamically elevated with `useSafeAreaInsets().bottom` to clear 3-button system bars (`||| <`).
-- Replaced emojis across all major UI components with `lucide-react-native` icons.
+- Native Android Blocker module compiles cleanly with Base64 PNG streaming.
+- Auto-resume and verse targeting verified via query params and MMKV storage.
+- All 5 tabs properly registered and typed in Expo Router.
 
 ## Session Handoff Notes
 
-- Branch `feat/onboarding-flow-and-dashboard` updated and typecheck verified.
-- All 5 user reported debug items from screenshots resolved and tested against code.
-- Ready for full rebuild and wireless deployment on Android device.
+- Branch `feat/onboarding-flow-and-dashboard` updated and fully typechecked.
+- All user requests and debug screenshots from `C:\Users\Asim PC\Desktop\Quran Unlock\debug` fully addressed.
+- Ready for testing on device or release bundling.
+
 

@@ -3,14 +3,36 @@ package com.bibleunlock.blocker
 import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.Drawable
 import android.provider.Settings
+import android.util.Base64
 import android.view.accessibility.AccessibilityManager
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import java.io.ByteArrayOutputStream
 
 class AndroidBlockerModule : Module() {
     private val context: Context
         get() = appContext.reactContext ?: throw IllegalStateException("React context not available")
+
+    private fun drawableToBase64(drawable: Drawable): String? {
+        return try {
+            val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth.coerceAtMost(96) else 72
+            val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight.coerceAtMost(96) else 72
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bitmap)
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+            val stream = ByteArrayOutputStream()
+            val scaled = Bitmap.createScaledBitmap(bitmap, 64, 64, true)
+            scaled.compress(Bitmap.CompressFormat.PNG, 80, stream)
+            "data:image/png;base64," + Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     override fun definition() = ModuleDefinition {
         Name("android-blocker")
@@ -73,11 +95,14 @@ class AndroidBlockerModule : Module() {
                 }
                 val label = resolveInfo.loadLabel(pm).toString()
                 val isSystem = (resolveInfo.activityInfo.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
+                val iconDrawable = resolveInfo.loadIcon(pm)
+                val iconBase64 = drawableToBase64(iconDrawable) ?: ""
 
                 appList.add(mapOf(
                     "packageName" to pkgName,
                     "label" to label,
-                    "isSystemApp" to isSystem
+                    "isSystemApp" to isSystem,
+                    "icon" to iconBase64
                 ))
             }
             appList.sortBy { (it["label"] as? String)?.lowercase() ?: "" }

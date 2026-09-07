@@ -15,31 +15,26 @@ import {
   ShieldAlert,
   Clock,
   BookOpen,
-  Sparkles,
   Flame,
   Pause,
   Trophy,
-  ChevronRight,
 } from 'lucide-react-native';
 import { useAuth } from '../../lib/auth';
 import { useReadingTimer } from '../../lib/readingTimer';
 import { AppBlocker } from '../../lib/appBlocker';
-import { getDailyVerse } from '../../lib/bible';
 import {
-  getBibleTranslation,
   getUserName,
   getReadingHistory30Days,
   getImpactStats,
   isBlockingPaused,
   getPauseBlockingUntil,
   setPauseBlockingUntil,
-  getBlockedApps,
+  getLastReadPosition,
 } from '../../lib/mmkv';
 import { Last30DaysTracker } from '../../components/Last30DaysTracker';
-import { BadgesGrid } from '../../components/BadgesGrid';
+import { DailyDevotionalCard } from '../../components/DailyDevotionalCard';
 import { PauseBlockingModal } from '../../components/PauseBlockingModal';
-import { BadgeShareModal } from '../../components/BadgeShareModal';
-import { BadgeItem, HabitDay, ImpactStats } from '../../types/onboarding';
+import { HabitDay, ImpactStats } from '../../types/onboarding';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -52,18 +47,12 @@ export default function HomeScreen() {
   const [pauseUntil, setPauseUntil] = useState<number | null>(null);
 
   const [isPauseModalVisible, setIsPauseModalVisible] = useState(false);
-  const [selectedBadge, setSelectedBadge] = useState<BadgeItem | null>(null);
-
   const [history, setHistory] = useState<HabitDay[]>([]);
   const [impact, setImpact] = useState<ImpactStats>({ minutesRead: 0, hoursSaved: 0, sessions: 0 });
   const [name, setName] = useState('Disciple');
 
   // Track progress (home screen progress state)
   const timer = useReadingTimer(false);
-
-  // Daily Scripture
-  const translation = getBibleTranslation();
-  const dailyVerse = getDailyVerse(translation);
 
   const loadData = useCallback(async () => {
     try {
@@ -114,59 +103,6 @@ export default function HomeScreen() {
     setIsPauseModalVisible(false);
     Alert.alert('Blocking Resumed', 'Distracting apps are shielded until your reading goal is met.');
   };
-
-  // Compute unlockable badges dynamically
-  const blockedApps = getBlockedApps();
-  const badges: BadgeItem[] = [
-    {
-      id: 'genesis',
-      title: 'Genesis',
-      subtitle: 'First Step',
-      icon: '🌱',
-      unlocked: impact.sessions >= 1 || timer.streak >= 1,
-      requirement: 'Complete your first Scripture reading session',
-    },
-    {
-      id: 'david_courage',
-      title: "David's Courage",
-      subtitle: '3-Day Habit',
-      icon: '⚔️',
-      unlocked: timer.streak >= 3,
-      requirement: 'Maintain your reading streak for 3 consecutive days',
-    },
-    {
-      id: 'solomon_wisdom',
-      title: "Solomon's Wisdom",
-      subtitle: '7-Day Streak',
-      icon: '👑',
-      unlocked: timer.streak >= 7,
-      requirement: "Complete 7 consecutive days in God's Word",
-    },
-    {
-      id: 'armor_of_god',
-      title: 'Armor of God',
-      subtitle: 'Apps Guarded',
-      icon: '🛡️',
-      unlocked: blockedApps.length >= 3,
-      requirement: 'Shield at least 3 distracting apps from temptation',
-    },
-    {
-      id: 'living_water',
-      title: 'Living Water',
-      subtitle: '30m in Word',
-      icon: '🌊',
-      unlocked: impact.minutesRead >= 30,
-      requirement: 'Read Scripture for over 30 cumulative minutes',
-    },
-    {
-      id: 'morning_light',
-      title: 'Morning Light',
-      subtitle: 'Devotion',
-      icon: '🕊️',
-      unlocked: impact.sessions >= 3,
-      requirement: 'Complete 3 Bible reading sessions with consistency',
-    },
-  ];
 
   const remainingMins = pauseUntil
     ? Math.max(0, Math.ceil((pauseUntil - Date.now()) / 60000))
@@ -292,7 +228,17 @@ export default function HomeScreen() {
 
           {/* Golden Radiant Button */}
           <Pressable
-            onPress={() => router.push('/reader' as any)}
+            onPress={() => {
+              const lastPos = getLastReadPosition();
+              router.push({
+                pathname: '/reader',
+                params: {
+                  book: lastPos.bookName,
+                  chapter: lastPos.chapterNumber.toString(),
+                  verse: (lastPos.verseNumber || 1).toString(),
+                },
+              } as any);
+            }}
             className="w-full py-4 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg flex-row"
           >
             <BookOpen size={18} color="#141413" style={{ marginRight: 8 }} />
@@ -302,45 +248,9 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* Daily Devotional Card */}
-        <View className="mb-4 p-5 rounded-3xl bg-[#141b17] border border-[#202e25]">
-          <View className="flex-row items-center justify-between mb-2">
-            <View className="flex-row items-center">
-              <Sparkles size={15} color="#d4a359" style={{ marginRight: 6 }} />
-              <Text className="text-xs font-sans-bold text-[#d4a359] uppercase tracking-wider">
-                Daily Devotional
-              </Text>
-            </View>
-            <Text className="text-[11px] font-sans text-[#5c7a6e]">
-              {translation}
-            </Text>
-          </View>
-
-          <Text className="text-xs font-sans text-[#78a898] mb-3">
-            Build steady spiritual consistency with today's verse
-          </Text>
-
-          <Text
-            className="text-base text-[#faf9f5] leading-relaxed mb-3 italic"
-            style={{ fontFamily: 'EBGaramond_400Regular_Italic' }}
-          >
-            "{dailyVerse.text}"
-          </Text>
-
-          <View className="flex-row items-center justify-between pt-2 border-t border-[#202e25]">
-            <Text className="text-xs font-sans-bold text-[#f5b800]">
-              {dailyVerse.bookName} {dailyVerse.chapter}:{dailyVerse.verseNum}
-            </Text>
-            <Pressable
-              onPress={() => router.push('/reader' as any)}
-              className="py-1 px-2.5 rounded-lg active:opacity-75 flex-row items-center"
-            >
-              <Text className="text-xs font-sans-bold text-[#78a898] mr-1">
-                Read Chapter
-              </Text>
-              <ChevronRight size={14} color="#78a898" />
-            </Pressable>
-          </View>
+        {/* Daily Devotional Card with Refresh, Goto, Share */}
+        <View className="mb-4">
+          <DailyDevotionalCard />
         </View>
 
         {/* Streak & Pause Blocking Card */}
@@ -418,9 +328,6 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
-
-        {/* Badges & Achievements Section */}
-        <BadgesGrid badges={badges} onSelectBadge={setSelectedBadge} />
       </ScrollView>
 
       {/* Modals */}
@@ -431,13 +338,6 @@ export default function HomeScreen() {
         onClose={() => setIsPauseModalVisible(false)}
         onPause={handlePauseBlocking}
         onResume={handleResumeBlocking}
-      />
-
-      <BadgeShareModal
-        badge={selectedBadge}
-        userName={name}
-        streak={timer.streak}
-        onClose={() => setSelectedBadge(null)}
       />
     </SafeAreaView>
   );

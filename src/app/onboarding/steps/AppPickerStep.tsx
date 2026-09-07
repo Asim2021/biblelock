@@ -7,6 +7,7 @@ import {
   TextInput,
   Modal,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Lock, AlertTriangle, Check, Search, ShieldAlert, Sparkles } from 'lucide-react-native';
@@ -23,6 +24,7 @@ interface AppItem {
   packageName: string;
   label: string;
   isSystemApp?: boolean;
+  icon?: string;
 }
 
 const COMMON_DISTRACTIONS = [
@@ -289,11 +291,19 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
                     }`}
                   >
                     <View className="flex-row items-center flex-1 mr-3">
-                      <View className="w-10 h-10 rounded-xl bg-[#252d3d] items-center justify-center mr-3">
-                        <Text className="text-base font-bold text-[#f5b800]">
-                          {app.label.charAt(0).toUpperCase()}
-                        </Text>
-                      </View>
+                      {app.icon ? (
+                        <Image
+                          source={{ uri: app.icon }}
+                          style={{ width: 40, height: 40, borderRadius: 10, marginRight: 12 }}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <View className="w-10 h-10 rounded-xl bg-[#252d3d] items-center justify-center mr-3">
+                          <Text className="text-base font-bold text-[#f5b800]">
+                            {app.label.charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                      )}
                       <View className="flex-1">
                         <Text className="text-sm font-sans-bold text-[#faf9f5]" numberOfLines={1}>
                           {app.label}

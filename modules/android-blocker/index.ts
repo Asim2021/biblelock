@@ -4,6 +4,7 @@ export interface InstalledAppInfo {
   packageName: string;
   label: string;
   isSystemApp: boolean;
+  icon?: string;
 }
 
 interface AndroidBlockerModuleInterface {

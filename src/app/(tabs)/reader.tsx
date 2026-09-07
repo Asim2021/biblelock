@@ -7,13 +7,17 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { getBooks, getChapter, Verse } from '../../lib/bible';
 import { useReadingTimer } from '../../lib/readingTimer';
 import {
   getBibleTranslation,
   setBibleTranslation,
+  getLastReadPosition,
+  setLastReadPosition,
+  saveBookmark,
+  getBookmarks,
 } from '../../lib/mmkv';
 import { Button } from '../../components/Button';
 import {
@@ -22,6 +26,7 @@ import {
   Sparkles,
   ChevronDown,
   Check,
+  Bookmark as BookmarkIcon,
 } from 'lucide-react-native';
 
 export default function ReaderScreen() {
@@ -35,18 +40,140 @@ export default function ReaderScreen() {
   );
 
   const timer = useReadingTimer(isFocused);
+  const params = useLocalSearchParams<{
+    book?: string;
+    chapter?: string;
+    verse?: string;
+  }>();
 
   const [translation, setTranslationState] = useState<'WEB' | 'KJV'>(() =>
     getBibleTranslation()
   );
-  const [bookIndex, setBookIndex] = useState(0); // Default to Genesis (0)
-  const [chapterNumber, setChapterNumber] = useState(1);
-  const [showBookModal, setShowBookModal] = useState(false);
-
-  const flatListRef = useRef<FlatList>(null);
 
   const allBooks = getBooks(translation);
+
+  // Initialize position from query params if passed, or stored MMKV last read position
+  const [bookIndex, setBookIndex] = useState(() => {
+    if (params.book) {
+      const idx = allBooks.findIndex(
+        (b) =>
+          b.name.toLowerCase() === params.book?.toLowerCase() ||
+          b.id.toLowerCase() === params.book?.toLowerCase()
+      );
+      if (idx !== -1) return idx;
+    }
+    const saved = getLastReadPosition();
+    return saved.bookIndex < allBooks.length ? saved.bookIndex : 0;
+  });
+
+  const [chapterNumber, setChapterNumber] = useState(() => {
+    if (params.chapter) {
+      const ch = parseInt(params.chapter, 10);
+      if (!isNaN(ch) && ch > 0) return ch;
+    }
+    const saved = getLastReadPosition();
+    return saved.chapterNumber || 1;
+  });
+
+  const [targetVerse, setTargetVerse] = useState<number | null>(() => {
+    if (params.verse) {
+      const v = parseInt(params.verse, 10);
+      return !isNaN(v) ? v : null;
+    }
+    return null;
+  });
+
+  const [bookmarkedVerses, setBookmarkedVerses] = useState<number[]>([]);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const [showBookModal, setShowBookModal] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
+
   const currentChapterData = getChapter(translation, bookIndex, chapterNumber);
+  const currentBook = allBooks[bookIndex] || allBooks[0];
+
+  // Refresh saved bookmarks for this chapter
+  useEffect(() => {
+    const list = getBookmarks();
+    const chapterBookmarks = list
+      .filter((b) => b.bookName === currentBook.name && b.chapterNumber === chapterNumber)
+      .map((b) => b.verseNumber);
+    setBookmarkedVerses(chapterBookmarks);
+  }, [currentBook.name, chapterNumber]);
+
+  // Handle incoming query parameter changes while on screen
+  useEffect(() => {
+    if (params.book) {
+      const idx = allBooks.findIndex(
+        (b) =>
+          b.name.toLowerCase() === params.book?.toLowerCase() ||
+          b.id.toLowerCase() === params.book?.toLowerCase()
+      );
+      if (idx !== -1) setBookIndex(idx);
+    }
+    if (params.chapter) {
+      const ch = parseInt(params.chapter, 10);
+      if (!isNaN(ch) && ch > 0) setChapterNumber(ch);
+    }
+    if (params.verse) {
+      const v = parseInt(params.verse, 10);
+      if (!isNaN(v)) setTargetVerse(v);
+    }
+  }, [params.book, params.chapter, params.verse]);
+
+  // Persist current reading position whenever book or chapter changes
+  useEffect(() => {
+    if (currentBook) {
+      setLastReadPosition({
+        bookIndex,
+        bookName: currentBook.name,
+        chapterNumber,
+        verseNumber: targetVerse || 1,
+        updatedAt: Date.now(),
+      });
+    }
+  }, [bookIndex, chapterNumber, currentBook?.name, targetVerse]);
+
+  // Scroll to targeted verse if requested
+  useEffect(() => {
+    if (targetVerse && currentChapterData?.verses?.length) {
+      const verseIdx = currentChapterData.verses.findIndex((v) => v.verse === targetVerse);
+      if (verseIdx !== -1) {
+        setTimeout(() => {
+          flatListRef.current?.scrollToIndex({
+            index: verseIdx,
+            animated: true,
+            viewPosition: 0.2,
+          });
+        }, 300);
+      }
+    }
+  }, [targetVerse, currentChapterData]);
+
+  const handleToggleBookmarkVerse = (verseItem: Verse) => {
+    const isBookmarked = bookmarkedVerses.includes(verseItem.verse);
+    if (isBookmarked) {
+      // Remove
+      setBookmarkedVerses((prev) => prev.filter((v) => v !== verseItem.verse));
+      setToastMessage(`Removed bookmark for ${currentBook.name} ${chapterNumber}:${verseItem.verse}`);
+    } else {
+      // Add
+      saveBookmark({
+        id: `bm_${Date.now()}_${verseItem.verse}`,
+        title: `${currentBook.name} ${chapterNumber}:${verseItem.verse}`,
+        bookIndex,
+        bookName: currentBook.name,
+        chapterNumber,
+        verseNumber: verseItem.verse,
+        verseText: verseItem.text,
+        color: '#f5b800',
+        createdAt: Date.now(),
+      });
+      setBookmarkedVerses((prev) => [...prev, verseItem.verse]);
+      setToastMessage(`Bookmarked ${currentBook.name} ${chapterNumber}:${verseItem.verse}`);
+    }
+    setTimeout(() => setToastMessage(null), 2500);
+  };
 
   // Switch translation
   const handleToggleTranslation = (newTr: 'WEB' | 'KJV') => {
@@ -83,8 +210,6 @@ export default function ReaderScreen() {
     }
   };
 
-  const currentBook = allBooks[bookIndex] || allBooks[0];
-
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: '#181715' }}
@@ -120,6 +245,16 @@ export default function ReaderScreen() {
           />
         </View>
       </View>
+
+      {/* Bookmark Feedback Toast */}
+      {toastMessage && (
+        <View className="bg-primary/20 border-b border-primary/40 px-4 py-2 flex-row items-center justify-center">
+          <BookmarkIcon size={14} color="#f5b800" style={{ marginRight: 6 }} />
+          <Text className="text-xs font-sans-medium text-[#f5b800] text-center">
+            {toastMessage}
+          </Text>
+        </View>
+      )}
 
       {/* Book & Translation Selection Bar */}
       <View className="px-5 py-3 flex-row items-center justify-between border-b border-hairline/10">
@@ -228,23 +363,48 @@ export default function ReaderScreen() {
             </Text>
           </View>
         }
-        renderItem={({ item }: { item: Verse }) => (
-          <View className="flex-row items-baseline mb-3.5">
-            <Text className="text-xs font-mono text-primary mr-3 w-6 text-right select-none font-bold">
-              {item.verse}
-            </Text>
-            <Text
-              className="text-lg text-on-dark flex-1 leading-relaxed"
-              style={{
-                fontFamily: 'EBGaramond_400Regular',
-                fontSize: 18,
-                lineHeight: 30,
-              }}
+        renderItem={({ item }: { item: Verse }) => {
+          const isBookmarked = bookmarkedVerses.includes(item.verse);
+          const isTargeted = targetVerse === item.verse;
+
+          return (
+            <Pressable
+              onLongPress={() => handleToggleBookmarkVerse(item)}
+              className={`flex-row items-baseline mb-3.5 p-2 rounded-lg ${
+                isTargeted
+                  ? 'bg-primary/15 border-l-2 border-primary'
+                  : isBookmarked
+                  ? 'bg-surface-dark-elevated'
+                  : 'bg-transparent'
+              }`}
             >
-              {item.text}
-            </Text>
-          </View>
-        )}
+              <Text className="text-xs font-mono text-primary mr-3 w-6 text-right select-none font-bold">
+                {item.verse}
+              </Text>
+              <Text
+                className="text-lg text-on-dark flex-1 leading-relaxed"
+                style={{
+                  fontFamily: 'EBGaramond_400Regular',
+                  fontSize: 18,
+                  lineHeight: 30,
+                }}
+              >
+                {item.text}
+              </Text>
+              <Pressable
+                onPress={() => handleToggleBookmarkVerse(item)}
+                hitSlop={8}
+                className="ml-2 p-1"
+              >
+                <BookmarkIcon
+                  size={14}
+                  color={isBookmarked ? '#f5b800' : '#4a574f'}
+                  fill={isBookmarked ? '#f5b800' : 'transparent'}
+                />
+              </Pressable>
+            </Pressable>
+          );
+        }}
         ListFooterComponent={
           <View className="mt-8 pt-6 border-t border-hairline/20 flex-row justify-between items-center">
             <Button

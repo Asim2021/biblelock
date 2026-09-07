@@ -1,5 +1,36 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.8] - 2026-09-08
+
+### Added
+- **5-Tab Bottom Navigation Bar:** Expanded menu structure from 3 tabs to 5 tabs (`Home`, `Reader`, `Library`, `Stats`, `Settings`) styled with Lucide vector icons.
+- **Dedicated Library Tab Screen (`src/app/(tabs)/library.tsx`):** Added pinned non-deletable "Last Read" marker card showing timestamp and Scripture reference with "Continue Reading →", plus user-created bookmarks list with color-coding tags, personal notes, and tap-to-read navigation.
+- **Dedicated Stats Tab Screen (`src/app/(tabs)/stats.tsx`):** Faith growth analytics replicating Quran Unlock reference screens:
+  - User avatar circle with initials and spiritual walk header.
+  - "Bible Reading" goal meter with circular progress gauge (`Zap` icon).
+  - "This Week" 7-day tracker card (`S M Tu W Th F S`) with daily reading minutes and active-day underline.
+  - Streak milestone progress bar (`0d Current Streak` ---------------- `3d Next Milestone`).
+  - Badges section with `BadgesGrid` and viral `BadgeShareModal`.
+  - Daily Scripture devotional card with Refresh, Goto, and Share.
+  - Lifetime Activity 3-card grid (Verses Read, Time Spent, Best Streak).
+  - Community Impact counters ("145.9M Total Verses Read", "434.1M minutes Time Spent", "Share Bible Unlock" button).
+- **DailyDevotionalCard Component (`src/components/DailyDevotionalCard.tsx`):** Reusable card with Refresh (picks new random inspirational verse), Goto (deep-links reader to exact chapter and verse), and Share (opens native share sheet with verse text, citation, and `https://bibleunlock.app`).
+- **Interactive "+ Custom Apps" Modal in Settings:** Full installed app search and multi-selection modal allowing users to protect any app installed on their phone.
+- **Appearance & Theme Settings Modal:** Theme mode switcher supporting Dark, Light, and System modes with MMKV persistence.
+
+### Fixed
+- **Reading Progress Tracking:** Reader now persists exact `bookIndex`, `bookName`, `chapterNumber`, `verseNumber`, and `updatedAt` to MMKV (`LAST_READ_POSITION`). When resuming from the blocker overlay or Home hero button, the app opens the exact chapter and scrolls directly to the target verse instead of resetting to Genesis 1.
+- **Blocker Overlay Theme & Branding (`BlockerActivity.kt`):** Fixed title from "Scripture Unlock" to "Bible Unlock", updated background to `#0D120F`, rendered high-resolution `splashscreen_logo`, and styled CTA button in radiant gold `#F5B800` opening `bibleunlock://reader`.
+- **Real Installed App Icons:** `AndroidBlockerModule.kt` now encodes native `Drawable` icons into Base64 PNG data URIs (`drawableToBase64`), enabling `<Image source={{ uri: app.icon }} />` in `AppPickerStep.tsx` and `settings.tsx`.
+- **Settings Dynamic App List:** Replaced static 5 presets (TikTok, X, etc.) with real user-blocked apps and live icons.
+
+### Verified Impact
+- `npx tsc --noEmit` passing with 0 errors across all 5 tabs and modules.
+- Quitting reading session at Genesis 5 and resuming opens Genesis 5 directly.
+- Native blocker overlay visually matches Bible Unlock design guidelines.
+
+---
+
 ## [1.0.7] - 2026-09-08
 
 ### Fixed

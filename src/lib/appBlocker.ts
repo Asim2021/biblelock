@@ -14,6 +14,13 @@ export interface BlockerStatus {
   platform: 'ios' | 'android' | 'web';
 }
 
+export interface InstalledApp {
+  packageName: string;
+  label: string;
+  isSystemApp: boolean;
+  icon?: string;
+}
+
 export const AppBlocker = {
   /**
    * Request system permission (Screen Time on iOS, Accessibility on Android)
@@ -123,8 +130,8 @@ export const AppBlocker = {
   /**
    * Query installed launchable apps on the device (with curated presets fallback)
    */
-  getInstalledApps: async (): Promise<{ packageName: string; label: string; isSystemApp: boolean }[]> => {
-    const defaultApps = [
+  getInstalledApps: async (): Promise<InstalledApp[]> => {
+    const defaultApps: InstalledApp[] = [
       { packageName: 'com.instagram.android', label: 'Instagram', isSystemApp: false },
       { packageName: 'com.zhiliaoapp.musically', label: 'TikTok', isSystemApp: false },
       { packageName: 'com.google.android.youtube', label: 'YouTube', isSystemApp: false },
