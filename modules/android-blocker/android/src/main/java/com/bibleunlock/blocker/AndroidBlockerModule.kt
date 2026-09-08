@@ -118,23 +118,22 @@ class AndroidBlockerModule : Module() {
                     if (pkgName == selfPackage || pkgName == "android" || pkgName.startsWith("com.android.systemui")) {
                         continue
                     }
-                        val isSystem = (appInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
-                        val launchIntent = pm.getLaunchIntentForPackage(pkgName)
-                        if ((launchIntent != null || !isSystem) && seenPackages.add(pkgName)) {
-                            val label = pm.getApplicationLabel(appInfo).toString()
-                            val iconDrawable = pm.getApplicationIcon(appInfo)
-                            val iconBase64 = drawableToBase64(iconDrawable) ?: ""
+                    val isSystem = (appInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
+                    val launchIntent = pm.getLaunchIntentForPackage(pkgName)
+                    if ((launchIntent != null || !isSystem) && seenPackages.add(pkgName)) {
+                        val label = pm.getApplicationLabel(appInfo).toString()
+                        val iconDrawable = pm.getApplicationIcon(appInfo)
+                        val iconBase64 = drawableToBase64(iconDrawable) ?: ""
 
-                            appList.add(mapOf(
-                                "packageName" to pkgName,
-                                "label" to label,
-                                "isSystemApp" to isSystem,
-                                "icon" to iconBase64
-                            ))
-                        }
+                        appList.add(mapOf(
+                            "packageName" to pkgName,
+                            "label" to label,
+                            "isSystemApp" to isSystem,
+                            "icon" to iconBase64
+                        ))
                     }
                 }
-            } catch (_: Exception) {
+            } catch (e: Exception) {
                 // Ignore if getInstalledApplications fails
             }
 
