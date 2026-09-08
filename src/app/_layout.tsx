@@ -25,6 +25,7 @@ import {
 import '../../global.css';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { ScriptureShield } from '../lib/scriptureShield';
+import { isOnboardingCompleted } from '../lib/mmkv';
 
 // Keep splash screen visible while loading resources
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -37,19 +38,22 @@ function RootNavigation() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = (segments as string[])[0] === '(auth)';
+    const firstSegment = (segments as string[])[0];
+    const inOnboarding = firstSegment === 'onboarding';
+    const onboardingDone = isOnboardingCompleted();
 
-    if (!user && !inAuthGroup) {
-      // Redirect to login if unauthenticated
-      router.replace('/(auth)/login' as any);
-    } else if (user && inAuthGroup) {
-      // Redirect to tabs if authenticated
+    if (!onboardingDone) {
+      if (!inOnboarding) {
+        router.replace('/onboarding' as any);
+      }
+    } else if (inOnboarding) {
       router.replace('/(tabs)' as any);
     }
   }, [user, isLoading, segments]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="onboarding/index" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen
@@ -65,7 +69,19 @@ function RootNavigation() {
 }
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ThemeProvider, DarkTheme } from 'expo-router/react-navigation';
+import { ThemeProvider as NavigationThemeProvider, DarkTheme, DefaultTheme } from 'expo-router/react-navigation';
+import { ThemeProvider as AppThemeProvider, useTheme } from '../lib/themeContext';
+
+function ThemedNavigationWrapper() {
+  const { isDark } = useTheme();
+  return (
+    <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+      <AuthProvider>
+        <RootNavigation />
+      </AuthProvider>
+    </NavigationThemeProvider>
+  );
+}
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
@@ -96,12 +112,10 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ThemeProvider value={DarkTheme}>
-        <AuthProvider>
-          <StatusBar style="light" />
-          <RootNavigation />
-        </AuthProvider>
-      </ThemeProvider>
+      <AppThemeProvider>
+        <ThemedNavigationWrapper />
+      </AppThemeProvider>
     </SafeAreaProvider>
   );
 }
+

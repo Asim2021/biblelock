@@ -19,49 +19,72 @@ class BlockerActivity : AppCompatActivity() {
         val rootLayout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setBackgroundColor(Color.parseColor("#181715")) // Dark Navy/Canvas
-            setPadding(48, 48, 48, 48)
+            setBackgroundColor(Color.parseColor("#0D120F")) // Celestial Navy
+            val pad = (32 * resources.displayMetrics.density).toInt()
+            setPadding(pad, pad, pad, pad)
         }
 
-        // Lock Icon/Emoji
-        val iconText = TextView(this).apply {
-            text = "🔒"
-            textSize = 54f
-            gravity = Gravity.CENTER
-            setPadding(0, 0, 0, 32)
+        // App Icon / Logo
+        val iconView = android.widget.ImageView(this).apply {
+            val resId = resources.getIdentifier("splashscreen_logo", "drawable", packageName)
+            if (resId != 0) {
+                setImageResource(resId)
+            }
+            val sizePx = (88 * resources.displayMetrics.density).toInt()
+            layoutParams = LinearLayout.LayoutParams(sizePx, sizePx).apply {
+                gravity = Gravity.CENTER
+                bottomMargin = (24 * resources.displayMetrics.density).toInt()
+            }
         }
-        rootLayout.addView(iconText)
+        rootLayout.addView(iconView)
 
         // Title
         val titleText = TextView(this).apply {
-            text = "Scripture Unlock"
-            textSize = 28f
+            text = "Bible Unlock"
+            textSize = 30f
             setTextColor(Color.parseColor("#FAF9F5"))
             typeface = Typeface.SERIF
             gravity = Gravity.CENTER
-            setPadding(0, 0, 0, 16)
+            setPadding(0, 0, 0, (12 * resources.displayMetrics.density).toInt())
         }
         rootLayout.addView(titleText)
 
         // Subtitle message
         val subtitleText = TextView(this).apply {
-            text = "This app is locked until you complete today's Bible reading goal.\n\n\"Thy word is a lamp unto my feet, and a light unto my path.\""
-            textSize = 16f
-            setTextColor(Color.parseColor("#A09D96"))
+            text = "This app is shielded until today's Bible reading goal is met.\n\n\"Thy word is a lamp unto my feet, and a light unto my path.\""
+            textSize = 15f
+            setTextColor(Color.parseColor("#78A898"))
             gravity = Gravity.CENTER
-            setPadding(0, 0, 0, 48)
+            val bottomPad = (40 * resources.displayMetrics.density).toInt()
+            setPadding(0, 0, 0, bottomPad)
         }
         rootLayout.addView(subtitleText)
 
-        // CTA Button
+        // CTA Button (Radiant Warm Gold)
         val openReaderButton = Button(this).apply {
             text = "Read Bible Now"
-            setTextColor(Color.WHITE)
-            setBackgroundColor(Color.parseColor("#CC785C")) // Coral Brand CTA
+            setTextColor(Color.parseColor("#141413"))
             textSize = 16f
-            setPadding(32, 24, 32, 24)
+            typeface = Typeface.DEFAULT_BOLD
+            val shape = android.graphics.drawable.GradientDrawable().apply {
+                shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+                cornerRadius = 24f * resources.displayMetrics.density
+                setColor(Color.parseColor("#F5B800"))
+            }
+            background = shape
+            val padH = (32 * resources.displayMetrics.density).toInt()
+            val padV = (16 * resources.displayMetrics.density).toInt()
+            setPadding(padH, padV, padH, padV)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply {
+                val marginH = (16 * resources.displayMetrics.density).toInt()
+                val marginB = (12 * resources.displayMetrics.density).toInt()
+                setMargins(marginH, 0, marginH, marginB)
+            }
             setOnClickListener {
-                // Launch Bible Unlock reader
+                // Launch Bible Unlock reader (restores last read position)
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("bibleunlock://reader")).apply {
                     setPackage(applicationContext.packageName)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -75,10 +98,10 @@ class BlockerActivity : AppCompatActivity() {
         // Dismiss / Go Home button
         val goHomeButton = Button(this).apply {
             text = "Go to Home Screen"
-            setTextColor(Color.parseColor("#A09D96"))
+            setTextColor(Color.parseColor("#78A898"))
             setBackgroundColor(Color.TRANSPARENT)
             textSize = 14f
-            setPadding(32, 16, 32, 16)
+            typeface = Typeface.DEFAULT_BOLD
             setOnClickListener {
                 val homeIntent = Intent(Intent.ACTION_MAIN).apply {
                     addCategory(Intent.CATEGORY_HOME)

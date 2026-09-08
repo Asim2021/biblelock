@@ -7,17 +7,31 @@ import {
   ScrollView,
   Modal,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { getBooks, getChapter, Verse } from '../../lib/bible';
 import { useReadingTimer } from '../../lib/readingTimer';
 import {
   getBibleTranslation,
   setBibleTranslation,
+  getLastReadPosition,
+  setLastReadPosition,
+  saveBookmark,
+  getBookmarks,
 } from '../../lib/mmkv';
 import { Button } from '../../components/Button';
+import {
+  Clock,
+  Unlock,
+  Sparkles,
+  ChevronDown,
+  Check,
+  Bookmark as BookmarkIcon,
+} from 'lucide-react-native';
+import { useTheme } from '../../lib/themeContext';
 
 export default function ReaderScreen() {
+  const { colors, isDark } = useTheme();
   const [isFocused, setIsFocused] = useState(true);
 
   useFocusEffect(
@@ -28,18 +42,140 @@ export default function ReaderScreen() {
   );
 
   const timer = useReadingTimer(isFocused);
+  const params = useLocalSearchParams<{
+    book?: string;
+    chapter?: string;
+    verse?: string;
+  }>();
 
   const [translation, setTranslationState] = useState<'WEB' | 'KJV'>(() =>
     getBibleTranslation()
   );
-  const [bookIndex, setBookIndex] = useState(0); // Default to Genesis (0)
-  const [chapterNumber, setChapterNumber] = useState(1);
-  const [showBookModal, setShowBookModal] = useState(false);
-
-  const flatListRef = useRef<FlatList>(null);
 
   const allBooks = getBooks(translation);
+
+  // Initialize position from query params if passed, or stored MMKV last read position
+  const [bookIndex, setBookIndex] = useState(() => {
+    if (params.book) {
+      const idx = allBooks.findIndex(
+        (b) =>
+          b.name.toLowerCase() === params.book?.toLowerCase() ||
+          b.id.toLowerCase() === params.book?.toLowerCase()
+      );
+      if (idx !== -1) return idx;
+    }
+    const saved = getLastReadPosition();
+    return saved.bookIndex < allBooks.length ? saved.bookIndex : 0;
+  });
+
+  const [chapterNumber, setChapterNumber] = useState(() => {
+    if (params.chapter) {
+      const ch = parseInt(params.chapter, 10);
+      if (!isNaN(ch) && ch > 0) return ch;
+    }
+    const saved = getLastReadPosition();
+    return saved.chapterNumber || 1;
+  });
+
+  const [targetVerse, setTargetVerse] = useState<number | null>(() => {
+    if (params.verse) {
+      const v = parseInt(params.verse, 10);
+      return !isNaN(v) ? v : null;
+    }
+    return null;
+  });
+
+  const [bookmarkedVerses, setBookmarkedVerses] = useState<number[]>([]);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const [showBookModal, setShowBookModal] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
+
   const currentChapterData = getChapter(translation, bookIndex, chapterNumber);
+  const currentBook = allBooks[bookIndex] || allBooks[0];
+
+  // Refresh saved bookmarks for this chapter
+  useEffect(() => {
+    const list = getBookmarks();
+    const chapterBookmarks = list
+      .filter((b) => b.bookName === currentBook.name && b.chapterNumber === chapterNumber)
+      .map((b) => b.verseNumber);
+    setBookmarkedVerses(chapterBookmarks);
+  }, [currentBook.name, chapterNumber]);
+
+  // Handle incoming query parameter changes while on screen
+  useEffect(() => {
+    if (params.book) {
+      const idx = allBooks.findIndex(
+        (b) =>
+          b.name.toLowerCase() === params.book?.toLowerCase() ||
+          b.id.toLowerCase() === params.book?.toLowerCase()
+      );
+      if (idx !== -1) setBookIndex(idx);
+    }
+    if (params.chapter) {
+      const ch = parseInt(params.chapter, 10);
+      if (!isNaN(ch) && ch > 0) setChapterNumber(ch);
+    }
+    if (params.verse) {
+      const v = parseInt(params.verse, 10);
+      if (!isNaN(v)) setTargetVerse(v);
+    }
+  }, [params.book, params.chapter, params.verse]);
+
+  // Persist current reading position whenever book or chapter changes
+  useEffect(() => {
+    if (currentBook) {
+      setLastReadPosition({
+        bookIndex,
+        bookName: currentBook.name,
+        chapterNumber,
+        verseNumber: targetVerse || 1,
+        updatedAt: Date.now(),
+      });
+    }
+  }, [bookIndex, chapterNumber, currentBook?.name, targetVerse]);
+
+  // Scroll to targeted verse if requested
+  useEffect(() => {
+    if (targetVerse && currentChapterData?.verses?.length) {
+      const verseIdx = currentChapterData.verses.findIndex((v) => v.verse === targetVerse);
+      if (verseIdx !== -1) {
+        setTimeout(() => {
+          flatListRef.current?.scrollToIndex({
+            index: verseIdx,
+            animated: true,
+            viewPosition: 0.2,
+          });
+        }, 300);
+      }
+    }
+  }, [targetVerse, currentChapterData]);
+
+  const handleToggleBookmarkVerse = (verseItem: Verse) => {
+    const isBookmarked = bookmarkedVerses.includes(verseItem.verse);
+    if (isBookmarked) {
+      // Remove
+      setBookmarkedVerses((prev) => prev.filter((v) => v !== verseItem.verse));
+      setToastMessage(`Removed bookmark for ${currentBook.name} ${chapterNumber}:${verseItem.verse}`);
+    } else {
+      // Add
+      saveBookmark({
+        id: `bm_${Date.now()}_${verseItem.verse}`,
+        title: `${currentBook.name} ${chapterNumber}:${verseItem.verse}`,
+        bookIndex,
+        bookName: currentBook.name,
+        chapterNumber,
+        verseNumber: verseItem.verse,
+        verseText: verseItem.text,
+        color: '#f5b800',
+        createdAt: Date.now(),
+      });
+      setBookmarkedVerses((prev) => [...prev, verseItem.verse]);
+      setToastMessage(`Bookmarked ${currentBook.name} ${chapterNumber}:${verseItem.verse}`);
+    }
+    setTimeout(() => setToastMessage(null), 2500);
+  };
 
   // Switch translation
   const handleToggleTranslation = (newTr: 'WEB' | 'KJV') => {
@@ -76,76 +212,178 @@ export default function ReaderScreen() {
     }
   };
 
-  const currentBook = allBooks[bookIndex] || allBooks[0];
-
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: '#181715' }}
+      style={{ flex: 1, backgroundColor: colors.background }}
       edges={['top', 'left', 'right']}
     >
       {/* Top Active Reading Timer Bar */}
-      <View className="px-5 py-3 bg-surface-dark-elevated border-b border-hairline/10">
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingVertical: 12,
+          backgroundColor: colors.surface,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        }}
+      >
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center">
-            <Text className="text-sm mr-2">{timer.isGoalMet ? '🔓' : '⏱️'}</Text>
-            <Text className="text-xs font-sans-semibold uppercase tracking-wider text-on-dark-soft">
+            <View className="mr-2">
+              {timer.isGoalMet ? (
+                <Unlock size={14} color={colors.success} />
+              ) : (
+                <Clock size={14} color={colors.accent} />
+              )}
+            </View>
+            <Text
+              style={{
+                fontSize: 11,
+                fontFamily: 'Inter_600SemiBold',
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                color: colors.textSecondary,
+              }}
+            >
               {timer.isGoalMet ? 'Apps Unlocked' : 'Reading Timer Active'}
             </Text>
           </View>
-          <Text className="text-sm font-mono font-bold text-primary">
+          <Text
+            style={{
+              fontSize: 13,
+              fontFamily: 'Inter_700Bold',
+              color: colors.accent,
+            }}
+          >
             {timer.formattedTime} / {timer.formattedGoal}
           </Text>
         </View>
 
         {/* Progress Bar */}
-        <View className="h-1.5 w-full bg-surface-dark-soft rounded-full overflow-hidden">
+        <View
+          style={{
+            height: 6,
+            width: '100%',
+            backgroundColor: colors.surfaceSubtle,
+            borderRadius: 3,
+            overflow: 'hidden',
+          }}
+        >
           <View
-            className={`h-full ${
-              timer.isGoalMet ? 'bg-success' : 'bg-primary'
-            } rounded-full`}
-            style={{ width: `${Math.round(timer.progress * 100)}%` }}
+            style={{
+              height: '100%',
+              borderRadius: 3,
+              backgroundColor: timer.isGoalMet ? colors.success : colors.accent,
+              width: `${Math.round(timer.progress * 100)}%`,
+            }}
           />
         </View>
       </View>
 
+      {/* Bookmark Feedback Toast */}
+      {toastMessage && (
+        <View
+          style={{
+            backgroundColor: colors.accentBg,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.accent,
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <BookmarkIcon size={14} color={colors.accent} style={{ marginRight: 6 }} />
+          <Text style={{ fontSize: 12, fontFamily: 'Inter_500Medium', color: colors.accent, textAlign: 'center' }}>
+            {toastMessage}
+          </Text>
+        </View>
+      )}
+
       {/* Book & Translation Selection Bar */}
-      <View className="px-5 py-3 flex-row items-center justify-between border-b border-hairline/10">
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingVertical: 10,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+        }}
+      >
         <Pressable
           onPress={() => setShowBookModal(true)}
-          className="flex-row items-center bg-surface-dark-elevated px-3.5 py-2 rounded-md border border-hairline/20"
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            backgroundColor: colors.surface,
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            borderRadius: 10,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
         >
-          <Text className="text-sm font-sans-bold text-on-dark mr-1.5">
+          <Text
+            style={{
+              fontSize: 14,
+              fontFamily: 'Inter_700Bold',
+              color: colors.textPrimary,
+              marginRight: 8,
+            }}
+          >
             {currentBook.name} {chapterNumber}
           </Text>
-          <Text className="text-xs text-on-dark-soft">▼</Text>
+          <ChevronDown size={14} color={colors.textSecondary} />
         </Pressable>
 
         {/* Translation Toggle Pill */}
-        <View className="flex-row bg-surface-dark-elevated rounded-md p-1 border border-hairline/20">
+        <View
+          style={{
+            flexDirection: 'row',
+            backgroundColor: colors.surfaceSubtle,
+            borderRadius: 8,
+            padding: 3,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        >
           <Pressable
             onPress={() => handleToggleTranslation('WEB')}
-            className={`px-3 py-1 rounded ${
-              translation === 'WEB' ? 'bg-primary' : 'bg-transparent'
-            }`}
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+              borderRadius: 6,
+              backgroundColor: translation === 'WEB' ? colors.accent : 'transparent',
+            }}
           >
             <Text
-              className={`text-xs font-sans-semibold ${
-                translation === 'WEB' ? 'text-white' : 'text-on-dark-soft'
-              }`}
+              style={{
+                fontSize: 12,
+                fontFamily: 'Inter_600SemiBold',
+                color: translation === 'WEB' ? '#141413' : colors.textSecondary,
+              }}
             >
               WEB
             </Text>
           </Pressable>
           <Pressable
             onPress={() => handleToggleTranslation('KJV')}
-            className={`px-3 py-1 rounded ${
-              translation === 'KJV' ? 'bg-primary' : 'bg-transparent'
-            }`}
+            style={{
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+              borderRadius: 6,
+              backgroundColor: translation === 'KJV' ? colors.accent : 'transparent',
+            }}
           >
             <Text
-              className={`text-xs font-sans-semibold ${
-                translation === 'KJV' ? 'text-white' : 'text-on-dark-soft'
-              }`}
+              style={{
+                fontSize: 12,
+                fontFamily: 'Inter_600SemiBold',
+                color: translation === 'KJV' ? '#141413' : colors.textSecondary,
+              }}
             >
               KJV
             </Text>
@@ -154,7 +392,14 @@ export default function ReaderScreen() {
       </View>
 
       {/* Horizontal Chapter Picker */}
-      <View className="py-2 border-b border-hairline/10 bg-surface-dark">
+      <View
+        style={{
+          paddingVertical: 8,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.border,
+          backgroundColor: colors.surface,
+        }}
+      >
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -165,16 +410,24 @@ export default function ReaderScreen() {
               <Pressable
                 key={ch}
                 onPress={() => handleSelectChapter(ch)}
-                className={`w-9 h-9 items-center justify-center rounded-full mr-2 ${
-                  chapterNumber === ch
-                    ? 'bg-primary'
-                    : 'bg-surface-dark-elevated border border-hairline/10'
-                }`}
+                style={{
+                  width: 36,
+                  height: 36,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 18,
+                  marginRight: 8,
+                  backgroundColor: chapterNumber === ch ? colors.accent : colors.surfaceSubtle,
+                  borderWidth: chapterNumber === ch ? 0 : 1,
+                  borderColor: colors.borderSubtle,
+                }}
               >
                 <Text
-                  className={`text-xs font-sans-semibold ${
-                    chapterNumber === ch ? 'text-white' : 'text-on-dark-soft'
-                  }`}
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'Inter_600SemiBold',
+                    color: chapterNumber === ch ? '#141413' : colors.textSecondary,
+                  }}
                 >
                   {ch}
                 </Text>
@@ -186,9 +439,22 @@ export default function ReaderScreen() {
 
       {/* Goal Achieved Toast Banner */}
       {timer.isGoalMet && (
-        <View className="bg-success/15 px-4 py-2.5 border-b border-success/30 flex-row items-center justify-center">
-          <Text className="text-sm mr-2">🎉</Text>
-          <Text className="text-xs font-sans-medium text-success">
+        <View
+          style={{
+            backgroundColor: colors.successBg,
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.border,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <View className="mr-2">
+            <Sparkles size={16} color={colors.success} />
+          </View>
+          <Text style={{ fontSize: 12, fontFamily: 'Inter_500Medium', color: colors.success }}>
             Daily goal met! Distracting apps are unlocked for the day.
           </Text>
         </View>
@@ -203,35 +469,100 @@ export default function ReaderScreen() {
         ListHeaderComponent={
           <View className="mb-6 items-center">
             <Text
-              className="text-3xl text-on-dark font-serif text-center mb-1"
-              style={{ fontFamily: 'EBGaramond_600SemiBold' }}
+              style={{
+                fontFamily: 'EBGaramond_700Bold',
+                fontSize: 28,
+                color: colors.textPrimary,
+                textAlign: 'center',
+                marginBottom: 4,
+              }}
             >
               {currentBook.name}
             </Text>
-            <Text className="text-xs font-mono text-primary uppercase tracking-widest">
+            <Text
+              style={{
+                fontSize: 12,
+                fontFamily: 'Inter_600SemiBold',
+                color: colors.accent,
+                textTransform: 'uppercase',
+                letterSpacing: 2,
+              }}
+            >
               Chapter {chapterNumber} • {translation}
             </Text>
           </View>
         }
-        renderItem={({ item }: { item: Verse }) => (
-          <View className="flex-row items-baseline mb-3.5">
-            <Text className="text-xs font-mono text-primary mr-3 w-6 text-right select-none font-bold">
-              {item.verse}
-            </Text>
-            <Text
-              className="text-lg text-on-dark flex-1 leading-relaxed"
+        renderItem={({ item }: { item: Verse }) => {
+          const isBookmarked = bookmarkedVerses.includes(item.verse);
+          const isTargeted = targetVerse === item.verse;
+
+          return (
+            <Pressable
+              onLongPress={() => handleToggleBookmarkVerse(item)}
               style={{
-                fontFamily: 'EBGaramond_400Regular',
-                fontSize: 18,
-                lineHeight: 30,
+                flexDirection: 'row',
+                alignItems: 'baseline',
+                marginBottom: 14,
+                padding: 8,
+                borderRadius: 8,
+                backgroundColor: isTargeted
+                  ? colors.accentBg
+                  : isBookmarked
+                  ? colors.surface
+                  : 'transparent',
+                borderLeftWidth: isTargeted ? 3 : 0,
+                borderLeftColor: colors.accent,
               }}
             >
-              {item.text}
-            </Text>
-          </View>
-        )}
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: 'Inter_700Bold',
+                  color: colors.accent,
+                  marginRight: 12,
+                  width: 24,
+                  textAlign: 'right',
+                }}
+              >
+                {item.verse}
+              </Text>
+              <Text
+                style={{
+                  flex: 1,
+                  fontFamily: 'EBGaramond_400Regular',
+                  fontSize: 18,
+                  lineHeight: 30,
+                  color: colors.textPrimary,
+                }}
+              >
+                {item.text}
+              </Text>
+              <Pressable
+                onPress={() => handleToggleBookmarkVerse(item)}
+                hitSlop={8}
+                style={{ marginLeft: 8, padding: 4 }}
+              >
+                <BookmarkIcon
+                  size={15}
+                  color={isBookmarked ? colors.accent : colors.textMuted}
+                  fill={isBookmarked ? colors.accent : 'transparent'}
+                />
+              </Pressable>
+            </Pressable>
+          );
+        }}
         ListFooterComponent={
-          <View className="mt-8 pt-6 border-t border-hairline/20 flex-row justify-between items-center">
+          <View
+            style={{
+              marginTop: 32,
+              paddingTop: 24,
+              borderTopWidth: 1,
+              borderTopColor: colors.border,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
             <Button
               title="← Prev Chapter"
               variant="outline"
@@ -253,66 +584,90 @@ export default function ReaderScreen() {
       <Modal
         visible={showBookModal}
         animationType="slide"
-        presentationStyle="pageSheet"
+        transparent={false}
+        statusBarTranslucent
         onRequestClose={() => setShowBookModal(false)}
       >
-        <SafeAreaView className="flex-1 bg-surface-dark">
-          <View className="p-4 border-b border-hairline/20 flex-row items-center justify-between">
-            <Text className="text-lg font-sans-bold text-on-dark">
-              Select Book of the Bible
-            </Text>
-            <Pressable
-              onPress={() => setShowBookModal(false)}
-              className="p-2"
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+            <View
+              style={{
+                padding: 16,
+                borderBottomWidth: 1,
+                borderBottomColor: colors.border,
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
             >
-              <Text className="text-base text-primary font-sans-medium">Done</Text>
-            </Pressable>
-          </View>
+              <Text style={{ fontSize: 18, fontFamily: 'EBGaramond_700Bold', color: colors.textPrimary }}>
+                Select Book of the Bible
+              </Text>
+              <Pressable
+                onPress={() => setShowBookModal(false)}
+                style={{ padding: 8 }}
+              >
+                <Text style={{ fontSize: 15, color: colors.accent, fontFamily: 'Inter_600SemiBold' }}>Done</Text>
+              </Pressable>
+            </View>
 
-          <FlatList
-            data={allBooks}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item, index }) => {
-              const isSelected = bookIndex === index;
-              const isOldTestament = index < 39;
-              const showSectionHeader = index === 0 || index === 39;
+            <FlatList
+              data={allBooks}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item, index }) => {
+                const isSelected = bookIndex === index;
+                const isOldTestament = index < 39;
+                const showSectionHeader = index === 0 || index === 39;
 
-              return (
-                <View>
-                  {showSectionHeader && (
-                    <View className="bg-surface-dark-soft px-5 py-2.5">
-                      <Text className="text-xs font-sans-bold uppercase tracking-wider text-accent-amber">
-                        {isOldTestament ? 'Old Testament (39 Books)' : 'New Testament (27 Books)'}
-                      </Text>
-                    </View>
-                  )}
-                  <Pressable
-                    onPress={() => {
-                      setBookIndex(index);
-                      setChapterNumber(1);
-                      setShowBookModal(false);
-                      flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
-                    }}
-                    className={`px-5 py-3.5 border-b border-hairline/10 flex-row items-center justify-between ${
-                      isSelected ? 'bg-primary/10' : ''
-                    }`}
-                  >
-                    <Text
-                      className={`text-base font-sans ${
-                        isSelected ? 'text-primary font-sans-bold' : 'text-on-dark'
-                      }`}
+                return (
+                  <View>
+                    {showSectionHeader && (
+                      <View style={{ backgroundColor: colors.surfaceSubtle, paddingHorizontal: 20, paddingVertical: 10 }}>
+                        <Text style={{ fontSize: 11, fontFamily: 'Inter_700Bold', textTransform: 'uppercase', letterSpacing: 1, color: colors.accent }}>
+                          {isOldTestament ? 'Old Testament (39 Books)' : 'New Testament (27 Books)'}
+                        </Text>
+                      </View>
+                    )}
+                    <Pressable
+                      onPress={() => {
+                        setBookIndex(index);
+                        setChapterNumber(1);
+                        setShowBookModal(false);
+                        flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+                      }}
+                      style={{
+                        paddingHorizontal: 20,
+                        paddingVertical: 14,
+                        borderBottomWidth: 1,
+                        borderBottomColor: colors.borderSubtle,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        backgroundColor: isSelected ? colors.accentBg : 'transparent',
+                      }}
                     >
-                      {item.name}
-                    </Text>
-                    <Text className="text-xs text-on-dark-soft font-mono">
-                      {item.chapterCount} {item.chapterCount === 1 ? 'ch' : 'chs'}
-                    </Text>
-                  </Pressable>
-                </View>
-              );
-            }}
-          />
-        </SafeAreaView>
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_400Regular',
+                          color: isSelected ? colors.accent : colors.textPrimary,
+                        }}
+                      >
+                        {item.name}
+                      </Text>
+                      <View className="flex-row items-center">
+                        <Text style={{ fontSize: 12, color: colors.textSecondary, marginRight: 8 }}>
+                          {item.chapterCount} {item.chapterCount === 1 ? 'ch' : 'chs'}
+                        </Text>
+                        {isSelected && <Check size={16} color={colors.accent} />}
+                      </View>
+                    </Pressable>
+                  </View>
+                );
+              }}
+            />
+          </SafeAreaView>
+        </View>
       </Modal>
     </SafeAreaView>
   );
