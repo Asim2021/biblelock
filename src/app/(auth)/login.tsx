@@ -53,13 +53,12 @@ export default function LoginScreen() {
       >
         {/* Header Branding */}
         <View className="items-center mt-6">
-          <View className="w-20 h-20 rounded-2xl bg-surface-dark-elevated items-center justify-center border border-hairline/20 mb-6 shadow-md overflow-hidden">
-            <Image
-              source={require('../../../assets/images/icon.png')}
-              style={{ width: 80, height: 80, borderRadius: 16 }}
-              resizeMode="cover"
-            />
-          </View>
+          <Image
+            source={require('../../../assets/images/icon.png')}
+            style={{ width: 80, height: 80, borderRadius: 16 }}
+            className="mb-6 shadow-md"
+            resizeMode="cover"
+          />
 
           <Text
             className="text-4xl text-on-dark text-center mb-3 font-serif-semibold tracking-tight"

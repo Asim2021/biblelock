@@ -5,15 +5,6 @@ import {
   ActivityIndicator,
   View,
 } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  useReducedMotion,
-} from 'react-native-reanimated';
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export interface ButtonProps {
   title: string;
@@ -38,23 +29,6 @@ export function Button({
   className = '',
   textClassName = '',
 }: ButtonProps) {
-  const reducedMotion = useReducedMotion();
-  const scale = useSharedValue(1);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  const handlePressIn = () => {
-    if (disabled || loading || reducedMotion) return;
-    scale.value = withTiming(0.97, { duration: 100 });
-  };
-
-  const handlePressOut = () => {
-    if (disabled || loading || reducedMotion) return;
-    scale.value = withSpring(1, { duration: 250, dampingRatio: 0.8 });
-  };
-
   const getContainerStyle = () => {
     let base = 'flex-row items-center justify-center rounded-md';
 
@@ -106,12 +80,12 @@ export function Button({
   };
 
   return (
-    <AnimatedPressable
+    <Pressable
       onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
       disabled={disabled || loading}
-      style={animatedStyle}
+      style={({ pressed }) => [
+        { transform: [{ scale: pressed && !disabled && !loading ? 0.97 : 1 }] },
+      ]}
       className={getContainerStyle()}
     >
       {loading ? (
@@ -125,7 +99,7 @@ export function Button({
           <Text className={getTextStyle()}>{title}</Text>
         </View>
       )}
-    </AnimatedPressable>
+    </Pressable>
   );
 }
 

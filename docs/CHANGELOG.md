@@ -1,5 +1,30 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.10] - 2026-09-13
+
+### Removed & Pruned (Ponytail Over-Engineering Audit)
+- **Dead & Orphaned Code:**
+  - Deleted obsolete 590-line Anthropic Claude web design spec (`DESIGN.md`).
+  - Deleted 543-line legacy theme system (`src/theme.ts`) superseded by `src/lib/themeContext.tsx`.
+  - Deleted 493-line superseded draft plan (`docs/IMPLEMENTATION_001.md`) and historical sprint artifacts in `docs/superpowers/`, restoring the strict 4-file documentation architecture.
+  - Deleted orphaned `ProgressRing.tsx` (123 lines) and `ShieldBadge.tsx` (83 lines) with zero callers.
+  - Deleted redundant 5-line proxy file `src/components/SafeAreaView.tsx`.
+- **Dependency Reductions (`package.json`):**
+  - Uninstalled 9 unreferenced packages: `@expo/ui`, `expo-symbols`, `expo-glass-effect`, `expo-image`, `expo-device`, `expo-system-ui`, `expo-constants`, `react-native-gesture-handler`, `react-native-worklets`.
+  - Removed dead `"reset-project"` script pointing to non-existent file.
+
+### Simplified
+- **`src/components/Button.tsx`:** Replaced Reanimated 4 hook chain (`useSharedValue`, `withSpring`, `useReducedMotion`) with native `<Pressable>` pressed transforms.
+- **`src/lib/mmkv.ts`:** Removed redundant `remove` alias and runtime method reflection; unified on standard `delete(key)`.
+- **`src/app/(auth)/login.tsx` & `src/app/auth/callback.tsx`:** Cleaned nested layout wrappers and simplified redirect logic.
+
+### Verified Impact
+- **Net code reduction:** -2,230 lines of code, -9 unused dependencies.
+- **Typecheck:** `npx tsc --noEmit` clean with 0 errors across entire workspace.
+- **Package state:** `npm prune` and `package-lock.json` synchronized cleanly.
+
+---
+
 ## [1.0.9] - 2026-09-08
 
 ### Added

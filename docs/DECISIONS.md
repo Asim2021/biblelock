@@ -316,5 +316,39 @@ Selected **Option B**. Declared `QUERY_ALL_PACKAGES` in `app.json` and both `And
 ### 6. Lessons & Downstream Impact
 On Android, `presentationStyle="pageSheet"` within `<Modal>` must be avoided in cross-platform React Native apps when custom theme backgrounds are desired, as Android translates it to a platform-native window theme with fixed white backgrounds.
 
+---
 
+## [DEC-010] Whole-Repo Ponytail Cleanup & Over-Engineering Pruning
 
+- **Date:** 2026-09-13
+- **Status:** Validated
+- **Related Task / Baseline:** STATUS.md (FIX-008), /ponytail-audit
+
+### 1. Problem / Trigger (Why the Original Plan Changed)
+As development progressed across previous sprints, redundant artifacts, unreferenced dependencies, and dead components accumulated:
+1. `DESIGN.md` in root was a 590-line leftover Anthropic Claude web specification.
+2. `src/theme.ts` (543 lines) remained in the tree despite complete migration to `src/lib/themeContext.tsx`.
+3. `ProgressRing.tsx` (123 lines) and `ShieldBadge.tsx` (83 lines) had zero imports in the application.
+4. 9 npm packages in `package.json` had zero imports anywhere in `src/` or `modules/`.
+5. `Button.tsx` carried unnecessary Reanimated 4 hook chains for a simple press scale effect that native `<Pressable>` handles out of the box.
+6. Documentation files (`docs/IMPLEMENTATION_001.md`, `docs/superpowers/`) violated the repository's 4-file documentation memory architecture (`AGENTS.md`).
+
+### 2. Alternatives Evaluated
+- **Option A (Leave dead code/deps in place):** Carries dead code, increases install times and bundle size, and confuses developers/agents navigating the repo.
+- **Option B (Ponytail-audit purge):** Delete all unimported code, remove unreferenced dependencies from `package.json`, simplify over-engineered interactions to standard React Native primitives, and align docs strictly to the 4-file standard.
+
+### 3. Decision & Trade-offs
+Selected **Option B**. Deleted all orphaned components and obsolete specs, pruned 9 dependencies, simplified `Button.tsx` and `mmkv.ts`, and verified typechecking.
+
+### 4. Implementation Details
+- Deleted: `DESIGN.md`, `src/theme.ts`, `docs/IMPLEMENTATION_001.md`, `docs/superpowers/`, `src/components/ProgressRing.tsx`, `src/components/ShieldBadge.tsx`, `src/components/SafeAreaView.tsx`.
+- Pruned from `package.json`: `@expo/ui`, `expo-symbols`, `expo-glass-effect`, `expo-image`, `expo-device`, `expo-system-ui`, `expo-constants`, `react-native-gesture-handler`, `react-native-worklets`, and dead `"reset-project"` script.
+- Simplified: `src/components/Button.tsx` to native `<Pressable>` pressed transforms, `src/lib/mmkv.ts` to standard `delete(key)` without redundant aliases, and `src/app/(auth)/login.tsx` & `src/app/auth/callback.tsx`.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- Net code reduction: **-2,230 lines of code**, **-9 unused dependencies**.
+- `npx tsc --noEmit` exited cleanly with 0 errors.
+- Clean 4-file documentation architecture restored in `docs/`.
+
+### 6. Lessons & Downstream Impact
+Regularly run `/ponytail-audit` at milestone completions to prevent legacy specs, dead components, and speculative dependencies from lingering in the codebase.

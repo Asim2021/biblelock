@@ -9,11 +9,7 @@ export default function AuthCallbackScreen() {
 
   useEffect(() => {
     if (!isLoading) {
-      if (user) {
-        router.replace('/(tabs)');
-      } else {
-        router.replace('/(auth)/login');
-      }
+      router.replace(user ? '/(tabs)' : '/(auth)/login');
     }
   }, [user, isLoading, router]);
 
