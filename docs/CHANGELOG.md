@@ -1,5 +1,27 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.11] - 2026-09-13
+
+### Changed
+- **Pure Offline Local Identity (`src/lib/auth.tsx`):**
+  - Initialized immediate local user identity (`local-user`) with zero cold-start network listeners, eliminating remote Supabase checks and deep-link OAuth handling on launch.
+  - Sourced reader profile synchronously from local MMKV (`getUserName()`, daily goal, streak, translation).
+- **Decoupled Reading Timer (`src/lib/readingTimer.ts`):**
+  - Removed per-second `supabase.auth.getSession()` queries and `SyncService` push calls during active Scripture reading.
+  - Reading seconds, daily goal completion, and streaks persist strictly and synchronously to local MMKV.
+- **Settings Screen (`src/app/(tabs)/settings.tsx`):**
+  - Replaced "Signed in as / Sign Out" controls with "Local Storage & Profile" card displaying offline MMKV storage status and local reader name.
+  - Removed cloud sync calls on goal, translation, and app shield toggles.
+- **Auth Callback (`src/app/auth/callback.tsx`):**
+  - Configured to route unconditionally to `/(tabs)`.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Complete offline privacy: 0 network requests executed during daily habit usage and reading sessions.
+- Zero login prompts or authentication screens shown to users.
+
+---
+
 ## [1.0.10] - 2026-09-13
 
 ### Removed & Pruned (Ponytail Over-Engineering Audit)

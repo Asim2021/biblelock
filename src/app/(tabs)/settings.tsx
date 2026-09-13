@@ -31,10 +31,10 @@ import {
   Sun,
   X,
 } from 'lucide-react-native';
-import { useAuth } from '../../lib/auth';
 import { usePurchases } from '../../lib/purchases';
 import { AppBlocker, InstalledApp } from '../../lib/appBlocker';
 import {
+  getUserName,
   getDailyGoalMinutes,
   setDailyGoalMinutes,
   getBibleTranslation,
@@ -46,7 +46,6 @@ import {
   setThemeMode as saveThemeMode,
   ThemeMode,
 } from '../../lib/mmkv';
-import { SyncService } from '../../lib/sync';
 import { useTheme } from '../../lib/themeContext';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
@@ -56,7 +55,6 @@ const GOAL_OPTIONS = [5, 10, 15, 20, 30];
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, profile, signOut } = useAuth();
   const { isPremium, toggleDevPremium } = usePurchases();
   const { themeMode, setThemeMode, colors, isDark } = useTheme();
 
@@ -83,17 +81,11 @@ export default function SettingsScreen() {
   const handleSelectGoal = (minutes: number) => {
     setDailyGoal(minutes);
     setDailyGoalMinutes(minutes);
-    if (user?.id) {
-      SyncService.syncSettings(user.id, { daily_goal_minutes: minutes });
-    }
   };
 
   const handleSelectTranslation = (tr: 'WEB' | 'KJV') => {
     setTranslationState(tr);
     setBibleTranslation(tr);
-    if (user?.id) {
-      SyncService.syncSettings(user.id, { translation: tr });
-    }
   };
 
   const handleToggleApp = (pkgName: string) => {
@@ -106,9 +98,6 @@ export default function SettingsScreen() {
     setBlockedListState(next);
     setBlockedApps(next);
     AppBlocker.shieldApps(next);
-    if (user?.id) {
-      SyncService.syncSettings(user.id, { blocked_apps: next });
-    }
   };
 
   const handleRequestPermissions = async () => {
@@ -167,8 +156,6 @@ export default function SettingsScreen() {
     AppBlocker.shieldApps();
     Alert.alert('Reset Complete', "Today's reading progress has been reset to 00:00.");
   };
-
-  const userEmail = profile?.email || user?.email || 'Guest Disciple';
 
   return (
     <SafeAreaView
@@ -747,7 +734,7 @@ export default function SettingsScreen() {
           </Card>
         </View>
 
-        {/* Account & Developer Section */}
+        {/* Storage & Profile Section */}
         <View className="mb-6">
           <Text
             style={{
@@ -760,11 +747,11 @@ export default function SettingsScreen() {
               paddingHorizontal: 4,
             }}
           >
-            Account & Diagnostics
+            Local Storage & Profile
           </Text>
           <Card variant="dark" style={{ padding: 16 }}>
             <View className="mb-4">
-              <Text style={{ fontSize: 11, color: colors.textSecondary }}>Signed in as</Text>
+              <Text style={{ fontSize: 11, color: colors.textSecondary }}>Storage Mode</Text>
               <Text
                 style={{
                   fontSize: 14,
@@ -773,17 +760,23 @@ export default function SettingsScreen() {
                   marginTop: 2,
                 }}
               >
-                {userEmail}
+                100% Offline (Local MMKV Storage)
               </Text>
             </View>
 
-            <Button
-              title="Sign Out"
-              variant="outline"
-              size="sm"
-              onPress={signOut}
-              className="mb-4"
-            />
+            <View className="mb-4">
+              <Text style={{ fontSize: 11, color: colors.textSecondary }}>Reader Profile</Text>
+              <Text
+                style={{
+                  fontSize: 14,
+                  fontFamily: 'Inter_500Medium',
+                  color: colors.textPrimary,
+                  marginTop: 2,
+                }}
+              >
+                {getUserName()}
+              </Text>
+            </View>
 
             <View style={{ paddingTop: 16, borderTopWidth: 1, borderTopColor: colors.borderSubtle }}>
               <Text

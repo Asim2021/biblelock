@@ -54,16 +54,21 @@
   - Simplified `Button.tsx` by replacing Reanimated 4 hook chain with native `<Pressable>` pressed transforms.
   - Cleaned up `mmkv.ts` by removing redundant `remove` alias and runtime reflection.
   - Shrunk image wrapping in `login.tsx` and route redirect in `auth/callback.tsx`.
+- [x] `TASK-017`: Pure Offline Local Storage Mode & Cloud Decoupling (`DEC-011`):
+  - Streamlined `src/lib/auth.tsx` to initialize an instantaneous local offline identity (`local-user`) from MMKV, removing startup OAuth network checks and deep-link listeners.
+  - Decoupled `src/lib/readingTimer.ts` from Supabase session polling and background network calls on every second of active Scripture reading.
+  - Updated `src/app/(tabs)/settings.tsx` to remove `SyncService` push calls and replaced the Sign In/Out controls with a "Local Storage & Profile" card displaying offline device storage status.
+  - Configured `src/app/auth/callback.tsx` to route unconditionally to `/(tabs)`.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `npm prune` completed cleanly; 9 unused dependencies uninstalled.
-- Net code reduction: -2,230 lines of code, -9 unused dependencies.
-- Clean 4-file documentation architecture restored in `docs/`.
+- Reading timer updates progress strictly and synchronously in local MMKV.
+- Zero startup network latency or unauthenticated loading states.
 
 ## Session Handoff Notes
 
-- Entire repository audited and pruned of dead code, obsolete specs, and unused dependencies.
-- All 5 tab screens, auth flows, and native blocker modules intact and fully typechecked.
+- Entire application operates 100% offline with all streaks, goals, bookmarks, collections, blocked apps, and settings stored in MMKV.
+- No user login is required or forced anywhere in the app.
 - Ready for testing on device or release bundling.
+

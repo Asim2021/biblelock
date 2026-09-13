@@ -352,3 +352,36 @@ Selected **Option B**. Deleted all orphaned components and obsolete specs, prune
 
 ### 6. Lessons & Downstream Impact
 Regularly run `/ponytail-audit` at milestone completions to prevent legacy specs, dead components, and speculative dependencies from lingering in the codebase.
+
+---
+
+## [DEC-011] Pure Offline Local Storage Mode & Decoupling from Cloud Auth
+
+- **Date:** 2026-09-13
+- **Status:** Validated
+- **Related Task / Baseline:** STATUS.md (TASK-017)
+
+### 1. Problem / Trigger (Why the Original Plan Changed)
+User explicitly requested 100% offline local storage with zero forced login. The application previously initialized Supabase remote auth listeners on startup, performed deep-link parsing, polled Supabase session on every second during reading timer ticks to sync progress, and presented sign in/out controls in Settings.
+
+### 2. Alternatives Evaluated
+- **Option A (Optional Cloud Sign-In):** Keep local storage default, but retain Supabase background auth listeners and an optional login button.
+- **Option B (Pure Local-Only Architecture):** Initialize immediate local identity (`id: 'local-user'`) from MMKV, remove startup network auth listeners, remove per-second remote sync polling from `readingTimer.ts`, and replace Settings "Signed in as / Sign Out" with an offline storage status card.
+
+### 3. Decision & Trade-offs
+Selected **Option B**. The app now operates with zero network delay, no login gates, and complete user privacy. All data (streaks, timer seconds, bookmarks, collections, app blocklists, preferences) lives purely on device in synchronous MMKV storage.
+
+### 4. Implementation Details
+- `src/lib/auth.tsx`: Replaced complex OAuth/PKCE listener pipeline with an instantaneous offline local provider sourcing display name and stats from MMKV.
+- `src/lib/readingTimer.ts`: Removed `supabase.auth.getSession()` and `SyncService` polling every second.
+- `src/app/(tabs)/settings.tsx`: Removed `SyncService` push calls and replaced the Sign In/Out section with a "Local Storage & Profile" card.
+- `src/app/auth/callback.tsx`: Configured to redirect directly to `/(tabs)`.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit` passing cleanly with 0 errors.
+- Cold launch immediately presents Onboarding or Home without auth loading flicker.
+- Zero network requests executed per second during active Scripture reading.
+
+### 6. Lessons & Downstream Impact
+Defaulting to local-first architecture eliminates cloud dependencies and networking failure modes for core habit and timer features.
+

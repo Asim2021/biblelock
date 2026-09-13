@@ -5,13 +5,13 @@ import { useAuth } from '../../lib/auth';
 
 export default function AuthCallbackScreen() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { isLoading } = useAuth();
 
   useEffect(() => {
     if (!isLoading) {
-      router.replace(user ? '/(tabs)' : '/(auth)/login');
+      router.replace('/(tabs)');
     }
-  }, [user, isLoading, router]);
+  }, [isLoading, router]);
 
   return (
     <View
