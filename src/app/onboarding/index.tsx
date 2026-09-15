@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { LanguageCode, OnboardingData } from '../../types/onboarding';
+import { OnboardingData } from '../../types/onboarding';
 import {
   getOnboardingData,
   setOnboardingData,
@@ -10,7 +10,7 @@ import {
   DEFAULT_BLOCKED_APPS,
 } from '../../lib/mmkv';
 
-import { LanguageStep } from './steps/LanguageStep';
+// LanguageStep hidden — English-only for now
 import { CarouselStep } from './steps/CarouselStep';
 import { SurveyStep } from './steps/SurveyStep';
 import { PlanStep } from './steps/PlanStep';
@@ -22,8 +22,8 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const initialData = getOnboardingData();
 
-  const [step, setStep] = useState<number>(1);
-  const [language, setLanguage] = useState<LanguageCode>(initialData.language || 'en');
+  const [step, setStep] = useState<number>(2); // Start at carousel (language step hidden)
+  const language = 'en'; // English-only for now
   const [userName, setUserName] = useState<string>(initialData.userName || '');
   const [readingFrequency, setReadingFrequency] = useState<string[]>(initialData.readingFrequency || []);
   const [biggestChallenges, setBiggestChallenges] = useState<string[]>(initialData.biggestChallenges || []);
@@ -65,16 +65,7 @@ export default function OnboardingScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0d2e24' }} edges={['top', 'bottom']}>
       <View style={{ flex: 1 }}>
-        {step === 1 && (
-          <LanguageStep
-            selectedLanguage={language}
-            onSelectLanguage={setLanguage}
-            onContinue={() => {
-              saveCurrentProgress();
-              setStep(2);
-            }}
-          />
-        )}
+        {/* LanguageStep hidden — English-only for now */}
 
         {step === 2 && (
           <CarouselStep

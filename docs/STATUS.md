@@ -81,21 +81,28 @@
   - **Library & Reader Gating (`src/app/(tabs)/library.tsx`, `src/app/(tabs)/reader.tsx`):** Enforced 3-bookmark free limit on reader bookmark addition. Gated new collection creation in library behind Sanctuary.
   - **Stats Gating (`src/app/(tabs)/stats.tsx`, `src/components/BadgeShareModal.tsx`):** Added period selector tabs (Week / Month / Year) with lock icons gating extended history, and gated badge social sharing behind Sanctuary.
   - **Dashboard Soft Prompt (`src/app/(tabs)/index.tsx`):** Added dismissible, non-intrusive Sanctuary prompt card surfacing when free users maintain a 3+ day streak.
+- [x] `FIX-009`: Free Tier 5-App Shielding Limit, Reset Defaults, Authentic Social Media Icons & Uninstalled App Dimming:
+  - **Free Tier 5-App Cap (`src/app/onboarding/steps/AppPickerStep.tsx`):** Enforced strict 5-app shielding limit for non-premium users across both the full installed app picker modal (`toggleApp`, `handleSave`) and quick distraction chips (`toggleQuickApp`). Added user alerts, clear "(Max 5 on Free)" labels, and live counter badges (`/5`).
+  - **Free Tier Reset Defaults (`src/app/(tabs)/settings.tsx`):** Added a dedicated "Reset Defaults" action in the Shielded Applications header and empty state for Free tier users. If an app was deleted by mistake, users can restore the 5 default apps in 1 click. Gated "+ Add Apps" on Free tier now prompts to reset defaults or upgrade.
+  - **Authentic Social Media Icons (`src/components/AppIcon.tsx`):** Created crisp vector SVG components for Instagram (gradient camera), TikTok (offset cyan/magenta note on dark), YouTube (red play button), X/Twitter (official 𝕏 geometry), Reddit (orange Snoo alien face), Facebook, Snapchat, Netflix, Discord, and WhatsApp. Integrated across settings list, modal picker, and onboarding quick chips, eliminating fallback letter badges.
+  - **Uninstalled App Dimming & "Not installed" Indicators:**
+    - In `settings.tsx`: Detected apps missing from device package scan are rendered at 55% opacity with a subtle `"Not installed"` badge beside their name.
+    - In `AppPickerStep.tsx`: Onboarding automatically pre-selects only default apps that are actually detected on the device, while keeping uninstalled distraction chips clickable with a dimmed (60% opacity) appearance and "Not installed" micro-label.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- Live RevenueCat test API verified with HTTP 200: active `default` offering loaded with `$rc_monthly`, `$rc_annual`, `$rc_lifetime`.
-- Reading timer updates progress strictly and synchronously in local MMKV.
-- Zero startup network latency or unauthenticated loading states.
-- Paywall renders natively in both Dark and Light theme modes without hardcoded background conflicts.
-- Feature gates redirect unentitled users smoothly to `/paywall`.
+- `AppIcon.tsx`: Pure `react-native-svg` vector icons with zero image asset download overhead.
+- Free tier limit: Blocks selecting > 5 apps with contextual alert in onboarding and settings.
+- Reset defaults: Synchronously restores `DEFAULT_BLOCKED_APPS` to MMKV and native blocker.
+- Uninstalled detection: Validated with device package list cross-reference.
 
 ## Session Handoff Notes
 
-- Pricing overhaul fully implemented with Covenant / Sanctuary tier architecture.
-- Paywall dynamically showcases master brand icon, dynamic streak-aware emotional copy, 6-feature benefits matrix, and revised price points ($4.99/mo, $29.99/yr, $79.99 lifetime).
-- Cross-app feature gates active in Settings, Reader, Library, and Stats.
-- Dismissible soft prompt active on Dashboard for 3+ day streak users.
+- Free tier 5-app guardrail is active in both onboarding and settings.
+- Social media apps now display crisp vector brand icons instead of single-letter placeholders.
+- Free plan users have a 1-tap "Reset Defaults" button in Settings to recover any accidentally deleted shielded apps.
+- Uninstalled apps are visually dimmed with clean "Not installed" badges and auto-filtered during initial onboarding.
+
 
 

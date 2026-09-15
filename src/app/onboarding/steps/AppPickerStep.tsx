@@ -8,10 +8,13 @@ import {
   Modal,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Lock, AlertTriangle, Check, Search, ShieldAlert, Sparkles } from 'lucide-react-native';
 import { AppBlocker } from '../../../lib/appBlocker';
+import { usePurchases } from '../../../lib/purchases';
+import { AppIcon } from '../../../components/AppIcon';
 
 interface AppPickerStepProps {
   blockedApps: string[];
@@ -42,6 +45,7 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
   onNext,
 }) => {
   const insets = useSafeAreaInsets();
+  const { isPremium } = usePurchases();
   const [showModal, setShowModal] = useState(false);
   const [installedApps, setInstalledApps] = useState<AppItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -51,6 +55,15 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
   useEffect(() => {
     AppBlocker.getInstalledApps().then((apps) => {
       setInstalledApps(apps);
+      if (apps && apps.length > 0) {
+        const installedDefaults = blockedApps.filter((pkg) =>
+          apps.some((a) => a.packageName === pkg)
+        );
+        if (installedDefaults.length > 0 && installedDefaults.length < blockedApps.length) {
+          setBlockedApps(installedDefaults);
+          setTempSelected(installedDefaults);
+        }
+      }
     });
   }, []);
 
@@ -67,12 +80,20 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
     if (tempSelected.includes(pkg)) {
       setTempSelected(tempSelected.filter((p) => p !== pkg));
     } else {
+      if (!isPremium && tempSelected.length >= 5) {
+        Alert.alert(
+          '5 App Limit (Free Plan)',
+          'The Free plan includes up to 5 shielded apps. Deselect an app first or upgrade to Premium for unlimited apps.'
+        );
+        return;
+      }
       setTempSelected([...tempSelected, pkg]);
     }
   };
 
   const handleSave = () => {
-    setBlockedApps(tempSelected);
+    const finalSelected = !isPremium && tempSelected.length > 5 ? tempSelected.slice(0, 5) : tempSelected;
+    setBlockedApps(finalSelected);
     setShowModal(false);
   };
 
@@ -80,6 +101,13 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
     if (blockedApps.includes(pkg)) {
       setBlockedApps(blockedApps.filter((p) => p !== pkg));
     } else {
+      if (!isPremium && blockedApps.length >= 5) {
+        Alert.alert(
+          '5 App Limit (Free Plan)',
+          'The Free plan includes up to 5 shielded apps. Deselect an app first or upgrade to Premium for unlimited apps.'
+        );
+        return;
+      }
       setBlockedApps([...blockedApps, pkg]);
     }
   };
@@ -122,14 +150,15 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
           Choose which apps to shield until you complete your daily Bible reading.
         </Text>
 
-        {/* Big Interactive Lock Card */}
+        {/* Guarded Apps Status Card (Disabled for Free plan in Onboarding) */}
         <Pressable
-          onPress={openPicker}
+          disabled={!isPremium}
+          onPress={isPremium ? openPicker : undefined}
           className={`p-6 rounded-3xl items-center justify-center mb-5 border ${
             blockedApps.length > 0
               ? 'border-[#f5b800] bg-[#143e32]'
               : 'border-[#265e4d] bg-[#12382d]'
-          } active:opacity-90`}
+          } ${isPremium ? 'active:opacity-90' : ''}`}
         >
           <View className="w-16 h-16 rounded-2xl bg-[#1d5242] items-center justify-center mb-3">
             <Lock size={32} color="#f5b800" strokeWidth={2} />
@@ -138,12 +167,14 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
           <Text className="text-xl font-sans-bold text-[#faf9f5] mb-1">
             {blockedApps.length > 0
               ? `${blockedApps.length} ${blockedApps.length === 1 ? 'app' : 'apps'} guarded`
-              : 'Select Apps to Block'}
+              : 'No Apps Selected'}
           </Text>
           <Text className="text-xs font-sans text-[#78a898]">
-            {blockedApps.length > 0
+            {isPremium
               ? 'Tap to adjust your selected apps'
-              : 'Tap to browse all installed apps'}
+              : blockedApps.length > 0
+                ? 'Shielded during your daily Bible reading'
+                : 'Select distractions from the options below'}
           </Text>
         </Pressable>
 
@@ -155,6 +186,9 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
           <View className="flex-row flex-wrap">
             {COMMON_DISTRACTIONS.map((c) => {
               const isSelected = blockedApps.includes(c.packageName);
+              const isInstalled =
+                installedApps.length === 0 ||
+                installedApps.some((a) => a.packageName === c.packageName);
               return (
                 <Pressable
                   key={c.packageName}
@@ -162,19 +196,36 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
                   className={`flex-row items-center px-3 py-2 rounded-xl mr-2 mb-2 border ${
                     isSelected
                       ? 'border-[#f5b800] bg-[#1d4c3d]'
-                      : 'border-[#205243] bg-[#143e32]'
+                      : isInstalled
+                        ? 'border-[#205243] bg-[#143e32]'
+                        : 'border-[#1b3d32] bg-[#0f2e25]'
                   }`}
+                  style={{ opacity: isInstalled || isSelected ? 1 : 0.6 }}
                 >
-                  {isSelected ? (
-                    <Check size={14} color="#f5b800" style={{ marginRight: 6 }} />
-                  ) : null}
-                  <Text
-                    className={`text-xs font-sans-bold ${
-                      isSelected ? 'text-[#f5b800]' : 'text-[#faf9f5]'
-                    }`}
-                  >
-                    {c.label}
-                  </Text>
+                  <View style={{ marginRight: 6 }}>
+                    <AppIcon packageName={c.packageName} label={c.label} size={16} borderRadius={4} />
+                  </View>
+                  <View>
+                    <Text
+                      className={`text-xs font-sans-bold ${
+                        isSelected
+                          ? 'text-[#f5b800]'
+                          : isInstalled
+                            ? 'text-[#faf9f5]'
+                            : 'text-[#8fa89f]'
+                      }`}
+                    >
+                      {c.label}
+                    </Text>
+                    {!isInstalled && (
+                      <Text style={{ fontSize: 9, color: '#729489', fontFamily: 'Inter_500Medium' }}>
+                        Not installed
+                      </Text>
+                    )}
+                  </View>
+                  {isSelected && (
+                    <Check size={14} color="#f5b800" style={{ marginLeft: 6 }} />
+                  )}
                 </Pressable>
               );
             })}
@@ -254,7 +305,9 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
             Select Apps to Block
           </Text>
           <Text className="text-xs font-sans text-[#a09d96] mb-4">
-            Choose which apps to guard until your daily reading is done
+            {isPremium
+              ? 'Choose which apps to guard until your daily reading is done'
+              : 'Choose up to 5 apps to guard on the Free plan (Unlimited on Premium)'}
           </Text>
 
           {/* Search bar */}
@@ -291,19 +344,15 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
                     }`}
                   >
                     <View className="flex-row items-center flex-1 mr-3">
-                      {app.icon ? (
-                        <Image
-                          source={{ uri: app.icon }}
-                          style={{ width: 40, height: 40, borderRadius: 10, marginRight: 12 }}
-                          resizeMode="contain"
+                      <View style={{ marginRight: 12 }}>
+                        <AppIcon
+                          packageName={app.packageName}
+                          label={app.label}
+                          iconUri={app.icon}
+                          size={40}
+                          borderRadius={10}
                         />
-                      ) : (
-                        <View className="w-10 h-10 rounded-xl bg-[#252d3d] items-center justify-center mr-3">
-                          <Text className="text-base font-bold text-[#f5b800]">
-                            {app.label.charAt(0).toUpperCase()}
-                          </Text>
-                        </View>
-                      )}
+                      </View>
                       <View className="flex-1">
                         <Text className="text-sm font-sans-bold text-[#faf9f5]" numberOfLines={1}>
                           {app.label}
@@ -345,7 +394,7 @@ export const AppPickerStep: React.FC<AppPickerStepProps> = ({
               className="flex-1 py-3.5 ml-2 rounded-xl bg-[#f5b800] items-center justify-center shadow-md"
             >
               <Text className="text-sm font-sans-bold text-[#141413]">
-                Save & Continue ({tempSelected.length})
+                Save & Continue ({tempSelected.length}{!isPremium ? '/5' : ''})
               </Text>
             </Pressable>
           </View>

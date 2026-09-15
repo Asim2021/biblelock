@@ -30,6 +30,7 @@ import {
   Moon,
   Sun,
   X,
+  RotateCcw,
 } from 'lucide-react-native';
 import { usePurchases } from '../../lib/purchases';
 import { useFeatureGate } from '../../lib/useFeatureGate';
@@ -42,11 +43,13 @@ import {
   setBibleTranslation,
   getBlockedApps,
   setBlockedApps,
+  DEFAULT_BLOCKED_APPS,
   setReadingProgress,
   getThemeMode,
   setThemeMode as saveThemeMode,
   ThemeMode,
 } from '../../lib/mmkv';
+import { AppIcon } from '../../components/AppIcon';
 import { useTheme } from '../../lib/themeContext';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
@@ -113,8 +116,47 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleResetDefaultApps = () => {
+    Alert.alert(
+      'Reset Default Apps',
+      'Restore the default 5 distraction apps (Instagram, TikTok, YouTube, X, Reddit)?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset to Defaults',
+          onPress: () => {
+            setBlockedListState(DEFAULT_BLOCKED_APPS);
+            setBlockedApps(DEFAULT_BLOCKED_APPS);
+            AppBlocker.shieldApps(DEFAULT_BLOCKED_APPS);
+            Alert.alert('Reset Complete', 'Default 5 shielded apps restored.');
+          },
+        },
+      ]
+    );
+  };
+
   const handleCustomApps = async () => {
-    if (!requirePremium('Custom app selection')) {
+    if (!isPremium) {
+      Alert.alert(
+        'Custom App Selection',
+        'Custom app selection requires Premium. Free plan includes the 5 default distraction apps.\n\nWould you like to restore the default 5 apps or upgrade to Premium?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Reset Defaults',
+            onPress: () => {
+              setBlockedListState(DEFAULT_BLOCKED_APPS);
+              setBlockedApps(DEFAULT_BLOCKED_APPS);
+              AppBlocker.shieldApps(DEFAULT_BLOCKED_APPS);
+              Alert.alert('Reset Complete', 'Default 5 shielded apps restored.');
+            },
+          },
+          {
+            text: 'Upgrade',
+            onPress: () => router.push('/paywall'),
+          },
+        ]
+      );
       return;
     }
     setShowAppPickerModal(true);
@@ -358,30 +400,59 @@ export default function SettingsScreen() {
                 color: colors.textSecondary,
               }}
             >
-              Shielded Applications ({blockedList.length})
+              Shielded Applications ({blockedList.length}{!isPremium ? '/5' : ''})
             </Text>
-            <Pressable
-              onPress={handleCustomApps}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                backgroundColor: colors.accentBg,
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                borderRadius: 8,
-              }}
-            >
-              <Plus size={13} color={colors.accent} style={{ marginRight: 4 }} />
-              <Text
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {!isPremium && (
+                <Pressable
+                  onPress={handleResetDefaultApps}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: colors.surfaceSubtle,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: colors.borderSubtle,
+                    marginRight: 8,
+                  }}
+                >
+                  <RotateCcw size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: colors.textSecondary,
+                      fontFamily: 'Inter_600SemiBold',
+                    }}
+                  >
+                    Reset
+                  </Text>
+                </Pressable>
+              )}
+              <Pressable
+                onPress={handleCustomApps}
                 style={{
-                  fontSize: 12,
-                  color: colors.accent,
-                  fontFamily: 'Inter_600SemiBold',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: colors.accentBg,
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  borderRadius: 8,
                 }}
               >
-                Add Apps
-              </Text>
-            </Pressable>
+                <Plus size={13} color={colors.accent} style={{ marginRight: 4 }} />
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: colors.accent,
+                    fontFamily: 'Inter_600SemiBold',
+                  }}
+                >
+                  Add Apps
+                </Text>
+              </Pressable>
+            </View>
           </View>
 
           <Card variant="dark" style={{ padding: 8 }}>
@@ -422,7 +493,7 @@ export default function SettingsScreen() {
                   Shield distracting apps like social media or games so they stay locked until your Bible goal is met.
                 </Text>
                 <Pressable
-                  onPress={handleCustomApps}
+                  onPress={isPremium ? handleCustomApps : handleResetDefaultApps}
                   style={{
                     paddingHorizontal: 16,
                     paddingVertical: 10,
@@ -432,15 +503,29 @@ export default function SettingsScreen() {
                     alignItems: 'center',
                   }}
                 >
-                  <Plus size={14} color="#141413" style={{ marginRight: 6 }} />
-                  <Text style={{ fontSize: 12, fontFamily: 'Inter_700Bold', color: '#141413' }}>
-                    Select Apps to Shield
-                  </Text>
+                  {isPremium ? (
+                    <>
+                      <Plus size={14} color="#141413" style={{ marginRight: 6 }} />
+                      <Text style={{ fontSize: 12, fontFamily: 'Inter_700Bold', color: '#141413' }}>
+                        Select Apps to Shield
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <RotateCcw size={14} color="#141413" style={{ marginRight: 6 }} />
+                      <Text style={{ fontSize: 12, fontFamily: 'Inter_700Bold', color: '#141413' }}>
+                        Restore 5 Default Apps
+                      </Text>
+                    </>
+                  )}
                 </Pressable>
               </View>
             ) : (
               blockedList.map((pkg, idx) => {
                 const info = getAppInfo(pkg);
+                const isInstalled =
+                  installedApps.length === 0 ||
+                  installedApps.some((a) => a.packageName === pkg);
                 return (
                   <View
                     key={pkg}
@@ -451,43 +536,55 @@ export default function SettingsScreen() {
                       padding: 12,
                       borderTopWidth: idx !== 0 ? 1 : 0,
                       borderTopColor: colors.borderSubtle,
+                      opacity: isInstalled ? 1 : 0.55,
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
-                      {info.icon ? (
-                        <Image
-                          source={{ uri: info.icon }}
-                          style={{ width: 36, height: 36, borderRadius: 8, marginRight: 12 }}
-                          resizeMode="contain"
+                      <View style={{ marginRight: 12 }}>
+                        <AppIcon
+                          packageName={pkg}
+                          label={info.label}
+                          iconUri={info.icon}
+                          size={36}
+                          borderRadius={8}
                         />
-                      ) : (
-                        <View
-                          style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 8,
-                            backgroundColor: colors.surfaceSubtle,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginRight: 12,
-                          }}
-                        >
-                          <Text style={{ fontSize: 14, fontWeight: 'bold', color: colors.accent }}>
-                            {info.label.charAt(0).toUpperCase()}
-                          </Text>
-                        </View>
-                      )}
+                      </View>
                       <View style={{ flex: 1 }}>
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            fontFamily: 'Inter_500Medium',
-                            color: colors.textPrimary,
-                          }}
-                          numberOfLines={1}
-                        >
-                          {info.label}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <Text
+                            style={{
+                              fontSize: 14,
+                              fontFamily: 'Inter_500Medium',
+                              color: colors.textPrimary,
+                              marginRight: 6,
+                            }}
+                            numberOfLines={1}
+                          >
+                            {info.label}
+                          </Text>
+                          {!isInstalled && (
+                            <View
+                              style={{
+                                backgroundColor: colors.surfaceSubtle,
+                                paddingHorizontal: 6,
+                                paddingVertical: 1.5,
+                                borderRadius: 6,
+                                borderWidth: 1,
+                                borderColor: colors.borderSubtle,
+                              }}
+                            >
+                              <Text
+                                style={{
+                                  fontSize: 10,
+                                  fontFamily: 'Inter_600SemiBold',
+                                  color: colors.textMuted,
+                                }}
+                              >
+                                Not installed
+                              </Text>
+                            </View>
+                          )}
+                        </View>
                         <Text
                           style={{ fontSize: 11, color: colors.textSecondary, marginTop: 1 }}
                           numberOfLines={1}
@@ -950,29 +1047,15 @@ export default function SettingsScreen() {
                           }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
-                            {app.icon ? (
-                              <Image
-                                source={{ uri: app.icon }}
-                                style={{ width: 40, height: 40, borderRadius: 10, marginRight: 12 }}
-                                resizeMode="contain"
+                            <View style={{ marginRight: 12 }}>
+                              <AppIcon
+                                packageName={app.packageName}
+                                label={app.label}
+                                iconUri={app.icon}
+                                size={40}
+                                borderRadius={10}
                               />
-                            ) : (
-                              <View
-                                style={{
-                                  width: 40,
-                                  height: 40,
-                                  borderRadius: 10,
-                                  backgroundColor: colors.surfaceSubtle,
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  marginRight: 12,
-                                }}
-                              >
-                                <Text style={{ fontSize: 14, fontWeight: 'bold', color: colors.accent }}>
-                                  {app.label.charAt(0).toUpperCase()}
-                                </Text>
-                              </View>
-                            )}
+                            </View>
                             <View style={{ flex: 1 }}>
                               <Text
                                 numberOfLines={1}
