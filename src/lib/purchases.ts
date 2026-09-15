@@ -36,10 +36,18 @@ export function initRevenueCat() {
     return;
   }
 
+  if (apiKey.startsWith('sk_')) {
+    console.warn(
+      '[Purchases] Configuration skipped: Secret API key (sk_...) detected in client env. RevenueCat SDK requires the Public SDK key (goog_... for Android, appl_... for iOS, or test_... for Test Store). Please update EXPO_PUBLIC_REVENUECAT_*_KEY in .env.'
+    );
+    return;
+  }
+
   try {
     Purchases.setLogLevel(LOG_LEVEL.DEBUG);
     Purchases.configure({ apiKey });
     isConfigured = true;
+    console.info('[Purchases] RevenueCat configured successfully with public key');
   } catch (e) {
     console.warn('[Purchases] RevenueCat configuration skipped:', e);
   }
@@ -54,7 +62,12 @@ export function usePurchases(): PurchasesState {
   const checkEntitlements = useCallback((info: CustomerInfo | null) => {
     if (devPremium) return true;
     if (!info) return false;
-    return typeof info.entitlements.active['premium'] !== 'undefined';
+    const active = info.entitlements.active;
+    return (
+      typeof active['premium'] !== 'undefined' ||
+      typeof active['pro'] !== 'undefined' ||
+      Object.keys(active).length > 0
+    );
   }, [devPremium]);
 
   useEffect(() => {

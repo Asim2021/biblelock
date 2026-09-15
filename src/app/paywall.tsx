@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { usePurchases } from '../lib/purchases';
-import { Button } from '../components/Button';
+import { useTheme } from '../lib/themeContext';
 import { Card } from '../components/Card';
 import { X, Crown, Check } from 'lucide-react-native';
 
@@ -39,17 +39,29 @@ const FEATURES = [
 
 export default function PaywallScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const { offerings, purchasePackage, restorePurchases, isPremium } = usePurchases();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual' | 'lifetime'>('annual');
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const currentPackages = offerings?.current?.availablePackages || [];
+  const annualPkg = currentPackages.find(
+    (p) => p.identifier.toLowerCase().includes('annual') || (p.packageType as string) === 'ANNUAL'
+  );
+  const monthlyPkg = currentPackages.find(
+    (p) => p.identifier.toLowerCase().includes('monthly') || (p.packageType as string) === 'MONTHLY'
+  );
+  const lifetimePkg = currentPackages.find(
+    (p) => p.identifier.toLowerCase().includes('lifetime') || (p.packageType as string) === 'LIFETIME'
+  );
+
   const handleSubscribe = async () => {
     setIsProcessing(true);
-    // Find matching package if available from RevenueCat, else simulate
-    const currentPackages = offerings?.current?.availablePackages;
-    const targetPackage = currentPackages?.find((p) =>
-      p.identifier.toLowerCase().includes(selectedPlan)
-    ) || currentPackages?.[0];
+    let targetPackage = null;
+    if (selectedPlan === 'annual') targetPackage = annualPkg;
+    else if (selectedPlan === 'monthly') targetPackage = monthlyPkg;
+    else if (selectedPlan === 'lifetime') targetPackage = lifetimePkg;
+    if (!targetPackage) targetPackage = currentPackages[0];
 
     let success = false;
     if (targetPackage) {
@@ -81,59 +93,108 @@ export default function PaywallScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-dark">
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Modal Close Header */}
-      <View className="px-5 py-3 flex-row justify-between items-center border-b border-hairline/10">
+      <View
+        style={{ borderBottomColor: colors.borderSubtle, borderBottomWidth: 1 }}
+        className="px-5 py-3 flex-row justify-between items-center"
+      >
         <View className="w-8" />
-        <Text className="text-xs font-sans-bold uppercase tracking-widest text-primary">
+        <Text
+          style={{ color: colors.accent }}
+          className="text-xs font-sans-bold uppercase tracking-widest"
+        >
           PREMIUM PASS
         </Text>
         <Pressable
           onPress={() => router.back()}
-          className="w-8 h-8 items-center justify-center rounded-full bg-surface-dark-elevated"
+          style={{
+            backgroundColor: colors.surfaceElevated,
+            borderColor: colors.borderSubtle,
+            borderWidth: 1,
+          }}
+          className="w-8 h-8 items-center justify-center rounded-full active:opacity-70"
         >
-          <X size={16} color="#faf9f5" />
+          <X size={16} color={colors.textPrimary} />
         </Pressable>
       </View>
 
       <ScrollView
         className="flex-1 px-5"
         contentContainerStyle={{ paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
       >
         {/* Hero Title */}
         <View className="items-center my-6">
-          <View className="w-16 h-16 rounded-full bg-primary/10 border border-primary/30 items-center justify-center mb-3">
-            <Crown size={32} color="#f5b800" strokeWidth={2} />
+          <View
+            style={{
+              backgroundColor: colors.accentBg,
+              borderColor: colors.accent,
+              borderWidth: 1,
+            }}
+            className="w-16 h-16 rounded-full items-center justify-center mb-3"
+          >
+            <Crown size={32} color={colors.accent} strokeWidth={2} />
           </View>
           <Text
-            className="text-3xl text-on-dark text-center font-serif"
-            style={{ fontFamily: 'EBGaramond_700Bold' }}
+            style={{
+              fontFamily: 'EBGaramond_700Bold',
+              color: colors.textPrimary,
+            }}
+            className="text-3xl text-center"
           >
             Bible Unlock Pro
           </Text>
-          <Text className="text-sm text-on-dark-soft text-center mt-2 px-6 leading-relaxed">
+          <Text
+            style={{ color: colors.textSecondary }}
+            className="text-sm text-center mt-2 px-6 leading-relaxed"
+          >
             Reclaim your attention and deepen your Scripture walk with unrestricted app blocking.
           </Text>
         </View>
 
         {/* Comparison Feature Table */}
-        <Card variant="dark" className="p-4 mb-6 border border-hairline/20">
-          <Text className="text-xs font-sans-bold uppercase tracking-wider text-accent-amber mb-3">
+        <Card
+          style={{
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            borderWidth: 1,
+            padding: 16,
+            marginBottom: 24,
+            borderRadius: 16,
+          }}
+        >
+          <Text
+            style={{ color: colors.accent }}
+            className="text-xs font-sans-bold uppercase tracking-wider mb-3"
+          >
             What You Get
           </Text>
           {FEATURES.map((feat, idx) => (
             <View
               key={feat.title}
-              className={`py-2.5 ${idx !== 0 ? 'border-t border-hairline/10' : ''}`}
+              style={{
+                borderTopColor: colors.borderSubtle,
+                borderTopWidth: idx !== 0 ? 1 : 0,
+                paddingVertical: 10,
+              }}
             >
-              <Text className="text-sm font-sans-semibold text-on-dark mb-1">
+              <Text
+                style={{ color: colors.textPrimary }}
+                className="text-sm font-sans-semibold mb-1"
+              >
                 {feat.title}
               </Text>
               <View className="flex-row justify-between items-center">
-                <Text className="text-xs text-on-dark-soft">Free: {feat.free}</Text>
+                <Text style={{ color: colors.textSecondary }} className="text-xs">
+                  Free: {feat.free}
+                </Text>
                 <View className="flex-row items-center">
-                  <Check size={12} color="#f5b800" strokeWidth={2.5} />
-                  <Text className="text-xs text-primary font-sans-medium ml-1">
+                  <Check size={13} color={colors.accent} strokeWidth={2.5} />
+                  <Text
+                    style={{ color: colors.accent }}
+                    className="text-xs font-sans-medium ml-1"
+                  >
                     {feat.pro}
                   </Text>
                 </View>
@@ -143,40 +204,62 @@ export default function PaywallScreen() {
         </Card>
 
         {/* Pricing Plan Selector */}
-        <View className="space-y-3 mb-6">
+        <View className="mb-6">
           {/* Annual Card (Best Value) */}
           <Pressable
             onPress={() => setSelectedPlan('annual')}
-            className={`p-4 rounded-lg border flex-row items-center justify-between mb-3 ${
-              selectedPlan === 'annual'
-                ? 'bg-primary/10 border-primary'
-                : 'bg-surface-dark-elevated border-hairline/10'
-            }`}
+            style={{
+              backgroundColor: selectedPlan === 'annual' ? colors.accentBg : colors.surface,
+              borderColor: selectedPlan === 'annual' ? colors.accent : colors.border,
+              borderWidth: 1,
+              borderRadius: 14,
+              padding: 16,
+              marginBottom: 12,
+            }}
+            className="flex-row items-center justify-between"
           >
-            <View>
+            <View className="flex-1 mr-3">
               <View className="flex-row items-center">
-                <Text className="text-base font-sans-bold text-on-dark">
+                <Text
+                  style={{ color: colors.textPrimary }}
+                  className="text-base font-sans-bold"
+                >
                   Annual Pass
                 </Text>
-                <View className="ml-2.5 bg-primary px-2 py-0.5 rounded-full">
-                  <Text className="text-[10px] text-white font-sans-bold uppercase">
+                <View
+                  style={{ backgroundColor: colors.accent }}
+                  className="ml-2.5 px-2 py-0.5 rounded-full"
+                >
+                  <Text
+                    style={{ color: colors.accentText }}
+                    className="text-[10px] font-sans-bold uppercase"
+                  >
                     Save 50%
                   </Text>
                 </View>
               </View>
-              <Text className="text-xs text-on-dark-soft mt-0.5">
-                $2.49 / month ($29.99 billed yearly)
+              <Text
+                style={{ color: colors.textSecondary }}
+                className="text-xs mt-1"
+              >
+                {annualPkg?.product?.priceString
+                  ? `${annualPkg.product.priceString} billed yearly`
+                  : '$2.49 / month ($29.99 billed yearly)'}
               </Text>
             </View>
             <View
-              className={`w-5 h-5 rounded-full border items-center justify-center ${
-                selectedPlan === 'annual'
-                  ? 'border-primary bg-primary'
-                  : 'border-hairline/40'
-              }`}
+              style={{
+                borderColor: selectedPlan === 'annual' ? colors.accent : colors.borderSubtle,
+                backgroundColor: selectedPlan === 'annual' ? colors.accent : 'transparent',
+                borderWidth: 1.5,
+              }}
+              className="w-5 h-5 rounded-full items-center justify-center"
             >
               {selectedPlan === 'annual' && (
-                <View className="w-2 h-2 rounded-full bg-white" />
+                <View
+                  style={{ backgroundColor: colors.accentText }}
+                  className="w-2 h-2 rounded-full"
+                />
               )}
             </View>
           </Pressable>
@@ -184,29 +267,45 @@ export default function PaywallScreen() {
           {/* Monthly Card */}
           <Pressable
             onPress={() => setSelectedPlan('monthly')}
-            className={`p-4 rounded-lg border flex-row items-center justify-between mb-3 ${
-              selectedPlan === 'monthly'
-                ? 'bg-primary/10 border-primary'
-                : 'bg-surface-dark-elevated border-hairline/10'
-            }`}
+            style={{
+              backgroundColor: selectedPlan === 'monthly' ? colors.accentBg : colors.surface,
+              borderColor: selectedPlan === 'monthly' ? colors.accent : colors.border,
+              borderWidth: 1,
+              borderRadius: 14,
+              padding: 16,
+              marginBottom: 12,
+            }}
+            className="flex-row items-center justify-between"
           >
-            <View>
-              <Text className="text-base font-sans-bold text-on-dark">
+            <View className="flex-1 mr-3">
+              <Text
+                style={{ color: colors.textPrimary }}
+                className="text-base font-sans-bold"
+              >
                 Monthly Pass
               </Text>
-              <Text className="text-xs text-on-dark-soft mt-0.5">
-                $4.99 / month (cancel anytime)
+              <Text
+                style={{ color: colors.textSecondary }}
+                className="text-xs mt-1"
+              >
+                {monthlyPkg?.product?.priceString
+                  ? `${monthlyPkg.product.priceString} / month (cancel anytime)`
+                  : '$4.99 / month (cancel anytime)'}
               </Text>
             </View>
             <View
-              className={`w-5 h-5 rounded-full border items-center justify-center ${
-                selectedPlan === 'monthly'
-                  ? 'border-primary bg-primary'
-                  : 'border-hairline/40'
-              }`}
+              style={{
+                borderColor: selectedPlan === 'monthly' ? colors.accent : colors.borderSubtle,
+                backgroundColor: selectedPlan === 'monthly' ? colors.accent : 'transparent',
+                borderWidth: 1.5,
+              }}
+              className="w-5 h-5 rounded-full items-center justify-center"
             >
               {selectedPlan === 'monthly' && (
-                <View className="w-2 h-2 rounded-full bg-white" />
+                <View
+                  style={{ backgroundColor: colors.accentText }}
+                  className="w-2 h-2 rounded-full"
+                />
               )}
             </View>
           </Pressable>
@@ -214,58 +313,91 @@ export default function PaywallScreen() {
           {/* Lifetime Card */}
           <Pressable
             onPress={() => setSelectedPlan('lifetime')}
-            className={`p-4 rounded-lg border flex-row items-center justify-between ${
-              selectedPlan === 'lifetime'
-                ? 'bg-primary/10 border-primary'
-                : 'bg-surface-dark-elevated border-hairline/10'
-            }`}
+            style={{
+              backgroundColor: selectedPlan === 'lifetime' ? colors.accentBg : colors.surface,
+              borderColor: selectedPlan === 'lifetime' ? colors.accent : colors.border,
+              borderWidth: 1,
+              borderRadius: 14,
+              padding: 16,
+            }}
+            className="flex-row items-center justify-between"
           >
-            <View>
-              <Text className="text-base font-sans-bold text-on-dark">
+            <View className="flex-1 mr-3">
+              <Text
+                style={{ color: colors.textPrimary }}
+                className="text-base font-sans-bold"
+              >
                 Lifetime Access
               </Text>
-              <Text className="text-xs text-on-dark-soft mt-0.5">
-                $49.99 one-time payment forever
+              <Text
+                style={{ color: colors.textSecondary }}
+                className="text-xs mt-1"
+              >
+                {lifetimePkg?.product?.priceString
+                  ? `${lifetimePkg.product.priceString} one-time payment forever`
+                  : '$49.99 one-time payment forever'}
               </Text>
             </View>
             <View
-              className={`w-5 h-5 rounded-full border items-center justify-center ${
-                selectedPlan === 'lifetime'
-                  ? 'border-primary bg-primary'
-                  : 'border-hairline/40'
-              }`}
+              style={{
+                borderColor: selectedPlan === 'lifetime' ? colors.accent : colors.borderSubtle,
+                backgroundColor: selectedPlan === 'lifetime' ? colors.accent : 'transparent',
+                borderWidth: 1.5,
+              }}
+              className="w-5 h-5 rounded-full items-center justify-center"
             >
               {selectedPlan === 'lifetime' && (
-                <View className="w-2 h-2 rounded-full bg-white" />
+                <View
+                  style={{ backgroundColor: colors.accentText }}
+                  className="w-2 h-2 rounded-full"
+                />
               )}
             </View>
           </Pressable>
         </View>
 
         {/* Primary CTA Button */}
-        <Button
-          title={
-            isProcessing
-              ? 'Processing...'
-              : selectedPlan === 'annual'
-              ? 'Start 7-Day Free Trial'
-              : 'Upgrade Now'
-          }
-          variant="primary"
-          size="lg"
+        <Pressable
           onPress={handleSubscribe}
-          loading={isProcessing}
-          className="w-full mb-4 shadow-md"
-        />
+          disabled={isProcessing}
+          style={({ pressed }) => [
+            {
+              backgroundColor: colors.accent,
+              opacity: isProcessing ? 0.7 : pressed ? 0.9 : 1,
+              transform: [{ scale: pressed && !isProcessing ? 0.98 : 1 }],
+            },
+          ]}
+          className="w-full py-4 rounded-xl items-center justify-center mb-4 shadow-sm"
+        >
+          {isProcessing ? (
+            <ActivityIndicator size="small" color={colors.accentText} />
+          ) : (
+            <Text
+              style={{
+                color: colors.accentText,
+                fontSize: 16,
+                fontFamily: 'Inter_700Bold',
+              }}
+            >
+              {selectedPlan === 'annual' ? 'Start 7-Day Free Trial' : 'Upgrade Now'}
+            </Text>
+          )}
+        </Pressable>
 
         {/* Restore Purchases */}
         <Pressable onPress={handleRestore} className="py-2 items-center">
-          <Text className="text-xs text-on-dark-soft font-sans-medium">
+          <Text
+            style={{ color: colors.textSecondary }}
+            className="text-xs font-sans-medium"
+          >
             Restore Purchases
           </Text>
         </Pressable>
 
-        <Text className="text-[11px] text-center text-on-dark-soft/60 mt-4 leading-relaxed">
+        <Text
+          style={{ color: colors.textMuted }}
+          className="text-[11px] text-center mt-4 leading-relaxed px-2"
+        >
           Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end of the current period.
         </Text>
       </ScrollView>

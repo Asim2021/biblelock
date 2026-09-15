@@ -1,5 +1,43 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.12] - 2026-09-13
+
+### Added & Integrated
+- **RevenueCat SDK Configuration & Live Paywall:**
+  - Initialized `initRevenueCat()` in `src/app/_layout.tsx` at startup.
+  - Connected RevenueCat Public Key (`test_SpCwlFTYjEmutuIhmDWmQnZjEzs`) in `.env`.
+  - Added secret key vs public SDK key guard in `src/lib/purchases.ts`.
+  - Expanded `checkEntitlements` in `src/lib/purchases.ts` to support `premium`, `pro`, or any active entitlement.
+  - Dynamically bound `src/app/paywall.tsx` to live RevenueCat packages (`$rc_monthly`, `$rc_annual`, `$rc_lifetime`) and dynamic product price strings with full restore purchases support.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Live RevenueCat test API verified with HTTP 200: active `default` offering loaded with `$rc_monthly`, `$rc_annual`, `$rc_lifetime`.
+
+---
+
+## [1.0.11] - 2026-09-13
+
+### Changed
+- **Pure Offline Local Identity (`src/lib/auth.tsx`):**
+  - Initialized immediate local user identity (`local-user`) with zero cold-start network listeners, eliminating remote Supabase checks and deep-link OAuth handling on launch.
+  - Sourced reader profile synchronously from local MMKV (`getUserName()`, daily goal, streak, translation).
+- **Decoupled Reading Timer (`src/lib/readingTimer.ts`):**
+  - Removed per-second `supabase.auth.getSession()` queries and `SyncService` push calls during active Scripture reading.
+  - Reading seconds, daily goal completion, and streaks persist strictly and synchronously to local MMKV.
+- **Settings Screen (`src/app/(tabs)/settings.tsx`):**
+  - Replaced "Signed in as / Sign Out" controls with "Local Storage & Profile" card displaying offline MMKV storage status and local reader name.
+  - Removed cloud sync calls on goal, translation, and app shield toggles.
+- **Auth Callback (`src/app/auth/callback.tsx`):**
+  - Configured to route unconditionally to `/(tabs)`.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Complete offline privacy: 0 network requests executed during daily habit usage and reading sessions.
+- Zero login prompts or authentication screens shown to users.
+
+---
+
 ## [1.0.10] - 2026-09-13
 
 ### Removed & Pruned (Ponytail Over-Engineering Audit)

@@ -26,6 +26,7 @@ import '../../global.css';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { ScriptureShield } from '../lib/scriptureShield';
 import { isOnboardingCompleted } from '../lib/mmkv';
+import { initRevenueCat } from '../lib/purchases';
 
 // Keep splash screen visible while loading resources
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -103,6 +104,7 @@ export default function RootLayout() {
       SplashScreen.hideAsync().catch(() => {});
       ScriptureShield.scheduleEveningReminder().catch(() => {});
       ScriptureShield.checkAndTriggerNotification().catch(() => {});
+      initRevenueCat();
     }
   }, [fontsLoaded, fontError]);
 
