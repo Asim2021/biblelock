@@ -68,6 +68,11 @@
   - Bound `src/app/paywall.tsx` to `useTheme()` tokens (`colors`, `isDark`).
   - Swapped hardcoded dark Tailwind classes (`bg-surface-dark`, `text-on-dark`) for dynamic theme colors.
   - Seamlessly adapts across both Celestial Dark (`#0d120f`) and Parchment Light (`#f8f6f0`), with matching radiant gold accents (`colors.accent`), themed feature matrix, selectable plan cards, tactile CTA button, and restore purchase actions.
+- [x] `TASK-020`: Paywall Master App Icon & Tier Customization ($5.99/mo, $59.99/yr, $149.99 lifetime):
+  - Embedded master brand app icon (`assets/images/icon.png`) in an elevated accent-bordered badge with optimized vertical spacing.
+  - Added feature icons (`ShieldCheck`, `Flame`, `Clock`, `Zap`) for benefits matrix.
+  - Set explicit price strings ($5.99/mo, $59.99/yr [$5.00/mo, Save 17%], $149.99 lifetime access) in UI.
+  - Fixed Primary CTA button background and illegible text by replacing NativeWind function style with direct inline theme styles (`colors.accent`).
 
 ## Verification Evidence
 
@@ -79,7 +84,7 @@
 
 ## Session Handoff Notes
 
-- Paywall dynamically aligns with app theme (`Celestial Dark` and `Parchment Light`).
+- Paywall dynamically showcases master brand icon, feature icons, and custom tier pricing ($5.99/mo, $59.99/yr, $149.99 lifetime).
 - RevenueCat is live-configured with public key and tested against RevenueCat offerings endpoint.
 - Dynamic prices and package subscriptions active in `src/app/paywall.tsx`.
 - Entire application operates 100% offline-first with MMKV.

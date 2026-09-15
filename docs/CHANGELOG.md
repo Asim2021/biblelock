@@ -1,5 +1,24 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.13] - 2026-09-15
+
+### Added & Improved
+- **Paywall Master Brand Icon & Pricing Tier Customization (`src/app/paywall.tsx`):**
+  - Replaced generic crown icon with master brand app icon (`assets/images/icon.png`) housed in a themed, elevated badge with dynamic accent border and subtle glow.
+  - Upgraded feature benefits matrix with Lucide icons (`ShieldCheck`, `Flame`, `Clock`, `Zap`) and themed badge backgrounds.
+  - Fixed Primary CTA button background and illegible text by replacing NativeWind function style with direct inline theme styles (`colors.accent`).
+  - Set explicit UI price strings matching user request:
+    - **Monthly Pass:** $5.99 / month (cancel anytime).
+    - **Annual Pass:** $5.00 / month ($59.99 billed yearly, Save 17% badge, 7-day trial CTA).
+    - **Lifetime Access:** $149.99 one-time payment forever ("Forever" badge).
+  - Compacted header and feature spacing so the icon and branding remain visible on standard mobile viewports.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Dual-theme rendering (Celestial Dark and Parchment Light) verified.
+
+---
+
 ## [1.0.12] - 2026-09-13
 
 ### Added & Integrated
