@@ -59,16 +59,29 @@
   - Decoupled `src/lib/readingTimer.ts` from Supabase session polling and background network calls on every second of active Scripture reading.
   - Updated `src/app/(tabs)/settings.tsx` to remove `SyncService` push calls and replaced the Sign In/Out controls with a "Local Storage & Profile" card displaying offline device storage status.
   - Configured `src/app/auth/callback.tsx` to route unconditionally to `/(tabs)`.
+- [x] `TASK-018`: RevenueCat SDK Configuration & Dynamic Paywall Integration:
+  - Configured `initRevenueCat()` in `src/app/_layout.tsx` at app boot.
+  - Connected RevenueCat Public Key (`test_SpCwlFTYjEmutuIhmDWmQnZjEzs`) in `.env`.
+  - Added secret key vs public SDK key guards in `src/lib/purchases.ts` and made entitlement checks resilient to `premium`/`pro`/any active entitlement.
+  - Dynamically bound `src/app/paywall.tsx` to live RevenueCat packages (`$rc_monthly`, `$rc_annual`, `$rc_lifetime`) and dynamic product prices with restore support.
+- [x] `TASK-019`: Paywall Dynamic Dual-Theme Alignment:
+  - Bound `src/app/paywall.tsx` to `useTheme()` tokens (`colors`, `isDark`).
+  - Swapped hardcoded dark Tailwind classes (`bg-surface-dark`, `text-on-dark`) for dynamic theme colors.
+  - Seamlessly adapts across both Celestial Dark (`#0d120f`) and Parchment Light (`#f8f6f0`), with matching radiant gold accents (`colors.accent`), themed feature matrix, selectable plan cards, tactile CTA button, and restore purchase actions.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
+- Live RevenueCat test API verified with HTTP 200: active `default` offering loaded with `$rc_monthly`, `$rc_annual`, `$rc_lifetime`.
 - Reading timer updates progress strictly and synchronously in local MMKV.
 - Zero startup network latency or unauthenticated loading states.
+- Paywall renders natively in both Dark and Light theme modes without hardcoded background conflicts.
 
 ## Session Handoff Notes
 
-- Entire application operates 100% offline with all streaks, goals, bookmarks, collections, blocked apps, and settings stored in MMKV.
-- No user login is required or forced anywhere in the app.
-- Ready for testing on device or release bundling.
+- Paywall dynamically aligns with app theme (`Celestial Dark` and `Parchment Light`).
+- RevenueCat is live-configured with public key and tested against RevenueCat offerings endpoint.
+- Dynamic prices and package subscriptions active in `src/app/paywall.tsx`.
+- Entire application operates 100% offline-first with MMKV.
+
 
