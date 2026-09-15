@@ -18,9 +18,11 @@ import {
   Flame,
   Pause,
   Trophy,
+  X,
 } from 'lucide-react-native';
 import { useAuth } from '../../lib/auth';
 import { useReadingTimer } from '../../lib/readingTimer';
+import { usePurchases } from '../../lib/purchases';
 import { AppBlocker } from '../../lib/appBlocker';
 import {
   getUserName,
@@ -43,6 +45,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user, profile } = useAuth();
   const { colors, isDark } = useTheme();
+  const { isPremium } = usePurchases();
 
   const [refreshing, setRefreshing] = useState(false);
   const [isShielded, setIsShielded] = useState(true);
@@ -53,6 +56,7 @@ export default function HomeScreen() {
   const [history, setHistory] = useState<HabitDay[]>([]);
   const [impact, setImpact] = useState<ImpactStats>({ minutesRead: 0, hoursSaved: 0, sessions: 0 });
   const [name, setName] = useState('Disciple');
+  const [sanctuaryPromptDismissed, setSanctuaryPromptDismissed] = useState(false);
 
   // Track progress (home screen progress state)
   const timer = useReadingTimer(false);
@@ -227,6 +231,51 @@ export default function HomeScreen() {
             </Pressable>
           </View>
         </View>
+
+        {/* Soft Sanctuary Prompt for 3+ day streak */}
+        {!isPremium && timer.streak >= 3 && !sanctuaryPromptDismissed && (
+          <View
+            style={{
+              marginTop: 10,
+              marginBottom: 4,
+              padding: 16,
+              borderRadius: 20,
+              backgroundColor: colors.accentBg,
+              borderWidth: 1,
+              borderColor: colors.accent,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <View className="flex-row items-center mb-1">
+                <Flame size={14} color={colors.accent} style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
+                  {timer.streak}-Day Streak Active
+                </Text>
+              </View>
+              <Text style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 16 }}>
+                Sanctuary protects your faithfulness with streak recovery, custom blocking & all translations.
+              </Text>
+              <Pressable
+                onPress={() => router.push('/paywall' as any)}
+                className="mt-2.5 flex-row items-center"
+              >
+                <Text style={{ fontSize: 12, fontFamily: 'Inter_700Bold', color: colors.accent }}>
+                  Explore Sanctuary →
+                </Text>
+              </Pressable>
+            </View>
+            <Pressable
+              onPress={() => setSanctuaryPromptDismissed(true)}
+              hitSlop={12}
+              style={{ alignSelf: 'flex-start', padding: 4 }}
+            >
+              <X size={16} color={colors.textMuted} />
+            </Pressable>
+          </View>
+        )}
 
         {/* Hero Card: "Time to Read" */}
         <View

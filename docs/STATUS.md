@@ -71,8 +71,16 @@
 - [x] `TASK-020`: Paywall Master App Icon & Tier Customization ($5.99/mo, $59.99/yr, $149.99 lifetime):
   - Embedded master brand app icon (`assets/images/icon.png`) in an elevated accent-bordered badge with optimized vertical spacing.
   - Added feature icons (`ShieldCheck`, `Flame`, `Clock`, `Zap`) for benefits matrix.
-  - Set explicit price strings ($5.99/mo, $59.99/yr [$5.00/mo, Save 17%], $149.99 lifetime access) in UI.
-  - Fixed Primary CTA button background and illegible text by replacing NativeWind function style with direct inline theme styles (`colors.accent`).
+  - Set explicit price strings in UI.
+- [x] `TASK-021`: Pricing Overhaul, Sanctuary Tier Rebranding, Emotional Dynamic Paywall & Cross-App Feature Gating:
+  - **New Pricing Schema:** Updated tiers to $4.99/mo, $29.99/yr ($2.49/mo, Save 50%), and $79.99 lifetime with dynamic RevenueCat `priceString` fallback.
+  - **Tier Naming:** Rebranded Free tier to "Covenant" and Paid tier to "Sanctuary".
+  - **Dynamic Emotional Paywall (`src/app/paywall.tsx`):** Added streak-aware and personalized emotional copy dynamically adapting to reader streak count and name, expanded features matrix to 6 items, updated CTA copy, added emotional anchor note, and revised success alert.
+  - **Universal Feature Gate Hook (`src/lib/useFeatureGate.ts`):** Created lightweight `requirePremium()` guard integrating seamlessly with `usePurchases()`.
+  - **Settings Gating (`src/app/(tabs)/settings.tsx`):** Gated custom app picker ("+ Add Custom Apps") and non-10m goal selector options behind Sanctuary. Added lock icons to locked options. Updated banner to "Sanctuary Member" / "Enter the Sanctuary".
+  - **Library & Reader Gating (`src/app/(tabs)/library.tsx`, `src/app/(tabs)/reader.tsx`):** Enforced 3-bookmark free limit on reader bookmark addition. Gated new collection creation in library behind Sanctuary.
+  - **Stats Gating (`src/app/(tabs)/stats.tsx`, `src/components/BadgeShareModal.tsx`):** Added period selector tabs (Week / Month / Year) with lock icons gating extended history, and gated badge social sharing behind Sanctuary.
+  - **Dashboard Soft Prompt (`src/app/(tabs)/index.tsx`):** Added dismissible, non-intrusive Sanctuary prompt card surfacing when free users maintain a 3+ day streak.
 
 ## Verification Evidence
 
@@ -81,12 +89,13 @@
 - Reading timer updates progress strictly and synchronously in local MMKV.
 - Zero startup network latency or unauthenticated loading states.
 - Paywall renders natively in both Dark and Light theme modes without hardcoded background conflicts.
+- Feature gates redirect unentitled users smoothly to `/paywall`.
 
 ## Session Handoff Notes
 
-- Paywall dynamically showcases master brand icon, feature icons, and custom tier pricing ($5.99/mo, $59.99/yr, $149.99 lifetime).
-- RevenueCat is live-configured with public key and tested against RevenueCat offerings endpoint.
-- Dynamic prices and package subscriptions active in `src/app/paywall.tsx`.
-- Entire application operates 100% offline-first with MMKV.
+- Pricing overhaul fully implemented with Covenant / Sanctuary tier architecture.
+- Paywall dynamically showcases master brand icon, dynamic streak-aware emotional copy, 6-feature benefits matrix, and revised price points ($4.99/mo, $29.99/yr, $79.99 lifetime).
+- Cross-app feature gates active in Settings, Reader, Library, and Stats.
+- Dismissible soft prompt active on Dashboard for 3+ day streak users.
 
 

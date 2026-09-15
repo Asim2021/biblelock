@@ -3,6 +3,7 @@ import { View, Text, Pressable, Modal, Share, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Share2 } from 'lucide-react-native';
 import { BadgeItem } from '../types/onboarding';
+import { useFeatureGate } from '../lib/useFeatureGate';
 
 interface BadgeShareModalProps {
   badge: BadgeItem | null;
@@ -18,9 +19,14 @@ export const BadgeShareModal: React.FC<BadgeShareModalProps> = ({
   onClose,
 }) => {
   const insets = useSafeAreaInsets();
+  const { requirePremium } = useFeatureGate();
   if (!badge) return null;
 
   const handleShare = async () => {
+    if (!requirePremium('Badge sharing')) {
+      onClose();
+      return;
+    }
     try {
       await Share.share({
         message: `✝️ I just earned the "${badge.title}" badge on Bible Unlock with a ${streak}-day reading streak! Replace mindless scrolling with daily Scripture: https://bibleunlock.app`,

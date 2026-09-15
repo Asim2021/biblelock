@@ -32,6 +32,7 @@ import {
   X,
 } from 'lucide-react-native';
 import { usePurchases } from '../../lib/purchases';
+import { useFeatureGate } from '../../lib/useFeatureGate';
 import { AppBlocker, InstalledApp } from '../../lib/appBlocker';
 import {
   getUserName,
@@ -56,6 +57,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isPremium, toggleDevPremium } = usePurchases();
+  const { requirePremium } = useFeatureGate();
   const { themeMode, setThemeMode, colors, isDark } = useTheme();
 
   const [dailyGoal, setDailyGoal] = useState(() => getDailyGoalMinutes());
@@ -79,6 +81,9 @@ export default function SettingsScreen() {
   }, []);
 
   const handleSelectGoal = (minutes: number) => {
+    if (minutes !== 10 && !requirePremium('Flexible daily goals')) {
+      return;
+    }
     setDailyGoal(minutes);
     setDailyGoalMinutes(minutes);
   };
@@ -109,6 +114,9 @@ export default function SettingsScreen() {
   };
 
   const handleCustomApps = async () => {
+    if (!requirePremium('Custom app selection')) {
+      return;
+    }
     setShowAppPickerModal(true);
     setLoadingApps(true);
     try {
@@ -202,7 +210,7 @@ export default function SettingsScreen() {
                     color: colors.textPrimary,
                   }}
                 >
-                  {isPremium ? 'Bible Unlock Pro' : 'Unlock Pro Access'}
+                  {isPremium ? 'Sanctuary Member' : 'Enter the Sanctuary'}
                 </Text>
                 <Text
                   style={{
@@ -212,7 +220,7 @@ export default function SettingsScreen() {
                     marginTop: 2,
                   }}
                 >
-                  {isPremium ? 'All Features Unlocked' : 'Custom App Blocklist & Lent Mode'}
+                  {isPremium ? 'All Spiritual Disciplines Unlocked' : 'Custom Apps, Protection & All Translations'}
                 </Text>
               </View>
             </View>
@@ -300,6 +308,7 @@ export default function SettingsScreen() {
             <View className="flex-row justify-between">
               {GOAL_OPTIONS.map((mins) => {
                 const isSelected = dailyGoal === mins;
+                const isLocked = !isPremium && mins !== 10;
                 return (
                   <Pressable
                     key={mins}
@@ -316,15 +325,20 @@ export default function SettingsScreen() {
                       backgroundColor: isSelected ? colors.accent : colors.surfaceSubtle,
                     }}
                   >
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontFamily: 'Inter_700Bold',
-                        color: isSelected ? '#141413' : colors.textPrimary,
-                      }}
-                    >
-                      {mins}m
-                    </Text>
+                    <View className="flex-row items-center justify-center">
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontFamily: 'Inter_700Bold',
+                          color: isSelected ? '#141413' : colors.textPrimary,
+                        }}
+                      >
+                        {mins}m
+                      </Text>
+                      {isLocked && (
+                        <Lock size={10} color={colors.textMuted} style={{ marginLeft: 3 }} />
+                      )}
+                    </View>
                   </Pressable>
                 );
               })}

@@ -7,6 +7,7 @@ import {
   getOnboardingData,
   setOnboardingData,
   setOnboardingCompleted,
+  DEFAULT_BLOCKED_APPS,
 } from '../../lib/mmkv';
 
 import { LanguageStep } from './steps/LanguageStep';
@@ -28,7 +29,11 @@ export default function OnboardingScreen() {
   const [biggestChallenges, setBiggestChallenges] = useState<string[]>(initialData.biggestChallenges || []);
   const [readingTimes, setReadingTimes] = useState<string[]>(initialData.readingTimes || ['7:00 AM']);
   const [durationMinutes, setDurationMinutes] = useState<number>(initialData.durationMinutes || 10);
-  const [blockedApps, setBlockedApps] = useState<string[]>(initialData.blockedApps || []);
+  const [blockedApps, setBlockedApps] = useState<string[]>(
+    initialData.blockedApps && initialData.blockedApps.length > 0
+      ? initialData.blockedApps
+      : DEFAULT_BLOCKED_APPS
+  );
 
   const saveCurrentProgress = () => {
     setOnboardingData({

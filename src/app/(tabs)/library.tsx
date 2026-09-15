@@ -38,6 +38,7 @@ import {
   VerseCollection,
 } from '../../lib/mmkv';
 import { useTheme } from '../../lib/themeContext';
+import { useFeatureGate } from '../../lib/useFeatureGate';
 
 type TabType = 'collections' | 'pins' | 'notes';
 
@@ -54,6 +55,7 @@ export default function LibraryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { requirePremium } = useFeatureGate();
 
   const [activeTab, setActiveTab] = useState<TabType>('collections');
   const [showHelperBanner, setShowHelperBanner] = useState(true);
@@ -96,6 +98,9 @@ export default function LibraryScreen() {
   };
 
   const handleOpenNewCollection = () => {
+    if (!requirePremium('Unlimited collections')) {
+      return;
+    }
     setEditingCollection(null);
     setCollectionName('');
     setSelectedColor(COLLECTION_COLORS[0]);

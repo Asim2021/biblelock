@@ -29,9 +29,11 @@ import {
   Bookmark as BookmarkIcon,
 } from 'lucide-react-native';
 import { useTheme } from '../../lib/themeContext';
+import { useFeatureGate } from '../../lib/useFeatureGate';
 
 export default function ReaderScreen() {
   const { colors, isDark } = useTheme();
+  const { requirePremium } = useFeatureGate();
   const [isFocused, setIsFocused] = useState(true);
 
   useFocusEffect(
@@ -159,6 +161,10 @@ export default function ReaderScreen() {
       setBookmarkedVerses((prev) => prev.filter((v) => v !== verseItem.verse));
       setToastMessage(`Removed bookmark for ${currentBook.name} ${chapterNumber}:${verseItem.verse}`);
     } else {
+      // Free users can save max 3 bookmarks
+      if (getBookmarks().length >= 3 && !requirePremium('Unlimited bookmarks')) {
+        return;
+      }
       // Add
       saveBookmark({
         id: `bm_${Date.now()}_${verseItem.verse}`,

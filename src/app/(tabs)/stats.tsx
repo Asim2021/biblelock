@@ -18,9 +18,11 @@ import {
   MoreHorizontal,
   Share2,
   BookOpen,
+  Lock,
 } from 'lucide-react-native';
 import { useAuth } from '../../lib/auth';
 import { useReadingTimer } from '../../lib/readingTimer';
+import { useFeatureGate } from '../../lib/useFeatureGate';
 import {
   getUserName,
   getImpactStats,
@@ -38,14 +40,23 @@ export default function StatsScreen() {
   const insets = useSafeAreaInsets();
   const { user, profile } = useAuth();
   const { colors, isDark } = useTheme();
+  const { isPremium, requirePremium } = useFeatureGate();
 
   const [refreshing, setRefreshing] = useState(false);
   const [name, setName] = useState('Disciple');
   const [impact, setImpact] = useState<ImpactStats>({ minutesRead: 0, hoursSaved: 0, sessions: 0 });
   const [selectedBadge, setSelectedBadge] = useState<BadgeItem | null>(null);
   const [history, setHistory] = useState<HabitDay[]>([]);
+  const [historyPeriod, setHistoryPeriod] = useState<'week' | 'month' | 'year'>('week');
 
   const timer = useReadingTimer(false);
+
+  const handleSelectPeriod = (period: 'week' | 'month' | 'year') => {
+    if (period !== 'week' && !requirePremium('Full reading history')) {
+      return;
+    }
+    setHistoryPeriod(period);
+  };
 
   const loadData = useCallback(() => {
     const storedName = getUserName();
@@ -343,9 +354,43 @@ export default function StatsScreen() {
           }}
         >
           <View className="flex-row items-center justify-between mb-4">
-            <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-              This Week
-            </Text>
+            <View className="flex-row items-center">
+              {(['week', 'month', 'year'] as const).map((p) => {
+                const isSelected = historyPeriod === p;
+                const isLocked = !isPremium && p !== 'week';
+                const label = p === 'week' ? 'Week' : p === 'month' ? 'Month' : 'Year';
+                return (
+                  <Pressable
+                    key={p}
+                    onPress={() => handleSelectPeriod(p)}
+                    style={{
+                      paddingHorizontal: 10,
+                      paddingVertical: 4,
+                      borderRadius: 12,
+                      marginRight: 6,
+                      backgroundColor: isSelected ? colors.accentBg : 'transparent',
+                      borderWidth: 1,
+                      borderColor: isSelected ? colors.accent : 'transparent',
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_500Medium',
+                        color: isSelected ? colors.accent : colors.textSecondary,
+                      }}
+                    >
+                      {label}
+                    </Text>
+                    {isLocked && (
+                      <Lock size={10} color={colors.textMuted} style={{ marginLeft: 3 }} />
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
             <Flame size={16} color="#ff7b42" />
           </View>
 

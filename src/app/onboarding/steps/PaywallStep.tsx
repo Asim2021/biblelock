@@ -8,6 +8,7 @@ import {
   Sun,
   Flame,
   Rocket,
+  BookOpen,
 } from 'lucide-react-native';
 
 interface PaywallStepProps {
@@ -16,21 +17,20 @@ interface PaywallStepProps {
 }
 
 const PRO_FEATURES = [
-  { Icon: Lock, text: 'Unlimited App Blocking' },
-  { Icon: Shield, text: 'Strict Devotional Mode' },
-  { Icon: Sparkles, text: 'Premium Audio & Scripture Commentary' },
-  { Icon: Sun, text: 'Morning & Evening Watch Targets' },
-  { Icon: Flame, text: 'Pause Streak (Streak Freeze Protection)' },
-  { Icon: Rocket, text: 'And much more...' },
+  { Icon: Lock, text: 'Unlimited App Shielding (No 5-app limit)' },
+  { Icon: BookOpen, text: 'Modern Translations (ESV, NIV, NLT)' },
+  { Icon: Flame, text: 'Streak Grace Protection (1 grace day / mo)' },
+  { Icon: Shield, text: 'Lent & Advent Devotional Seasons' },
+  { Icon: Sparkles, text: 'Full Reading Analytics & History' },
+  { Icon: Rocket, text: 'Unlimited Bookmarks & Verse Collections' },
 ];
 
 export const PaywallStep: React.FC<PaywallStepProps> = ({ onBack, onNext }) => {
   const router = useRouter();
 
   const handleTryPro = () => {
-    // Open paywall modal or continue to next step with pro intention
+    // Open paywall modal without advancing step underneath
     router.push('/paywall' as any);
-    onNext();
   };
 
   return (

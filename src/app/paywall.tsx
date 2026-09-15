@@ -4,8 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { usePurchases } from '../lib/purchases';
 import { useTheme } from '../lib/themeContext';
+import { getStreak, getUserName } from '../lib/mmkv';
 import { Card } from '../components/Card';
-import { X, Check, ShieldCheck, Flame, Clock, Zap } from 'lucide-react-native';
+import { X, Check, ShieldCheck, Flame, Clock, Zap, BookOpen, BarChart3, Bookmark } from 'lucide-react-native';
 
 const FEATURES = [
 	{
@@ -15,31 +16,53 @@ const FEATURES = [
 		pro: 'Unlimited custom apps',
 	},
 	{
+		icon: BookOpen,
+		title: 'Modern Translations',
+		free: 'KJV + WEB',
+		pro: 'ESV, NIV, NLT access',
+	},
+	{
 		icon: Flame,
-		title: 'Lent / Fasting Mode',
+		title: 'Streak Protection',
 		free: '—',
-		pro: '1 min reading = 1 min access',
+		pro: '1 grace day / month',
 	},
 	{
 		icon: Clock,
-		title: 'Multiple Daily Goals',
-		free: '1 goal/day',
-		pro: 'Morning & Evening goals',
+		title: 'Lent & Advent Modes',
+		free: '—',
+		pro: 'Dedicated spiritual seasons',
 	},
 	{
-		icon: Zap,
-		title: 'Lifetime Offline Sync',
-		free: 'Basic storage',
-		pro: 'Full history & streak sync',
+		icon: BarChart3,
+		title: 'Full Reading Analytics',
+		free: 'Today & this week',
+		pro: 'Monthly & lifetime history',
+	},
+	{
+		icon: Bookmark,
+		title: 'Unlimited Bookmarks',
+		free: 'Max 3 bookmarks',
+		pro: 'Unlimited + collections',
 	},
 ];
 
 export default function PaywallScreen() {
 	const router = useRouter();
 	const { colors, isDark } = useTheme();
-	const { offerings, purchasePackage, restorePurchases, isPremium } = usePurchases();
+	const { offerings, purchasePackage, restorePurchases } = usePurchases();
 	const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual' | 'lifetime'>('annual');
 	const [isProcessing, setIsProcessing] = useState(false);
+
+	const streak = getStreak().currentStreak;
+	const userName = getUserName();
+
+	let subtitle = 'Choose Scripture over scrolling. Start your journey deeper.';
+	if (streak >= 7) {
+		subtitle = `A ${streak}-day streak, ${userName}. Don't let it break — Sanctuary protects your progress.`;
+	} else if (streak >= 3) {
+		subtitle = `You've chosen Scripture over scrolling for ${streak} days. That's who you're becoming.`;
+	}
 
 	const currentPackages = offerings?.current?.availablePackages || [];
 	const annualPkg = currentPackages.find(
@@ -51,6 +74,10 @@ export default function PaywallScreen() {
 	const lifetimePkg = currentPackages.find(
 		(p) => p.identifier.toLowerCase().includes('lifetime') || (p.packageType as string) === 'LIFETIME',
 	);
+
+	const annualPrice = annualPkg?.product?.priceString || '$29.99';
+	const monthlyPrice = monthlyPkg?.product?.priceString || '$4.99';
+	const lifetimePrice = lifetimePkg?.product?.priceString || '$79.99';
 
 	const handleSubscribe = async () => {
 		setIsProcessing(true);
@@ -70,7 +97,7 @@ export default function PaywallScreen() {
 
 		setIsProcessing(false);
 		if (success) {
-			Alert.alert('Welcome to Pro!', 'Your subscription is active. All premium features unlocked.', [
+			Alert.alert('Welcome to the Sanctuary 🙏', 'Your subscription is active. All premium features unlocked.', [
 				{ text: 'Continue', onPress: () => router.back() },
 			]);
 		}
@@ -98,7 +125,7 @@ export default function PaywallScreen() {
 			>
 				<View className='w-8' />
 				<Text style={{ color: colors.accent }} className='text-xs font-sans-bold uppercase tracking-widest'>
-					PREMIUM PASS
+					SANCTUARY
 				</Text>
 				<Pressable
 					onPress={() => router.back()}
@@ -146,13 +173,13 @@ export default function PaywallScreen() {
 						}}
 						className='text-2xl text-center'
 					>
-						Bible Unlock Pro
+						Enter the Sanctuary
 					</Text>
 					<Text
 						style={{ color: colors.textSecondary }}
 						className='text-xs text-center mt-1 px-4 leading-relaxed'
 					>
-						Reclaim your attention and deepen your Scripture walk with unrestricted app blocking.
+						{subtitle}
 					</Text>
 				</View>
 
@@ -197,7 +224,7 @@ export default function PaywallScreen() {
 								</View>
 								<View className='flex-row justify-between items-center ml-8'>
 									<Text style={{ color: colors.textSecondary }} className='text-xs'>
-										Free: {feat.free}
+										Covenant: {feat.free}
 									</Text>
 									<View className='flex-row items-center'>
 										<Check size={13} color={colors.accent} strokeWidth={2.5} />
@@ -232,7 +259,7 @@ export default function PaywallScreen() {
 						<View className='flex-1 mr-3'>
 							<View className='flex-row items-center'>
 								<Text style={{ color: colors.textPrimary }} className='text-base font-sans-bold'>
-									Annual Pass
+									Annual Sanctuary
 								</Text>
 								<View
 									style={{ backgroundColor: colors.accent }}
@@ -242,12 +269,12 @@ export default function PaywallScreen() {
 										style={{ color: colors.accentText }}
 										className='text-[10px] font-sans-bold uppercase'
 									>
-										Save 17%
+										Save 50%
 									</Text>
 								</View>
 							</View>
 							<Text style={{ color: colors.textSecondary }} className='text-xs mt-1'>
-								$5.00 / month ($59.99 billed yearly)
+								$2.49/mo · {annualPrice} billed yearly
 							</Text>
 						</View>
 						<View
@@ -279,10 +306,10 @@ export default function PaywallScreen() {
 					>
 						<View className='flex-1 mr-3'>
 							<Text style={{ color: colors.textPrimary }} className='text-base font-sans-bold'>
-								Monthly Pass
+								Monthly Sanctuary
 							</Text>
 							<Text style={{ color: colors.textSecondary }} className='text-xs mt-1'>
-								$5.99 / month (cancel anytime)
+								{monthlyPrice}/month · Cancel anytime
 							</Text>
 						</View>
 						<View
@@ -314,7 +341,7 @@ export default function PaywallScreen() {
 						<View className='flex-1 mr-3'>
 							<View className='flex-row items-center'>
 								<Text style={{ color: colors.textPrimary }} className='text-base font-sans-bold'>
-									Lifetime Access
+									Lifetime Sanctuary
 								</Text>
 								<View
 									style={{
@@ -333,7 +360,7 @@ export default function PaywallScreen() {
 								</View>
 							</View>
 							<Text style={{ color: colors.textSecondary }} className='text-xs mt-1'>
-								$149.99 one-time payment forever
+								{lifetimePrice} · Pay once, keep forever
 							</Text>
 						</View>
 						<View
@@ -362,7 +389,7 @@ export default function PaywallScreen() {
 						borderRadius: 14,
 						alignItems: 'center',
 						justifyContent: 'center',
-						marginBottom: 12,
+						marginBottom: 4,
 						opacity: isProcessing ? 0.7 : 1,
 					}}
 				>
@@ -378,13 +405,22 @@ export default function PaywallScreen() {
 							}}
 						>
 							{selectedPlan === 'annual'
-								? 'Start 7-Day Free Trial'
+								? 'Unlock Sanctuary'
 								: selectedPlan === 'lifetime'
-									? 'Unlock Lifetime Access'
-									: 'Subscribe Monthly'}
+									? `Unlock Forever — ${lifetimePrice}`
+									: `Start for ${monthlyPrice}/mo`}
 						</Text>
 					)}
 				</Pressable>
+
+				{/* Emotional anchor line */}
+				<Text style={{ color: colors.accent }} className='text-xs font-sans-medium text-center mt-2 mb-2'>
+					{selectedPlan === 'annual'
+						? '~$2.49/month — replace scrolling with Scripture'
+						: selectedPlan === 'lifetime'
+							? 'One investment in your spiritual walk, forever'
+							: 'Less than a cup of coffee to guard your focus'}
+				</Text>
 
 				{/* Restore Purchases */}
 				<Pressable onPress={handleRestore} className='py-2 items-center'>
@@ -393,7 +429,7 @@ export default function PaywallScreen() {
 					</Text>
 				</Pressable>
 
-				<Text style={{ color: colors.textMuted }} className='text-[11px] text-center mt-3 leading-relaxed px-2'>
+				<Text style={{ color: colors.textMuted }} className='text-[11px] text-center mt-2 leading-relaxed px-2'>
 					Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end
 					of the current period.
 				</Text>

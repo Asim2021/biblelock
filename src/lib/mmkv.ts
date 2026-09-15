@@ -168,7 +168,8 @@ export function getBlockedApps(): string[] {
   const raw = storage.getString(STORAGE_KEYS.BLOCKED_APPS);
   if (!raw) return DEFAULT_BLOCKED_APPS;
   try {
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_BLOCKED_APPS;
   } catch {
     return DEFAULT_BLOCKED_APPS;
   }
@@ -234,7 +235,7 @@ const DEFAULT_ONBOARDING_DATA: OnboardingData = {
   biggestChallenges: ['Social media distractions'],
   readingTimes: ['7:00 AM'],
   durationMinutes: 10,
-  blockedApps: [],
+  blockedApps: DEFAULT_BLOCKED_APPS,
   isCompleted: false,
 };
 

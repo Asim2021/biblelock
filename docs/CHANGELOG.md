@@ -1,5 +1,28 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.14] - 2026-09-15
+
+### Added & Improved
+- **Sanctuary Pricing & Emotional Paywall Overhaul (`src/app/paywall.tsx`):**
+  - Rebranded Free tier to **Covenant** and Paid tier to **Sanctuary**.
+  - New accessible price points: **$4.99/month**, **$29.99/year** ($2.49/mo, Save 50%), and **$79.99 lifetime access** with dynamic `priceString` store fallback.
+  - Added dynamic streak-aware emotional copy adapting to reader streak and custom name.
+  - Expanded 6-feature comparison table with modern translations, streak protection, Lent/Advent modes, full analytics, and unlimited bookmarks.
+  - Personalized CTA buttons and emotional anchor message above renewal terms.
+- **Cross-App Feature Gating Architecture (`src/lib/useFeatureGate.ts`):**
+  - Created centralized `requirePremium()` hook to guard premium interactions without code duplication.
+  - **Settings (`src/app/(tabs)/settings.tsx`):** Gated custom app selector and non-10m goal options. Lock icons indicate gated options.
+  - **Reader (`src/app/(tabs)/reader.tsx`):** Enforced 3-bookmark free limit; 4th+ bookmark prompts Sanctuary upgrade.
+  - **Library (`src/app/(tabs)/library.tsx`):** Gated custom verse collection creation.
+  - **Stats (`src/app/(tabs)/stats.tsx`, `src/components/BadgeShareModal.tsx`):** Gated extended month/year reading history views and badge social sharing.
+  - **Dashboard (`src/app/(tabs)/index.tsx`):** Added dismissible soft prompt card for users with 3+ day reading streaks.
+
+### Verified Impact
+- `npx tsc --noEmit`: Clean compilation with 0 errors across entire repository.
+- Dual-theme rendering (Celestial Dark and Parchment Light) fully supported across all updated screens and components.
+
+---
+
 ## [1.0.13] - 2026-09-15
 
 ### Added & Improved

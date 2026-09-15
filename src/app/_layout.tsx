@@ -44,7 +44,7 @@ function RootNavigation() {
     const onboardingDone = isOnboardingCompleted();
 
     if (!onboardingDone) {
-      if (!inOnboarding) {
+      if (!inOnboarding && firstSegment !== 'paywall') {
         router.replace('/onboarding' as any);
       }
     } else if (inOnboarding) {
