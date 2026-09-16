@@ -8,7 +8,32 @@ import Purchases, {
 } from 'react-native-purchases';
 import { storage } from './mmkv';
 
-const DEV_PREMIUM_KEY = 'dev_premium_override';
+const DEV_OVERRIDE_KEY = 'dev_premium_override_mode';
+const LEGACY_DEV_KEY = 'dev_premium_override';
+
+export type DevOverrideMode = 'free' | 'pro' | null;
+
+const overrideListeners = new Set<(override: DevOverrideMode) => void>();
+
+export function getDevOverride(): DevOverrideMode {
+  const val = storage.getString(DEV_OVERRIDE_KEY);
+  if (val === 'free' || val === 'pro') return val;
+  const legacy = storage.getBoolean(LEGACY_DEV_KEY);
+  if (legacy === true) return 'pro';
+  if (legacy === false) return 'free';
+  return null;
+}
+
+export function setDevOverride(mode: DevOverrideMode): void {
+  if (mode === null) {
+    storage.delete(DEV_OVERRIDE_KEY);
+    storage.delete(LEGACY_DEV_KEY);
+  } else {
+    storage.set(DEV_OVERRIDE_KEY, mode);
+    storage.set(LEGACY_DEV_KEY, mode === 'pro');
+  }
+  overrideListeners.forEach((fn) => fn(mode));
+}
 
 export interface PurchasesState {
   isPremium: boolean;
@@ -57,10 +82,24 @@ export function usePurchases(): PurchasesState {
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [devPremium, setDevPremium] = useState(() => storage.getBoolean(DEV_PREMIUM_KEY) ?? false);
+  const [devOverride, setDevOverrideState] = useState<DevOverrideMode>(() => getDevOverride());
+
+  useEffect(() => {
+    const handleOverride = (mode: DevOverrideMode) => {
+      setDevOverrideState(mode);
+    };
+    overrideListeners.add(handleOverride);
+    return () => {
+      overrideListeners.delete(handleOverride);
+    };
+  }, []);
 
   const checkEntitlements = useCallback((info: CustomerInfo | null) => {
-    if (devPremium) return true;
+    // 1. Dev override has highest priority for QA/testing
+    if (devOverride === 'free') return false;
+    if (devOverride === 'pro') return true;
+
+    // 2. Real RevenueCat entitlements
     if (!info) return false;
     const active = info.entitlements.active;
     return (
@@ -68,7 +107,7 @@ export function usePurchases(): PurchasesState {
       typeof active['pro'] !== 'undefined' ||
       Object.keys(active).length > 0
     );
-  }, [devPremium]);
+  }, [devOverride]);
 
   useEffect(() => {
     initRevenueCat();
@@ -111,12 +150,12 @@ export function usePurchases(): PurchasesState {
   const purchasePackage = useCallback(async (pkg: PurchasesPackage): Promise<boolean> => {
     if (!isConfigured) {
       // Simulate purchase in dev/mock environment
-      storage.set(DEV_PREMIUM_KEY, true);
-      setDevPremium(true);
+      setDevOverride('pro');
       return true;
     }
 
     try {
+      setDevOverride(null);
       const { customerInfo: updatedInfo } = await Purchases.purchasePackage(pkg);
       setCustomerInfo(updatedInfo);
       return checkEntitlements(updatedInfo);
@@ -130,10 +169,11 @@ export function usePurchases(): PurchasesState {
 
   const restorePurchases = useCallback(async (): Promise<boolean> => {
     if (!isConfigured) {
-      return devPremium;
+      return getDevOverride() === 'pro';
     }
 
     try {
+      setDevOverride(null);
       const restoredInfo = await Purchases.restorePurchases();
       setCustomerInfo(restoredInfo);
       return checkEntitlements(restoredInfo);
@@ -141,13 +181,13 @@ export function usePurchases(): PurchasesState {
       console.warn('[Purchases] Restore failed:', e.message);
       return false;
     }
-  }, [checkEntitlements, devPremium]);
+  }, [checkEntitlements]);
 
   const toggleDevPremium = useCallback(() => {
-    const next = !devPremium;
-    storage.set(DEV_PREMIUM_KEY, next);
-    setDevPremium(next);
-  }, [devPremium]);
+    const currentIsPremium = checkEntitlements(customerInfo);
+    const next: DevOverrideMode = currentIsPremium ? 'free' : 'pro';
+    setDevOverride(next);
+  }, [customerInfo, checkEntitlements]);
 
   return {
     isPremium: checkEntitlements(customerInfo),

@@ -39,16 +39,36 @@ class AndroidBlockerModule : Module() {
 
         AsyncFunction("isAccessibilityEnabled") {
             val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager
-                ?: return@AsyncFunction false
-
-            val enabledServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_GENERIC)
-            val expectedServiceName = "${context.packageName}/${BlockerAccessibilityService::class.java.name}"
-
-            for (service in enabledServices) {
-                if (service.id.contains(expectedServiceName) || service.id.contains("BlockerAccessibilityService")) {
-                    return@AsyncFunction true
+            if (am != null) {
+                val enabledServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+                for (service in enabledServices) {
+                    val id = service.id ?: ""
+                    if (id.contains(BlockerAccessibilityService::class.java.name) || id.contains("BlockerAccessibilityService")) {
+                        return@AsyncFunction true
+                    }
                 }
             }
+
+            // Fallback via Settings.Secure (immediate & direct from system settings)
+            try {
+                val accessibilityEnabled = Settings.Secure.getInt(
+                    context.contentResolver,
+                    Settings.Secure.ACCESSIBILITY_ENABLED,
+                    0
+                )
+                if (accessibilityEnabled == 1) {
+                    val settingValue = Settings.Secure.getString(
+                        context.contentResolver,
+                        Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+                    )
+                    if (settingValue != null && settingValue.contains("BlockerAccessibilityService")) {
+                        return@AsyncFunction true
+                    }
+                }
+            } catch (e: Exception) {
+                // ignore
+            }
+
             return@AsyncFunction false
         }
 

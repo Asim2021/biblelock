@@ -1,5 +1,23 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.15] - 2026-09-16
+
+### Fixed
+- **Shield Protection Permission Reactive Lifecycle (`src/app/(tabs)/settings.tsx`, `src/lib/appBlocker.ts`, `AndroidBlockerModule.kt`):**
+  - Fixed `settings.tsx` to listen to `AppState` ('active') and `useFocusEffect` to dynamically refresh permission state when returning from Android Accessibility Settings.
+  - Upgraded native `AndroidBlockerModule.kt` `isAccessibilityEnabled` to query `AccessibilityServiceInfo.FEEDBACK_ALL_MASK` and check `Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES`.
+  - Removed premature `setHasPermission(true)` and "Permission Granted" alert upon launching settings in `appBlocker.ts` and `settings.tsx`.
+  - Enhanced the Shield Protection Permission card with active state badge ("Active" / "Disabled"), "Manage in Settings" action, and "Verify Status" button with explicit diagnostic alert.
+- **Developer "Simulate Free" / "Simulate Pro" Override (`src/lib/purchases.ts`, `src/app/(tabs)/settings.tsx`):**
+  - Added explicit `'free' | 'pro' | null` dev override mode to `usePurchases` with reactive cross-hook event listener.
+  - Resolved issue where active RevenueCat/Mock entitlements prevented `checkEntitlements` from ever returning `false`.
+  - Tapping "Simulate Free" now cleanly forces `isPremium = false`, re-renders the UI to the Free plan with "Upgrade" button, and enables "Simulate Pro" toggle.
+
+### Verified Impact
+- `npx tsc --noEmit`: Clean compilation with 0 errors.
+
+---
+
 ## [1.0.14] - 2026-09-15
 
 ### Added & Improved

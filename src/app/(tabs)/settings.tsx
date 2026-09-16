@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,11 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import {
   Crown,
   Shield,
@@ -78,10 +80,34 @@ export default function SettingsScreen() {
   const [loadingApps, setLoadingApps] = useState(false);
   const [appSearchQuery, setAppSearchQuery] = useState('');
 
-  useEffect(() => {
-    AppBlocker.hasPermissions().then(setHasPermission);
-    AppBlocker.getInstalledApps().then(setInstalledApps);
+  const refreshPermissions = useCallback(async () => {
+    const granted = await AppBlocker.hasPermissions();
+    setHasPermission(granted);
+    return granted;
   }, []);
+
+  useEffect(() => {
+    refreshPermissions();
+    AppBlocker.getInstalledApps().then(setInstalledApps);
+
+    const handleAppStateChange = (nextState: AppStateStatus) => {
+      if (nextState === 'active') {
+        refreshPermissions();
+        setTimeout(refreshPermissions, 500);
+      }
+    };
+
+    const sub = AppState.addEventListener('change', handleAppStateChange);
+    return () => {
+      sub.remove();
+    };
+  }, [refreshPermissions]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshPermissions();
+    }, [refreshPermissions])
+  );
 
   const handleSelectGoal = (minutes: number) => {
     if (minutes !== 10 && !requirePremium('Flexible daily goals')) {
@@ -109,11 +135,37 @@ export default function SettingsScreen() {
   };
 
   const handleRequestPermissions = async () => {
-    const granted = await AppBlocker.requestPermissions();
-    setHasPermission(granted);
+    await AppBlocker.requestPermissions();
+  };
+
+  const handleCheckPermission = async () => {
+    const granted = await refreshPermissions();
     if (granted) {
-      Alert.alert('Permission Granted', 'Bible Unlock is ready to shield apps.');
+      Alert.alert(
+        'Shield Active',
+        'Accessibility Shield permission is active. Your distracting apps are protected.'
+      );
+    } else {
+      Alert.alert(
+        'Permission Needed',
+        'Accessibility Shield permission is not granted. Tap "Open Settings" to enable Bible Unlock in system settings.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Open Settings', onPress: handleRequestPermissions },
+        ]
+      );
     }
+  };
+
+  const handleToggleSimulatePlan = () => {
+    const nextWillBeFree = isPremium;
+    toggleDevPremium();
+    Alert.alert(
+      'Developer Simulation',
+      nextWillBeFree
+        ? 'Switched to Free Tier. Free limits and upgrade triggers are now active.'
+        : 'Switched to Pro Tier (Sanctuary Member). All features unlocked.'
+    );
   };
 
   const handleResetDefaultApps = () => {
@@ -302,24 +354,42 @@ export default function SettingsScreen() {
                   : 'Requires device permission to block apps'}
               </Text>
             </View>
-            <View
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: 6,
-                backgroundColor: hasPermission ? colors.success : '#f59e0b',
-              }}
-            />
+            <View className="flex-row items-center">
+              <View
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: hasPermission ? colors.success : '#f59e0b',
+                  marginRight: 6,
+                }}
+              />
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: 'Inter_600SemiBold',
+                  color: hasPermission ? colors.success : '#f59e0b',
+                }}
+              >
+                {hasPermission ? 'Active' : 'Disabled'}
+              </Text>
+            </View>
           </View>
-          {!hasPermission && (
+          <View className="flex-row space-x-2 mt-1">
             <Button
-              title="Grant Blocker Permission"
-              variant="outline"
+              title={hasPermission ? 'Manage in Settings' : 'Grant Blocker Permission'}
+              variant={hasPermission ? 'outline' : 'primary'}
               size="sm"
               onPress={handleRequestPermissions}
-              className="mt-1"
+              className="flex-1 mr-2"
             />
-          )}
+            <Button
+              title="Verify Status"
+              variant="ghost"
+              size="sm"
+              onPress={handleCheckPermission}
+            />
+          </View>
         </Card>
 
         {/* Daily Goal Configuration */}
@@ -913,7 +983,7 @@ export default function SettingsScreen() {
                   title={isPremium ? 'Simulate Free' : 'Simulate Pro'}
                   variant="ghost"
                   size="sm"
-                  onPress={toggleDevPremium}
+                  onPress={handleToggleSimulatePlan}
                   className="flex-1 ml-2"
                 />
               </View>

@@ -89,6 +89,18 @@
     - In `settings.tsx`: Detected apps missing from device package scan are rendered at 55% opacity with a subtle `"Not installed"` badge beside their name.
     - In `AppPickerStep.tsx`: Onboarding automatically pre-selects only default apps that are actually detected on the device, while keeping uninstalled distraction chips clickable with a dimmed (60% opacity) appearance and "Not installed" micro-label.
 
+- [x] `FIX-010`: Resolved QA Issues on Shield Protection Permission Flow & Developer Simulate Free Button:
+  - **Shield Protection Permission Reactive Lifecycle (`src/app/(tabs)/settings.tsx`, `src/lib/appBlocker.ts`, `AndroidBlockerModule.kt`):**
+    - Added `AppState` listener and `useFocusEffect` to continuously and reliably re-query `AppBlocker.hasPermissions()` when the app regains focus from Android Settings or when navigating into the Settings tab.
+    - Fixed `AndroidBlockerModule.kt` `isAccessibilityEnabled` to query `AccessibilityServiceInfo.FEEDBACK_ALL_MASK` and check `Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES` as fallback, removing vendor-specific filter failures.
+    - Corrected `AppBlocker.requestPermissions()` so it queries actual permission state instead of prematurely returning `true` on Android, eliminating false positive "Permission Granted" alerts.
+    - Upgraded the "Shield Protection Permission" card with live "Active" vs "Disabled" indicators, direct "Manage in Settings" / "Grant Blocker Permission" actions, and a "Verify Status" button providing explicit system verification feedback.
+  - **Simulate Free / Simulate Pro Developer Override (`src/lib/purchases.ts`, `src/app/(tabs)/settings.tsx`):**
+    - Refactored `usePurchases` to support explicit dev overrides (`'free' | 'pro' | null`) with cross-hook module-level listeners.
+    - Previously, when an entitlement was active in RevenueCat or Mock, `checkEntitlements` could never return `false`, causing the "Simulate Free" button to do nothing.
+    - Tapping "Simulate Free" now explicitly overrides active entitlements, instantly switching `isPremium` to `false`, updating the UI to the Free plan with "Upgrade" action, and changing the button to "Simulate Pro".
+    - Tapping "Simulate Pro" restores Pro status, unlocking all disciplines and updating the button to "Simulate Free".
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
@@ -96,13 +108,14 @@
 - Free tier limit: Blocks selecting > 5 apps with contextual alert in onboarding and settings.
 - Reset defaults: Synchronously restores `DEFAULT_BLOCKED_APPS` to MMKV and native blocker.
 - Uninstalled detection: Validated with device package list cross-reference.
+- Permission detection: Dual-source native Android check (AccessibilityManager + Settings.Secure) with AppState focus refresh.
+- Developer simulation: Unconditionally toggles Free vs Pro regardless of underlying RevenueCat entitlements with cross-component reactivity.
 
 ## Session Handoff Notes
 
-- Free tier 5-app guardrail is active in both onboarding and settings.
-- Social media apps now display crisp vector brand icons instead of single-letter placeholders.
-- Free plan users have a 1-tap "Reset Defaults" button in Settings to recover any accidentally deleted shielded apps.
-- Uninstalled apps are visually dimmed with clean "Not installed" badges and auto-filtered during initial onboarding.
+- Shield Protection Permission updates dynamically when switching between the app and Android Accessibility Settings.
+- Users can tap "Manage in Settings" or "Verify Status" directly from the Shield Protection card at any time.
+- The "Simulate Free" button in Developer Controls cleanly overrides active subscriptions and allows full QA testing of the Free tier experience and paywall gates.
 
 
 

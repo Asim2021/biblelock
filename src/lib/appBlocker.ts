@@ -29,7 +29,7 @@ export const AppBlocker = {
     if (Platform.OS === 'ios') {
       try {
         await DeviceActivity.requestAuthorization('individual');
-        return true;
+        return await AppBlocker.hasPermissions();
       } catch (e) {
         console.warn('[AppBlocker] iOS Screen Time authorization error:', e);
         return false;
@@ -37,13 +37,13 @@ export const AppBlocker = {
     } else if (Platform.OS === 'android') {
       try {
         await AndroidBlocker.requestAccessibilityPermission();
-        return true;
+        return await AppBlocker.hasPermissions();
       } catch (e) {
         console.warn('[AppBlocker] Android Accessibility permission error:', e);
         return false;
       }
     }
-    return true;
+    return false;
   },
 
   /**
@@ -64,7 +64,7 @@ export const AppBlocker = {
         return false;
       }
     }
-    return true;
+    return false;
   },
 
   /**
