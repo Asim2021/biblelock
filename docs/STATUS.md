@@ -78,7 +78,6 @@
   - **Dynamic Emotional Paywall (`src/app/paywall.tsx`):** Added streak-aware and personalized emotional copy dynamically adapting to reader streak count and name, expanded features matrix to 6 items, updated CTA copy, added emotional anchor note, and revised success alert.
   - **Universal Feature Gate Hook (`src/lib/useFeatureGate.ts`):** Created lightweight `requirePremium()` guard integrating seamlessly with `usePurchases()`.
   - **Settings Gating (`src/app/(tabs)/settings.tsx`):** Gated custom app picker ("+ Add Custom Apps") and non-10m goal selector options behind Sanctuary. Added lock icons to locked options. Updated banner to "Sanctuary Member" / "Enter the Sanctuary".
-  - **Library & Reader Gating (`src/app/(tabs)/library.tsx`, `src/app/(tabs)/reader.tsx`):** Enforced 3-bookmark free limit on reader bookmark addition. Gated new collection creation in library behind Sanctuary.
   - **Stats Gating (`src/app/(tabs)/stats.tsx`, `src/components/BadgeShareModal.tsx`):** Added period selector tabs (Week / Month / Year) with lock icons gating extended history, and gated badge social sharing behind Sanctuary.
   - **Dashboard Soft Prompt (`src/app/(tabs)/index.tsx`):** Added dismissible, non-intrusive Sanctuary prompt card surfacing when free users maintain a 3+ day streak.
 - [x] `FIX-009`: Free Tier 5-App Shielding Limit, Reset Defaults, Authentic Social Media Icons & Uninstalled App Dimming:
@@ -97,7 +96,6 @@
     - Upgraded the "Shield Protection Permission" card with live "Active" vs "Disabled" indicators, direct "Manage in Settings" / "Grant Blocker Permission" actions, and a "Verify Status" button providing explicit system verification feedback.
   - **Simulate Free / Simulate Pro Developer Override (`src/lib/purchases.ts`, `src/app/(tabs)/settings.tsx`):**
     - Refactored `usePurchases` to support explicit dev overrides (`'free' | 'pro' | null`) with cross-hook module-level listeners.
-    - Previously, when an entitlement was active in RevenueCat or Mock, `checkEntitlements` could never return `false`, causing the "Simulate Free" button to do nothing.
     - Tapping "Simulate Free" now explicitly overrides active entitlements, instantly switching `isPremium` to `false`, updating the UI to the Free plan with "Upgrade" action, and changing the button to "Simulate Pro".
     - Tapping "Simulate Pro" restores Pro status, unlocking all disciplines and updating the button to "Simulate Free".
 - [x] `TASK-022`: Duration Options Restructure, Free-Tier Expansion (5m/10m/15m), and Onboarding Soft-Cap Pattern (`DEC-012`):
@@ -111,6 +109,18 @@
     - Added a dedicated "Custom" button displaying live `${dailyGoal}m` when a custom value is active.
     - Integrated inline numeric input (1–120 minutes) with validation for Pro users to customize their goal.
     - Added reactive normalization ensuring non-premium users with legacy/over-cap goals automatically default to 15m.
+- [x] `TASK-023`: Reusable TimePickerModal, Mobile Accessibility Standards & Settings Reading Reminders (`DEC-013`):
+  - **Reusable TimePickerModal (`src/components/TimePickerModal.tsx`):**
+    - Extracted 15-minute increment habit time picker into a shared component used by both Onboarding and Settings.
+    - Upgraded all tap targets to satisfy the 44x44pt mobile accessibility standard.
+    - Added `accessibilityRole="button"`, descriptive `accessibilityLabel` per element, and live preview formatted badge.
+  - **Onboarding Integration (`src/app/onboarding/steps/PlanStep.tsx`):**
+    - Refactored `PlanStep.tsx` to use `<TimePickerModal />`, removing duplicated inline state and markup.
+  - **Settings Reading Reminders Card (`src/app/(tabs)/settings.tsx`):**
+    - Added "Daily Reading Reminders" section under Scripture Shield Reminders.
+    - Lists scheduled times with clock icons and trash delete buttons (min 44pt touch targets).
+    - Unlocked 1 scheduled reminder for Free disciples; gated multiple reminder creation behind Sanctuary (`requirePremium('Multiple daily reminders')`) with lock icons.
+    - Integrated `<TimePickerModal />` for adding new reminder times, syncing to MMKV (`setScheduledReadingTimes`).
 
 ## Verification Evidence
 
@@ -118,10 +128,11 @@
 - Onboarding: Free users can freely select 5m, 10m, 15m, or 30m (with PRO badge). Saved goal soft-caps to 15m upon completing onboarding on Free plan.
 - Settings: Free users can select 5m, 10m, 15m. Tapping 30m or Custom opens Sanctuary paywall.
 - Settings (Pro): Can select 5m, 10m, 15m, 30m, or tap Custom to enter 1–120 minutes with inline input.
+- Settings (Reminders): Disciples can view their configured reading times, tap "+ Add Time" to open `TimePickerModal`, delete existing times, and Free tier users are gated when attempting to add a second reminder.
 - Reader: Timer bar reflects the daily goal (`formattedGoal`), whether 5m, 15m, 30m, or a custom duration.
 
 ## Session Handoff Notes
 
-- Reading duration options are now unified across onboarding and settings.
-- Free disciples have flexible access to 5m, 10m, and 15m sessions.
-- 30m and Custom durations provide clean monetization incentives in both onboarding (soft-cap) and settings (hard gate with paywall).
+- Reading duration and reading reminder time management are now unified across onboarding and settings.
+- The time picker modal is now an accessible, reusable component (`TimePickerModal.tsx`).
+- Free disciples have 1 reading reminder time; multiple reading reminders provide an additional clean monetization driver for Sanctuary.

@@ -4,10 +4,10 @@ import {
   Text,
   Pressable,
   ScrollView,
-  Modal,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Clock, Plus, Trash2, Timer, Check } from 'lucide-react-native';
+import { TimePickerModal } from '../../../components/TimePickerModal';
 
 interface PlanStepProps {
   userName: string;
@@ -18,9 +18,6 @@ interface PlanStepProps {
   onBack: () => void;
   onNext: () => void;
 }
-
-const HOURS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
-const MINUTES = ['00', '15', '30', '45'];
 
 export const PlanStep: React.FC<PlanStepProps> = ({
   userName,
@@ -34,16 +31,11 @@ export const PlanStep: React.FC<PlanStepProps> = ({
   const insets = useSafeAreaInsets();
   const [stage, setStage] = useState<'time' | 'duration'>('time');
   const [showPicker, setShowPicker] = useState(false);
-  const [pickerHour, setPickerHour] = useState('07');
-  const [pickerMin, setPickerMin] = useState('00');
-  const [pickerPeriod, setPickerPeriod] = useState<'AM' | 'PM'>('AM');
 
-  const handleAddTime = () => {
-    const formatted = `${parseInt(pickerHour, 10)}:${pickerMin} ${pickerPeriod}`;
+  const handleAddTime = (formatted: string) => {
     if (!readingTimes.includes(formatted)) {
       setReadingTimes([...readingTimes, formatted]);
     }
-    setShowPicker(false);
   };
 
   const removeTime = (index: number) => {
@@ -264,123 +256,12 @@ export const PlanStep: React.FC<PlanStepProps> = ({
         </Pressable>
       </View>
 
-      {/* Time Picker Modal */}
-      <Modal visible={showPicker} transparent animationType="fade">
-        <View className="flex-1 bg-black/75 justify-center items-center px-5">
-          <View className="w-full max-w-sm bg-[#182e25] border border-[#2d5c4b] rounded-3xl p-6 shadow-2xl">
-            <Text className="text-xl font-sans-bold text-[#faf9f5] text-center mb-5">
-              Select Reading Time
-            </Text>
-
-            {/* Time selection container */}
-            <View className="mb-6">
-              {/* Hours Grid (1 to 12) */}
-              <Text className="text-xs font-sans-bold text-[#78a898] mb-2 text-center">
-                Select Hour
-              </Text>
-              <View className="flex-row flex-wrap justify-center mb-4">
-                {HOURS.map((h) => {
-                  const isSelected = pickerHour === h;
-                  return (
-                    <Pressable
-                      key={h}
-                      onPress={() => setPickerHour(h)}
-                      className={`w-10 h-10 m-1 rounded-xl items-center justify-center ${
-                        isSelected ? 'bg-[#f5b800]' : 'bg-[#12382d] border border-[#205243]'
-                      }`}
-                    >
-                      <Text
-                        className={`text-sm font-sans-bold ${
-                          isSelected ? 'text-[#141413]' : 'text-[#faf9f5]'
-                        }`}
-                      >
-                        {h}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              {/* Minutes and Period Row */}
-              <View className="flex-row justify-between items-center px-2">
-                {/* Minute Chips */}
-                <View className="flex-1 mr-3">
-                  <Text className="text-xs font-sans-bold text-[#78a898] mb-2 text-center">
-                    Minute
-                  </Text>
-                  <View className="flex-row justify-around">
-                    {MINUTES.map((m) => {
-                      const isSelected = pickerMin === m;
-                      return (
-                        <Pressable
-                          key={m}
-                          onPress={() => setPickerMin(m)}
-                          className={`px-2.5 py-2 rounded-xl items-center justify-center ${
-                            isSelected ? 'bg-[#f5b800]' : 'bg-[#12382d] border border-[#205243]'
-                          }`}
-                        >
-                          <Text
-                            className={`text-xs font-sans-bold ${
-                              isSelected ? 'text-[#141413]' : 'text-[#faf9f5]'
-                            }`}
-                          >
-                            :{m}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </View>
-
-                {/* Period Toggle */}
-                <View className="w-20">
-                  <Text className="text-xs font-sans-bold text-[#78a898] mb-2 text-center">
-                    Period
-                  </Text>
-                  <View className="flex-row rounded-xl bg-[#12382d] border border-[#205243] p-0.5">
-                    {(['AM', 'PM'] as const).map((period) => {
-                      const isSelected = pickerPeriod === period;
-                      return (
-                        <Pressable
-                          key={period}
-                          onPress={() => setPickerPeriod(period)}
-                          className={`flex-1 py-1.5 rounded-lg items-center ${
-                            isSelected ? 'bg-[#f5b800]' : 'bg-transparent'
-                          }`}
-                        >
-                          <Text
-                            className={`text-xs font-sans-bold ${
-                              isSelected ? 'text-[#141413]' : 'text-[#78a898]'
-                            }`}
-                          >
-                            {period}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* Modal Bottom Actions */}
-            <View className="flex-row justify-between space-x-3">
-              <Pressable
-                onPress={() => setShowPicker(false)}
-                className="flex-1 py-3.5 mr-2 rounded-xl bg-[#163f33] items-center"
-              >
-                <Text className="text-sm font-sans-bold text-[#78a898]">Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={handleAddTime}
-                className="flex-1 py-3.5 ml-2 rounded-xl bg-[#f5b800] items-center shadow-md"
-              >
-                <Text className="text-sm font-sans-bold text-[#141413]">Add Time</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Reusable Time Picker Modal */}
+      <TimePickerModal
+        visible={showPicker}
+        onClose={() => setShowPicker(false)}
+        onSave={handleAddTime}
+      />
     </View>
   );
 };

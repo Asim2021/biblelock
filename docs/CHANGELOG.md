@@ -1,5 +1,27 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.17] - 2026-09-16
+
+### Added & Improved
+- **Reusable TimePickerModal & Mobile Accessibility Standards (`src/components/TimePickerModal.tsx`):**
+  - Extracted 15-minute interval habit time picker into a shared, accessible component.
+  - Standardized all touch targets to satisfy the mobile accessibility >= 44x44pt standard.
+  - Added explicit `accessibilityRole="button"`, `accessibilityLabel` per element, `accessibilityState={{ selected }}`, and live formatted preview time badge.
+- **Onboarding Component Standardization (`src/app/onboarding/steps/PlanStep.tsx`):**
+  - Refactored `PlanStep.tsx` to use `<TimePickerModal />`, eliminating duplicate state and modal rendering logic while keeping seamless time selection.
+- **Settings Daily Reading Reminders Management (`src/app/(tabs)/settings.tsx`):**
+  - Added a dedicated "Daily Reading Reminders" card inside Scripture Shield Reminders in Settings.
+  - Displays disciples' configured reading reminder times with clock icons and trash delete buttons (min 44pt touch targets).
+  - Unlocked 1 scheduled reminder for Free tier disciples; gated multiple reminder creation behind Sanctuary (`requirePremium('Multiple daily reminders')`) with lock icons.
+  - Integrated `<TimePickerModal />` directly into Settings to add new reminder times, syncing with MMKV (`setScheduledReadingTimes`).
+
+### Verified Impact
+- `npx tsc --noEmit`: Clean compilation with 0 errors across the repository.
+- `DEC-013` documented with complete Impact-Loop schema.
+- Reusable UI component eliminated code duplication between Onboarding and Settings.
+
+---
+
 ## [1.0.16] - 2026-09-16
 
 ### Added & Improved

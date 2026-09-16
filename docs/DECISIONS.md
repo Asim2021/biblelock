@@ -422,3 +422,49 @@ Selected **Option B**. Onboarding remains smooth and frictionless while planting
 ### 6. Lessons & Downstream Impact
 When introducing premium tiers, allow aspirational goal selection during early onboarding to gauge user intent, while enforcing tier constraints upon entering the active app lifecycle.
 
+---
+
+## [DEC-013] Reusable TimePickerModal Extraction, Mobile Accessibility Compliance, and Settings Reading Reminders Management
+
+- **Date:** 2026-09-16
+- **Status:** Validated
+- **Related Task / Baseline:** STATUS.md (TASK-023), implementation_plan.md
+
+### 1. Problem / Trigger (Why the Original Plan Changed)
+1. **Critical Settings Gap:** In onboarding (`PlanStep.tsx`), disciples configured daily reading reminder times (e.g. `7:00 AM`, `8:45 PM`), which were saved to MMKV storage. However, there was zero UI in `Settings` to view, modify, add, or delete these times after onboarding.
+2. **Code Duplication & Maintainability:** The custom 15-minute interval time picker modal lived exclusively inside `PlanStep.tsx`, tightly coupled with inline state (`HOURS`, `MINUTES`, `pickerHour`, `pickerMin`, `pickerPeriod`).
+3. **UI/UX & Mobile Accessibility Flaws:** Per `/ui-ux-pro-max` review, the inline picker lacked `accessibilityRole="button"`, descriptive `accessibilityLabel` attributes on each tap target, and failed the 44x44pt minimum touch target size on several chip elements.
+
+### 2. Alternatives Evaluated
+- **Option A (Native Datetimepicker `@react-native-community/datetimepicker`):** Install a third-party native dependency for iOS wheels and Android clock dialogs.
+  - *Cons:* Violates ponytail rung 2 & 5 (already in codebase / no unrequested dependencies); adds native build complexity; breaks visual consistency with the app's bespoke emerald and radiant gold Christian aesthetic.
+- **Option B (Reusable `TimePickerModal` Component with Accessibility & 44pt Touch Targets):** Extract the custom grid into `src/components/TimePickerModal.tsx`, standardize touch target bounds (min 44pt), add explicit accessibility roles and labels, and integrate into both `PlanStep.tsx` and `settings.tsx`.
+
+### 3. Decision & Trade-offs
+Selected **Option B**. Kept the fast, clean 15-minute increment habit-building grid. Extracted it into a reusable component. Added a complete "Daily Reading Reminders" card inside the Scripture Shield Reminders section in Settings, persisting to `getScheduledReadingTimes()` / `setScheduledReadingTimes()` in MMKV. Free tier disciples get 1 reminder time for free; adding multiple reminders is gated by Sanctuary (`requirePremium('Multiple daily reminders')`).
+
+### 4. Implementation Details
+- `src/components/TimePickerModal.tsx`:
+  - Created reusable modal with `visible`, `onClose`, `onSave`, and `initialTime` support.
+  - Standardized touch targets to >=44x44pt.
+  - Added `accessibilityRole="button"`, `accessibilityLabel`, and `accessibilityState={{ selected }}`.
+  - Added live preview badge displaying formatted scheduled time (`{previewTime}`).
+- `src/app/onboarding/steps/PlanStep.tsx`:
+  - Removed duplicate modal code and inline state.
+  - Integrated `<TimePickerModal />`.
+- `src/app/(tabs)/settings.tsx`:
+  - Added "Daily Reading Reminders" section with "+ Add Time" header action.
+  - Displayed scheduled times list with clock icons and trash delete buttons (min 44pt touch targets).
+  - Enforced 1 reminder for Free tier; gated additional reminders behind Sanctuary with lock icon.
+  - Integrated `<TimePickerModal />` at root modal level.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit` passing with 0 errors.
+- Disciples can now add, view, and delete reading reminder times directly from Settings.
+- Onboarding and Settings now share the exact same UI component and storage source of truth.
+- Screen reader accessibility compliance achieved across all hour, minute, and period controls.
+
+### 6. Lessons & Downstream Impact
+Always surface onboarding habit preferences in post-onboarding settings so users maintain continuous agency over their notifications and routine.
+
+

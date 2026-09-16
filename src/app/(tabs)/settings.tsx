@@ -46,15 +46,19 @@ import {
   getBlockedApps,
   setBlockedApps,
   DEFAULT_BLOCKED_APPS,
+  getReadingProgress,
   setReadingProgress,
   getThemeMode,
   setThemeMode as saveThemeMode,
   ThemeMode,
+  getScheduledReadingTimes,
+  setScheduledReadingTimes,
 } from '../../lib/mmkv';
 import { AppIcon } from '../../components/AppIcon';
 import { useTheme } from '../../lib/themeContext';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
+import { TimePickerModal } from '../../components/TimePickerModal';
 
 const GOAL_OPTIONS = [5, 10, 15, 30];
 
@@ -76,6 +80,34 @@ export default function SettingsScreen() {
   );
   const [hasPermission, setHasPermission] = useState(false);
   const [eveningReminder, setEveningReminder] = useState(true);
+  const [scheduledTimes, setScheduledTimes] = useState<string[]>(() =>
+    getScheduledReadingTimes()
+  );
+  const [showTimePickerModal, setShowTimePickerModal] = useState(false);
+
+  const handleAddReminderTime = (time: string) => {
+    if (scheduledTimes.includes(time)) {
+      return;
+    }
+    const updated = [...scheduledTimes, time];
+    setScheduledTimes(updated);
+    setScheduledReadingTimes(updated);
+  };
+
+  const handleOpenTimePicker = () => {
+    if (!isPremium && scheduledTimes.length >= 1) {
+      if (!requirePremium('Multiple daily reminders')) {
+        return;
+      }
+    }
+    setShowTimePickerModal(true);
+  };
+
+  const handleRemoveReminderTime = (timeToRemove: string) => {
+    const updated = scheduledTimes.filter((t) => t !== timeToRemove);
+    setScheduledTimes(updated);
+    setScheduledReadingTimes(updated);
+  };
 
   const [showAppPickerModal, setShowAppPickerModal] = useState(false);
   const [installedApps, setInstalledApps] = useState<InstalledApp[]>([]);
@@ -1024,22 +1056,172 @@ export default function SettingsScreen() {
           </Card>
         </View>
 
-        {/* Notification Settings */}
-        <View className="mb-5">
-          <Text
-            style={{
-              fontSize: 11,
-              fontFamily: 'Inter_600SemiBold',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              color: colors.textSecondary,
-              marginBottom: 10,
-              paddingHorizontal: 4,
-            }}
-          >
-            Scripture Shield Reminders
-          </Text>
+        {/* Scripture Shield Reminders Section */}
+        <View className="mb-6">
+          <View className="flex-row items-center justify-between mb-2.5 px-1">
+            <Text
+              style={{
+                fontSize: 11,
+                fontFamily: 'Inter_600SemiBold',
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                color: colors.textSecondary,
+              }}
+            >
+              Daily Reading Reminders
+            </Text>
+            <Pressable
+              onPress={handleOpenTimePicker}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Add reading reminder time"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: colors.accentBg,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+              }}
+            >
+              {!isPremium && scheduledTimes.length >= 1 ? (
+                <Lock size={12} color={colors.accent} style={{ marginRight: 4 }} />
+              ) : (
+                <Plus size={13} color={colors.accent} style={{ marginRight: 4 }} />
+              )}
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: colors.accent,
+                  fontFamily: 'Inter_600SemiBold',
+                }}
+              >
+                Add Time
+              </Text>
+            </Pressable>
+          </View>
+
           <Card variant="dark" style={{ padding: 16 }}>
+            {/* Scheduled Times List */}
+            <View className="mb-4">
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontFamily: 'Inter_600SemiBold',
+                  color: colors.textPrimary,
+                  marginBottom: 2,
+                }}
+              >
+                Scheduled Times
+              </Text>
+              <Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 12 }}>
+                Notifications sent to keep you consistent with your daily goal.
+              </Text>
+
+              {scheduledTimes.length === 0 ? (
+                <View
+                  style={{
+                    padding: 12,
+                    borderRadius: 12,
+                    backgroundColor: colors.surfaceSubtle,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ fontSize: 12, color: colors.textSecondary }}>
+                    No reminder times set. Tap "+ Add Time" above.
+                  </Text>
+                </View>
+              ) : (
+                <View>
+                  {scheduledTimes.map((timeStr) => (
+                    <View
+                      key={timeStr}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingHorizontal: 14,
+                        paddingVertical: 10,
+                        borderRadius: 12,
+                        backgroundColor: colors.surfaceSubtle,
+                        borderWidth: 1,
+                        borderColor: colors.borderSubtle,
+                        marginBottom: 6,
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <View
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 14,
+                            backgroundColor: colors.accentBg,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginRight: 10,
+                          }}
+                        >
+                          <Clock size={14} color={colors.accent} />
+                        </View>
+                        <Text
+                          style={{
+                            fontSize: 14,
+                            fontFamily: 'Inter_600SemiBold',
+                            color: colors.textPrimary,
+                          }}
+                        >
+                          {timeStr}
+                        </Text>
+                      </View>
+
+                      <Pressable
+                        onPress={() => handleRemoveReminderTime(timeStr)}
+                        hitSlop={10}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Delete reminder ${timeStr}`}
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 18,
+                          backgroundColor: '#331a1a',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Trash2 size={14} color="#f26666" />
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {!isPremium && scheduledTimes.length >= 1 && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginTop: 6,
+                    paddingHorizontal: 2,
+                  }}
+                >
+                  <Lock size={11} color={colors.accent} style={{ marginRight: 4 }} />
+                  <Text style={{ fontSize: 11, color: colors.accent, fontFamily: 'Inter_500Medium' }}>
+                    Sanctuary unlocks unlimited reminder times.
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Divider */}
+            <View
+              style={{
+                height: 1,
+                backgroundColor: colors.borderSubtle,
+                marginBottom: 14,
+              }}
+            />
+
+            {/* Evening Reflection Prompt Toggle */}
             <View className="flex-row items-center justify-between">
               <View className="flex-1 mr-4">
                 <Text
@@ -1338,6 +1520,14 @@ export default function SettingsScreen() {
           </SafeAreaView>
         </View>
       </Modal>
+
+      {/* Reusable Time Picker Modal for Reminders */}
+      <TimePickerModal
+        visible={showTimePickerModal}
+        onClose={() => setShowTimePickerModal(false)}
+        onSave={handleAddReminderTime}
+        title="Add Reminder Time"
+      />
     </SafeAreaView>
   );
 }
