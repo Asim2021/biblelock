@@ -100,22 +100,28 @@
     - Previously, when an entitlement was active in RevenueCat or Mock, `checkEntitlements` could never return `false`, causing the "Simulate Free" button to do nothing.
     - Tapping "Simulate Free" now explicitly overrides active entitlements, instantly switching `isPremium` to `false`, updating the UI to the Free plan with "Upgrade" action, and changing the button to "Simulate Pro".
     - Tapping "Simulate Pro" restores Pro status, unlocking all disciplines and updating the button to "Simulate Free".
+- [x] `TASK-022`: Duration Options Restructure, Free-Tier Expansion (5m/10m/15m), and Onboarding Soft-Cap Pattern (`DEC-012`):
+  - **Onboarding 30m PRO Badge & Soft-Cap (`PlanStep.tsx`, `onboarding/index.tsx`):**
+    - Added a styled `PRO` badge to the 30m duration card in onboarding without blocking user selection.
+    - Free users can tap and select 30m smoothly during onboarding.
+    - At save / onboarding completion time, `onboarding/index.tsx` soft-caps the stored daily goal to `15m` for Free users (`!isPremium && durationMinutes === 30`).
+  - **Settings Goal Restructuring & Custom Duration (`settings.tsx`):**
+    - Restructured `GOAL_OPTIONS` to `[5, 10, 15, 30]`, dropping 20m.
+    - Unlocked `5m`, `10m`, and `15m` for Free users; gated `30m` and `Custom` behind `requirePremium()`.
+    - Added a dedicated "Custom" button displaying live `${dailyGoal}m` when a custom value is active.
+    - Integrated inline numeric input (1–120 minutes) with validation for Pro users to customize their goal.
+    - Added reactive normalization ensuring non-premium users with legacy/over-cap goals automatically default to 15m.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `AppIcon.tsx`: Pure `react-native-svg` vector icons with zero image asset download overhead.
-- Free tier limit: Blocks selecting > 5 apps with contextual alert in onboarding and settings.
-- Reset defaults: Synchronously restores `DEFAULT_BLOCKED_APPS` to MMKV and native blocker.
-- Uninstalled detection: Validated with device package list cross-reference.
-- Permission detection: Dual-source native Android check (AccessibilityManager + Settings.Secure) with AppState focus refresh.
-- Developer simulation: Unconditionally toggles Free vs Pro regardless of underlying RevenueCat entitlements with cross-component reactivity.
+- Onboarding: Free users can freely select 5m, 10m, 15m, or 30m (with PRO badge). Saved goal soft-caps to 15m upon completing onboarding on Free plan.
+- Settings: Free users can select 5m, 10m, 15m. Tapping 30m or Custom opens Sanctuary paywall.
+- Settings (Pro): Can select 5m, 10m, 15m, 30m, or tap Custom to enter 1–120 minutes with inline input.
+- Reader: Timer bar reflects the daily goal (`formattedGoal`), whether 5m, 15m, 30m, or a custom duration.
 
 ## Session Handoff Notes
 
-- Shield Protection Permission updates dynamically when switching between the app and Android Accessibility Settings.
-- Users can tap "Manage in Settings" or "Verify Status" directly from the Shield Protection card at any time.
-- The "Simulate Free" button in Developer Controls cleanly overrides active subscriptions and allows full QA testing of the Free tier experience and paywall gates.
-
-
-
+- Reading duration options are now unified across onboarding and settings.
+- Free disciples have flexible access to 5m, 10m, and 15m sessions.
+- 30m and Custom durations provide clean monetization incentives in both onboarding (soft-cap) and settings (hard gate with paywall).

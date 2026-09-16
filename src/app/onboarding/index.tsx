@@ -9,6 +9,7 @@ import {
   setOnboardingCompleted,
   DEFAULT_BLOCKED_APPS,
 } from '../../lib/mmkv';
+import { usePurchases } from '../../lib/purchases';
 
 // LanguageStep hidden — English-only for now
 import { CarouselStep } from './steps/CarouselStep';
@@ -21,6 +22,7 @@ import { PermissionStep } from './steps/PermissionStep';
 export default function OnboardingScreen() {
   const router = useRouter();
   const initialData = getOnboardingData();
+  const { isPremium } = usePurchases();
 
   const [step, setStep] = useState<number>(2); // Start at carousel (language step hidden)
   const language = 'en'; // English-only for now
@@ -36,25 +38,27 @@ export default function OnboardingScreen() {
   );
 
   const saveCurrentProgress = () => {
+    const effectiveDuration = (!isPremium && durationMinutes === 30) ? 15 : durationMinutes;
     setOnboardingData({
       language,
       userName,
       readingFrequency,
       biggestChallenges,
       readingTimes,
-      durationMinutes,
+      durationMinutes: effectiveDuration,
       blockedApps,
     });
   };
 
   const handleFinishOnboarding = () => {
+    const effectiveDuration = (!isPremium && durationMinutes === 30) ? 15 : durationMinutes;
     setOnboardingData({
       language,
       userName: userName.trim() || 'Disciple',
       readingFrequency,
       biggestChallenges,
       readingTimes,
-      durationMinutes,
+      durationMinutes: effectiveDuration,
       blockedApps,
       isCompleted: true,
     });

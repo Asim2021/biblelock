@@ -56,7 +56,7 @@ import { useTheme } from '../../lib/themeContext';
 import { Card } from '../../components/Card';
 import { Button } from '../../components/Button';
 
-const GOAL_OPTIONS = [5, 10, 15, 20, 30];
+const GOAL_OPTIONS = [5, 10, 15, 30];
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -66,6 +66,8 @@ export default function SettingsScreen() {
   const { themeMode, setThemeMode, colors, isDark } = useTheme();
 
   const [dailyGoal, setDailyGoal] = useState(() => getDailyGoalMinutes());
+  const [showCustomGoalInput, setShowCustomGoalInput] = useState(false);
+  const [customGoalText, setCustomGoalText] = useState('');
   const [translation, setTranslationState] = useState<'WEB' | 'KJV'>(() =>
     getBibleTranslation()
   );
@@ -109,12 +111,39 @@ export default function SettingsScreen() {
     }, [refreshPermissions])
   );
 
+  useEffect(() => {
+    if (!isPremium && dailyGoal > 15) {
+      setDailyGoal(15);
+      setDailyGoalMinutes(15);
+    }
+  }, [isPremium, dailyGoal]);
+
   const handleSelectGoal = (minutes: number) => {
-    if (minutes !== 10 && !requirePremium('Flexible daily goals')) {
+    if (minutes > 15 && !requirePremium('Extended reading goals')) {
       return;
     }
     setDailyGoal(minutes);
     setDailyGoalMinutes(minutes);
+    setShowCustomGoalInput(false);
+  };
+
+  const handleCustomGoalPress = () => {
+    if (!requirePremium('Custom reading goals')) {
+      return;
+    }
+    setShowCustomGoalInput((prev) => !prev);
+    setCustomGoalText(String(dailyGoal));
+  };
+
+  const handleSaveCustomGoal = () => {
+    const mins = parseInt(customGoalText.trim(), 10);
+    if (isNaN(mins) || mins < 1 || mins > 120) {
+      Alert.alert('Invalid Duration', 'Please enter a reading duration between 1 and 120 minutes.');
+      return;
+    }
+    setDailyGoal(mins);
+    setDailyGoalMinutes(mins);
+    setShowCustomGoalInput(false);
   };
 
   const handleSelectTranslation = (tr: 'WEB' | 'KJV') => {
@@ -420,14 +449,14 @@ export default function SettingsScreen() {
             <View className="flex-row justify-between">
               {GOAL_OPTIONS.map((mins) => {
                 const isSelected = dailyGoal === mins;
-                const isLocked = !isPremium && mins !== 10;
+                const isLocked = !isPremium && mins > 15;
                 return (
                   <Pressable
                     key={mins}
                     onPress={() => handleSelectGoal(mins)}
                     style={{
                       flex: 1,
-                      marginHorizontal: 4,
+                      marginHorizontal: 2,
                       paddingVertical: 10,
                       borderRadius: 10,
                       alignItems: 'center',
@@ -440,7 +469,7 @@ export default function SettingsScreen() {
                     <View className="flex-row items-center justify-center">
                       <Text
                         style={{
-                          fontSize: 14,
+                          fontSize: 13,
                           fontFamily: 'Inter_700Bold',
                           color: isSelected ? '#141413' : colors.textPrimary,
                         }}
@@ -454,7 +483,128 @@ export default function SettingsScreen() {
                   </Pressable>
                 );
               })}
+
+              {/* Custom Goal Option */}
+              {(() => {
+                const isCustomSelected = !GOAL_OPTIONS.includes(dailyGoal);
+                return (
+                  <Pressable
+                    onPress={handleCustomGoalPress}
+                    style={{
+                      flex: 1.2,
+                      marginHorizontal: 2,
+                      paddingVertical: 10,
+                      borderRadius: 10,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1,
+                      borderColor: isCustomSelected
+                        ? colors.accent
+                        : showCustomGoalInput
+                        ? colors.accent
+                        : colors.border,
+                      backgroundColor: isCustomSelected ? colors.accent : colors.surfaceSubtle,
+                    }}
+                  >
+                    <View className="flex-row items-center justify-center">
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontFamily: 'Inter_700Bold',
+                          color: isCustomSelected ? '#141413' : colors.textPrimary,
+                        }}
+                        numberOfLines={1}
+                      >
+                        {isCustomSelected ? `${dailyGoal}m` : 'Custom'}
+                      </Text>
+                      {!isPremium && (
+                        <Lock size={10} color={colors.textMuted} style={{ marginLeft: 3 }} />
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })()}
             </View>
+
+            {/* Inline Custom Goal Input (Premium) */}
+            {showCustomGoalInput && (
+              <View
+                style={{
+                  marginTop: 12,
+                  paddingTop: 12,
+                  borderTopWidth: 1,
+                  borderTopColor: colors.border,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'Inter_500Medium',
+                    color: colors.textSecondary,
+                    marginBottom: 8,
+                  }}
+                >
+                  Enter custom duration (1–120 minutes):
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <TextInput
+                    style={{
+                      flex: 1,
+                      height: 40,
+                      backgroundColor: colors.surfaceSubtle,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderRadius: 8,
+                      paddingHorizontal: 12,
+                      color: colors.textPrimary,
+                      fontSize: 14,
+                      fontFamily: 'Inter_600SemiBold',
+                    }}
+                    placeholder="Minutes (e.g. 45)"
+                    placeholderTextColor={colors.textMuted}
+                    keyboardType="number-pad"
+                    value={customGoalText}
+                    onChangeText={setCustomGoalText}
+                    maxLength={3}
+                    autoFocus
+                  />
+                  <Pressable
+                    onPress={handleSaveCustomGoal}
+                    style={{
+                      marginLeft: 8,
+                      backgroundColor: colors.accent,
+                      paddingHorizontal: 14,
+                      height: 40,
+                      borderRadius: 8,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontFamily: 'Inter_700Bold',
+                        color: '#141413',
+                      }}
+                    >
+                      Set
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setShowCustomGoalInput(false)}
+                    style={{
+                      marginLeft: 6,
+                      padding: 8,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                    }}
+                  >
+                    <X size={16} color={colors.textSecondary} />
+                  </Pressable>
+                </View>
+              </View>
+            )}
           </Card>
         </View>
 

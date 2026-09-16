@@ -197,12 +197,19 @@ export const PlanStep: React.FC<PlanStepProps> = ({
                   <Pressable
                     key={mins}
                     onPress={() => setDurationMinutes(mins)}
-                    className={`flex-1 mx-1 p-3 rounded-2xl items-center justify-center border ${
+                    className={`flex-1 mx-1 p-3 rounded-2xl items-center justify-center border relative ${
                       isSelected
                         ? 'border-[#f5b800] bg-[#1a4a3b]'
                         : 'border-[#205243] bg-[#12382d]'
                     }`}
                   >
+                    {mins === 30 && (
+                      <View className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-md bg-[#f5b800]/20 border border-[#f5b800]/40">
+                        <Text className="text-[8px] font-sans-bold text-[#f5b800]">
+                          PRO
+                        </Text>
+                      </View>
+                    )}
                     <Text className="text-2xl font-sans-bold text-[#faf9f5] mb-1">
                       {mins}
                     </Text>

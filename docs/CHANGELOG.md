@@ -1,5 +1,25 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.16] - 2026-09-16
+
+### Added & Improved
+- **Duration Options Overhaul & Free-Tier Expansion (`src/app/(tabs)/settings.tsx`):**
+  - Restructured preset daily reading goals to `[5m, 10m, 15m, 30m]` (removed redundant 20m).
+  - Unlocked `5m`, `10m`, and `15m` for Free tier users (previously only 10m was free).
+  - Gated `30m` behind Sanctuary with lock icon and paywall trigger.
+  - Added a 5th "Custom" duration option with inline numeric input (1–120 mins), validation, and live `${dailyGoal}m` label for Pro subscribers.
+  - Added reactive normalization ensuring non-premium users with legacy/over-cap goals automatically default to 15m.
+- **Onboarding 30m PRO Badge & Soft-Cap UX Pattern (`src/app/onboarding/steps/PlanStep.tsx`, `src/app/onboarding/index.tsx`):**
+  - Added a subtle gold `PRO` badge to the 30m duration card in onboarding while keeping it freely selectable without friction.
+  - At save / onboarding completion time, `onboarding/index.tsx` intercepts and soft-caps the stored daily goal to `15m` for Free users (`!isPremium && durationMinutes === 30`).
+  - Upon entering Settings, Free users see 15m active and 30m locked, establishing clear monetization motivation.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- `DEC-012` documented with complete Impact-Loop schema.
+
+---
+
 ## [1.0.15] - 2026-09-16
 
 ### Fixed

@@ -385,3 +385,40 @@ Selected **Option B**. The app now operates with zero network delay, no login ga
 ### 6. Lessons & Downstream Impact
 Defaulting to local-first architecture eliminates cloud dependencies and networking failure modes for core habit and timer features.
 
+---
+
+## [DEC-012] Duration Options Overhaul, Free-Tier Tiering (5m/10m/15m), and Onboarding Soft-Cap Pattern
+
+- **Date:** 2026-09-16
+- **Status:** Validated
+- **Related Task / Baseline:** STATUS.md (TASK-022), implementation_plan.md
+
+### 1. Problem / Trigger (Why the Original Plan Changed)
+1. **Onboarding vs Settings Inconsistency:** Onboarding previously allowed Free users to pick any of `[5, 10, 15, 30]` with zero gating, while Settings locked everything except `10m` (`mins !== 10`), creating a contradictory and confusing user experience.
+2. **Missing Custom Duration & Restructuring:** Preset options included `20m` which was redundant, and lacked a user-requested `Custom` duration input (1–120 mins).
+3. **Free Tier Value Proposition:** Gating all options except 10m was overly restrictive. Free tier should offer flexible baseline options (`5m`, `10m`, `15m`), while positioning `30m` and `Custom` as Sanctuary (Premium) goals.
+
+### 2. Alternatives Evaluated
+- **Option A (Hard Lock on Onboarding 30m):** Block 30m with a paywall modal immediately when tapped during onboarding. Rejected because onboarding friction before habit formation harms initial completion rates.
+- **Option B (Soft-Cap Pattern):** Keep 30m selectable during onboarding with a subtle "PRO" badge hint. Free users can select 30m to express intent without obstruction. At save/completion time, the actual saved daily goal is soft-capped to 15m (the max free tier option). In Settings, 30m and Custom are locked with lock icons and paywall triggers.
+
+### 3. Decision & Trade-offs
+Selected **Option B**. Onboarding remains smooth and frictionless while planting the seed that 30m is a Sanctuary feature. Settings provides clean, honest feature gating with 5/10/15 unlocked, 30 locked, and Custom (1–120 min) available for Pro with an inline numeric input.
+
+### 4. Implementation Details
+- `src/app/onboarding/steps/PlanStep.tsx`: Added gold `PRO` badge to the 30m duration card while keeping it fully selectable.
+- `src/app/onboarding/index.tsx`: Integrated `usePurchases()` and soft-capped `durationMinutes` to `15` on save (`saveCurrentProgress` and `handleFinishOnboarding`) if `!isPremium && durationMinutes === 30`.
+- `src/app/(tabs)/settings.tsx`:
+  - Updated `GOAL_OPTIONS` to `[5, 10, 15, 30]`.
+  - Unlocked `5m`, `10m`, and `15m` for Free users; gated `30m` and `Custom` behind `requirePremium()`.
+  - Added "Custom" button with live `${dailyGoal}m` label when active, and inline numeric input (1–120 min) with validation.
+  - Added reactive normalization effect defaulting non-premium goals > 15m to 15m.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit` exited cleanly with 0 errors.
+- Unlocked 3 flexible duration tiers (`5m`, `10m`, `15m`) for Free disciples while establishing clear premium up-sell value for `30m` and `Custom`.
+- Onboarding preserves high-conversion flow without dropping users into jarring paywalls during goal selection.
+
+### 6. Lessons & Downstream Impact
+When introducing premium tiers, allow aspirational goal selection during early onboarding to gauge user intent, while enforcing tier constraints upon entering the active app lifecycle.
+
