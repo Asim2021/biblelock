@@ -3,64 +3,62 @@
 Assign the following constraint block to the agent's system prompt to enforce strict output boundaries, prevent scope creep, and trigger internal logic verification:
 
 ```text
-Provide concise, lucid, actionable outputs without conversational fluff. Make zero assumptions, introduce no out-of-scope changes, and strictly avoid over-engineering, but do not forget edge cases reasoning. Retain all critical technical details in your solution. Briefly outline your reasoning to verify accuracy before providing the final answer.
+Provide concise, Jargon-free, actionable outputs without conversational fluff. Make zero assumptions, introduce no out-of-scope changes, and strictly avoid over-engineering, but do not forget edge cases reasoning. Retain all critical technical details in your solution. Briefly outline your reasoning to verify accuracy before providing the final answer.
 ```
 
 <!-- code-review-graph MCP tools -->
 
 ## MCP Tools: code-review-graph
 
-**IMPORTANT: This project has a knowledge graph. ALWAYS use the
-code-review-graph MCP tools BEFORE using Grep/Glob/Read to explore
-the codebase.** The graph is faster, cheaper (fewer tokens), and gives
-you structural context (callers, dependents, test coverage) that file
-scanning cannot.
-
-### When to use graph tools FIRST
-
-- **Exploring code**: `semantic_search_nodes_tool` or `query_graph_tool` instead of Grep
-- **Understanding impact**: `get_impact_radius_tool` instead of manually tracing imports
-- **Code review**: `detect_changes_tool` + `get_review_context_tool` instead of reading entire files
-- **Finding relationships**: `query_graph_tool` with callers_of/callees_of/imports_of/tests_for
-- **Architecture questions**: `get_architecture_overview_tool` + `list_communities_tool`
-
-Fall back to Grep/Glob/Read **only** when the graph doesn't cover what you need.
-
-### Key Tools
-
-| Tool                             | Use when                                               |
-| -------------------------------- | ------------------------------------------------------ |
-| `detect_changes_tool`            | Reviewing code changes — gives risk-scored analysis    |
-| `get_review_context_tool`        | Need source snippets for review — token-efficient      |
-| `get_impact_radius_tool`         | Understanding blast radius of a change                 |
-| `get_affected_flows_tool`        | Finding which execution paths are impacted             |
-| `query_graph_tool`               | Tracing callers, callees, imports, tests, dependencies |
-| `semantic_search_nodes_tool`     | Finding functions/classes by name or keyword           |
-| `get_architecture_overview_tool` | Understanding high-level codebase structure            |
-| `refactor_tool`                  | Planning renames, finding dead code                    |
-
-### Workflow
-
-1. The graph auto-updates on file changes (via hooks).
-2. Use `detect_changes_tool` for code review.
-3. Use `get_affected_flows_tool` to understand impact.
-4. Use `query_graph_tool` pattern="tests_for" to check coverage.
+Use code-review-graph tools before Grep/Glob/Read when available:
+- **Symbol & Code Search:** `semantic_search_nodes_tool` or `query_graph_tool`
+- **Blast Radius & Impact:** `get_impact_radius_tool` or `get_affected_flows_tool`
+- **Code Review:** `detect_changes_tool` + `get_review_context_tool`
+- **Coverage & Callers:** `query_graph_tool` with callers_of/callees_of/tests_for
+Fall back to Grep/Glob/Read only when the graph does not cover the query.
 
 ---
 
-### Mandatory Implementation Steps for New Features:
+# Documentation System
 
-1. **Declare in Shared Types (`packages/types/src/featureFlags.ts`)**:
-    - Add the new flag key constant to `FEATURE_FLAGS` (e.g. `NEW_FEATURE: 'feature_new_feature'`).
-    - Add its type definition and set its baseline default value to `false` in `TIER_FEATURE_DEFAULTS.free` (and other tiers as appropriate).
-2. **Backend Route Protection (`apps/api`)**:
-    - Guard all associated REST routes or actions using the `requireFeature(FEATURE_FLAGS.<NAME>)` pre-handler middleware (`apps/api/src/middleware/featureGuard.ts`).
-    - If disabled, the API must return `403 Forbidden` (`FEATURE_DISABLED`).
-3. **Frontend UI Gating (`apps/web` & `apps/extension`)**:
-    - Wrap all related UI controls, action buttons, modals, or pages in `<FeatureGate flag={FEATURE_FLAGS.<NAME>}>` or evaluate with `useFeatureFlag(FEATURE_FLAGS.<NAME>)`.
-4. **Superadmin Metadata**:
-    - Register the new flag's label and description in `AdminFeatureFlags.tsx` so root administrators can toggle and override it for any tenant or in bulk.
-5. **Zero Ungated Features**:
-    - No agent may merge, commit, or deliver a new feature without verifying feature flag protection and default `false` state.
+This repository tracks project context across 4 files in `docs/`:
+- `docs/CHARTER.md`: Baseline requirements, scope limits, and core architecture.
+- `docs/STATUS.md`: Current sprint tasks, blockers, and handoff state. Update at end of session.
+- `docs/DECISIONS.md`: Architectural decisions, plan pivots, and proof of improvement.
+- `docs/CHANGELOG.md`: Chronological log of shipped features, fixes, and outcomes.
 
 ---
+
+# Protocols
+
+## 1. Start-of-Work Checklist
+
+1. Read `AGENTS.md` and `docs/STATUS.md`.
+2. Check `docs/CHARTER.md` when touching architecture or baseline requirements.
+3. Verify codebase ground truth (`package.json`, types, schemas, and tests).
+4. Verify task alignment with existing decisions in `docs/DECISIONS.md`.
+
+## 2. Decision & Plan-Change Protocol (Impact-Loop)
+
+Record any technical pivot, bottleneck fix, or architectural change in `docs/DECISIONS.md`:
+- **Format:** `[DEC-XXX] Title` (Date, Status, Related Task).
+- **Required Sections:**
+  1. Problem / Trigger
+  2. Alternatives Evaluated
+  3. Decision & Trade-offs
+  4. Implementation Details
+  5. Proof of Improvement (metrics, test commands)
+  6. Lessons & Downstream Impact
+
+## 3. End-of-Work Checklist
+
+- [ ] Verify changes with tests/typecheck (`npm test`, `npx tsc --noEmit`).
+- [ ] Update `docs/STATUS.md` with progress and next handoff notes.
+- [ ] Record any architectural decisions or pivots in `docs/DECISIONS.md`.
+- [ ] Append entry to `docs/CHANGELOG.md`.
+
+## 4. Truth & Traceability
+
+- **Status States:** `Planned`, `In Progress`, `Implemented (Unverified)`, `Validated`, `Blocked`, `Superseded`.
+- **Identifiers:** `DEC-XXX` (decisions), `TASK-XXX` (tasks in `STATUS.md`), `BENCH-XXX` (benchmarks).
+- Never claim progress without verification.
