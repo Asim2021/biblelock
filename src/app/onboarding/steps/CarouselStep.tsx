@@ -51,7 +51,7 @@ export const CarouselStep: React.FC<CarouselStepProps> = ({ onComplete }) => {
       <View className="flex-1 justify-center pb-16">
         {currentIndex === 0 && (
           <Text
-            className="text-4xl font-serif-semibold text-[#faf9f5] leading-[50px] tracking-tight"
+            className="text-[40px] font-serif-semibold text-[#faf9f5] leading-[52px] tracking-tight"
             style={{ fontFamily: 'EBGaramond_600SemiBold' }}
           >
             Social media{'\n'}addiction is taking{'\n'}you away from{' '}
@@ -61,7 +61,7 @@ export const CarouselStep: React.FC<CarouselStepProps> = ({ onComplete }) => {
 
         {currentIndex === 1 && (
           <Text
-            className="text-4xl font-serif-semibold text-[#faf9f5] leading-[50px] tracking-tight"
+            className="text-[40px] font-serif-semibold text-[#faf9f5] leading-[52px] tracking-tight"
             style={{ fontFamily: 'EBGaramond_600SemiBold' }}
           >
             Bible Unlock can{'\n'}help you get back{'\n'}on your{' '}
@@ -74,13 +74,13 @@ export const CarouselStep: React.FC<CarouselStepProps> = ({ onComplete }) => {
         {currentIndex === 2 && (
           <View>
             <Text
-              className="text-4xl font-serif-semibold text-[#faf9f5] leading-[52px] tracking-tight mb-4"
+              className="text-[40px] font-serif-semibold text-[#faf9f5] leading-[52px] tracking-tight mb-4"
               style={{ fontFamily: 'EBGaramond_600SemiBold' }}
             >
               It's <Text className="text-[#f5b800]">simple.</Text>
             </Text>
             <Text
-              className="text-4xl font-serif-semibold text-[#faf9f5] leading-[52px] tracking-tight"
+              className="text-[40px] font-serif-semibold text-[#faf9f5] leading-[52px] tracking-tight"
               style={{ fontFamily: 'EBGaramond_600SemiBold' }}
             >
               Once a day, you read Scripture to unlock your apps.
@@ -94,16 +94,16 @@ export const CarouselStep: React.FC<CarouselStepProps> = ({ onComplete }) => {
         {currentIndex < 2 ? (
           <Pressable
             onPress={handleNext}
-            className="w-16 h-16 rounded-2xl bg-[#1b3e32] items-center justify-center active:opacity-80"
+            className="w-20 h-20 rounded-2xl bg-[#1b3e32] items-center justify-center active:opacity-80"
           >
-            <Text className="text-2xl text-[#f5b800] font-bold">→</Text>
+            <Text className="text-3xl text-[#f5b800] font-bold">→</Text>
           </Pressable>
         ) : (
           <Pressable
             onPress={handleNext}
-            className="w-full py-4 rounded-2xl bg-[#235846] border border-[#2f755e] active:opacity-90 items-center justify-center shadow-lg"
+            className="w-full py-5 rounded-2xl bg-[#235846] border border-[#2f755e] active:opacity-90 items-center justify-center shadow-lg"
           >
-            <Text className="text-base font-sans-bold text-[#f5b800]">
+            <Text className="text-lg font-sans-bold text-[#f5b800] tracking-wide">
               Get Started
             </Text>
           </Pressable>

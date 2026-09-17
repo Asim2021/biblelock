@@ -1,5 +1,18 @@
 # Project Changelog & Verified Outcomes
+ 
+## [1.0.18] - 2026-09-17
+ 
+### Added & Improved
+- **Onboarding Typography & CTA Button Scaling (`src/app/onboarding/steps/CarouselStep.tsx`, `SurveyStep.tsx`):**
+  - Enlarged main slide serif display copy on the 3 onboarding carousel pages from `text-4xl` (36px) to `text-[40px] leading-[52px]` for enhanced visual prominence and legibility.
+  - Enlarged slides 1 & 2 circular navigation button from `w-16 h-16` to `w-20 h-20` (80x80pt touch target) and arrow icon from `text-2xl` to `text-3xl`.
+  - Enlarged slide 3 "Get Started" and Survey step "Continue" action buttons from `py-4` with `text-base` to `py-5` with `text-lg font-sans-bold tracking-wide`.
 
+### Verified Impact
+- `npx tsc --noEmit`: Clean compilation with 0 errors across the repository.
+ 
+---
+ 
 ## [1.0.17] - 2026-09-16
 
 ### Added & Improved

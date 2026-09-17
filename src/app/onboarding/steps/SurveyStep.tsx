@@ -218,9 +218,9 @@ export const SurveyStep: React.FC<SurveyStepProps> = ({
         {/* Continue Button */}
         <Pressable
           onPress={handleNext}
-          className="w-full py-4 rounded-2xl bg-[#286350] border border-[#3b846c] active:opacity-90 items-center justify-center shadow-md mb-2"
+          className="w-full py-5 rounded-2xl bg-[#286350] border border-[#3b846c] active:opacity-90 items-center justify-center shadow-md mb-2"
         >
-          <Text className="text-base font-sans-bold text-[#f5b800]">
+          <Text className="text-lg font-sans-bold text-[#f5b800] tracking-wide">
             Continue
           </Text>
         </Pressable>
