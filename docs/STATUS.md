@@ -122,17 +122,19 @@
     - Unlocked 1 scheduled reminder for Free disciples; gated multiple reminder creation behind Sanctuary (`requirePremium('Multiple daily reminders')`) with lock icons.
     - Integrated `<TimePickerModal />` for adding new reminder times, syncing to MMKV (`setScheduledReadingTimes`).
 
-- [x] `TASK-024`: Onboarding Typography & CTA Button Scaling (`CarouselStep.tsx`, `SurveyStep.tsx`):
-  - Enlarged main slide serif display copy on the 3 onboarding carousel pages from `text-4xl` (36px) to `text-[40px] leading-[52px]` for enhanced visual prominence and legibility.
-  - Enlarged slides 1 & 2 circular navigation button from `w-16 h-16` to `w-20 h-20` (80x80pt touch target) and arrow icon from `text-2xl` to `text-3xl`.
-  - Enlarged slide 3 "Get Started" and Survey step "Continue" action buttons from `py-4` with `text-base` to `py-5` with `text-lg font-sans-bold tracking-wide`.
+- [x] `TASK-025`: Onboarding Name Input Polish & Pre-populated Identity (`SurveyStep.tsx`, `onboarding/index.tsx`):
+  - Pre-populated default `userName` with `"Disciple"` in `onboarding/index.tsx` to align with the app's faith-centered identity while keeping it fully editable.
+  - Upgraded the name `<TextInput />` in `SurveyStep.tsx` with centered text alignment, enlarged typography (`text-xl`), generous padding (`px-6 py-5`), and `selectTextOnFocus` for effortless single-tap replacement.
+- [x] `FIX-011`: Resolved NativeWind / `react-native-css` TextInput Render Crash (`SurveyStep.tsx`):
+  - Root cause: `react-native-css` config defines `{ nativeStyleMapping: { textAlign: true } }` for `TextInput`. Compiling Tailwind `text-center` into `nativeStyleMapping` called `path.split(".")` on boolean `true`, throwing `TypeError: undefined is not a function`.
+  - Fix: Removed `text-center` from Tailwind `className` and set `style={{ textAlign: 'center' }}` directly on `<TextInput />`, bypassing the broken library mapping while maintaining perfect center alignment.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- Onboarding Carousel: Display text increased to 40px/52px leading, arrow button enlarged to 80x80 with 30px arrow, "Get Started" and "Continue" buttons enlarged to py-5 with 18px bold text.
+- Name Input: Centered via native style, 20px vertical padding, 24px horizontal padding, pre-populated with "Disciple", and auto-selects text on focus without `react-native-css` runtime crash.
 
 ## Session Handoff Notes
 
-- Onboarding initial carousel pages and survey buttons now have increased size and typography scale.
+- Name input in onboarding renders cleanly without runtime exceptions and text is centered with generous padding.
 

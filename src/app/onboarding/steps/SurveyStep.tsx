@@ -113,7 +113,9 @@ export const SurveyStep: React.FC<SurveyStepProps> = ({
                 placeholder="Enter your name"
                 placeholderTextColor="#5c8a7b"
                 autoFocus
-                className="w-full px-5 py-4 rounded-2xl bg-[#174637] border border-[#2b6b55] text-lg text-[#faf9f5] font-sans"
+                selectTextOnFocus
+                className="w-full px-6 py-5 rounded-2xl bg-[#174637] border border-[#2b6b55] text-xl text-[#faf9f5] font-sans"
+                style={{ textAlign: 'center' }}
               />
             </View>
           )}

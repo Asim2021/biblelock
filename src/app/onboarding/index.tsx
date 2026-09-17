@@ -26,7 +26,7 @@ export default function OnboardingScreen() {
 
   const [step, setStep] = useState<number>(2); // Start at carousel (language step hidden)
   const language = 'en'; // English-only for now
-  const [userName, setUserName] = useState<string>(initialData.userName || '');
+  const [userName, setUserName] = useState<string>(initialData.userName || 'Disciple');
   const [readingFrequency, setReadingFrequency] = useState<string[]>(initialData.readingFrequency || []);
   const [biggestChallenges, setBiggestChallenges] = useState<string[]>(initialData.biggestChallenges || []);
   const [readingTimes, setReadingTimes] = useState<string[]>(initialData.readingTimes || ['7:00 AM']);

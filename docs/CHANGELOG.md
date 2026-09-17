@@ -1,5 +1,18 @@
 # Project Changelog & Verified Outcomes
  
+## [1.0.19] - 2026-09-17
+ 
+### Added & Improved
+- **Onboarding Name Input Polish & Pre-populated Identity (`src/app/onboarding/steps/SurveyStep.tsx`, `onboarding/index.tsx`):**
+  - Pre-populated default `userName` with `"Disciple"` in `onboarding/index.tsx` to establish immediate emotional/spiritual connection while allowing full user editing.
+  - Upgraded `<TextInput />` in `SurveyStep.tsx` with centered text, enlarged typography (`text-xl`), generous padding (`px-6 py-5`), and `selectTextOnFocus` for effortless single-tap replacement.
+  - Fixed NativeWind / `react-native-css` crash where Tailwind `text-center` triggered invalid `path.split(".")` on boolean `nativeStyleMapping` in `react-native-css` by delegating text centering to standard React Native `style={{ textAlign: 'center' }}`.
+
+### Verified Impact
+- `npx tsc --noEmit`: Clean compilation with 0 errors across the repository.
+ 
+---
+ 
 ## [1.0.18] - 2026-09-17
  
 ### Added & Improved
