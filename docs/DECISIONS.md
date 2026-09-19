@@ -696,8 +696,47 @@ The Home tab previously rendered a horizontal 30-day streak scroller (`Last30Day
 - Eliminated the sparse empty-void appearance on Year view: 12 structured pillar tracks stand tall regardless of historical data density.
 - Users gain 4-quarter seasonal progression tracking across the spiritual year.
 
+
+---
+
+## [DEC-020] Real-time Cross-Tab Reading Timer Reactive Synchronization & Dynamic Goal Transition Engine
+
+- **Date:** 2026-09-20
+- **Status:** Validated
+- **Related Task:** TASK-035
+
+### 1. Problem / Trigger
+When a user read Scripture in Reader, changed reading goals in Settings, or switched tabs, data became contradictory across screens:
+- Reader tracked live reading progress (e.g. 10:09 / 10 min, apps unlocked).
+- Stats Month view reloaded from MMKV (10m read).
+- Home and Stats Card 1 were frozen at earlier in-memory values (e.g. 6 min read / 4 min remaining) because `useReadingTimer` instances were isolated local states that never re-synced when switching tabs, and Home lacked `useFocusEffect`.
+- Changing the goal mid-day (e.g. 5m -> 10m or 10m -> 5m) did not synchronously re-evaluate app shielding or broadcast to mounted screens.
+
+### 2. Alternatives Evaluated
+- **Option A (Full Global Context Provider):** Wrap the entire app root in a `TimerContext.Provider`. Adds unnecessary render overhead and component tree depth for an offline app.
+- **Option B (Reactive Module-Level Event Subscribers in MMKV & ReadingTimer):** Selected. Lightweight `goalListeners` and `progressListeners` sets in `src/lib/mmkv.ts` automatically broadcast any `setDailyGoalMinutes` or `setReadingProgress` mutations to all mounted `useReadingTimer` instances in real time. Coupled with `useFocusEffect` on Home and re-shielding logic when a goal is increased above current progress.
+
+### 3. Decision & Trade-offs
+- Added `subscribeToGoalChanges` and `subscribeToProgressChanges` to `src/lib/mmkv.ts`.
+- Refactored `useReadingTimer` in `src/lib/readingTimer.ts` to subscribe to MMKV events and re-sync on `isScreenFocused`.
+- Enforced bidirectional goal transition logic:
+  - If `isGoalMet` transitions from false to true (progress reaches goal or goal decreased below progress): unshield apps and award streak.
+  - If `isGoalMet` transitions from true to false (goal increased above current progress): re-shield apps until remainder is completed. Streak earned today is preserved.
+- Added `useFocusEffect` to `src/app/(tabs)/index.tsx` to refresh `loadData()` on tab focus.
+
+### 4. Implementation Details
+- `src/lib/mmkv.ts`: Dispatched `goalListeners` on `setDailyGoalMinutes` and `progressListeners` on `setReadingProgress`.
+- `src/lib/readingTimer.ts`: Bound `useReadingTimer` to MMKV change subscribers; added re-shielding branch (`AppBlocker.shieldApps()`); added focus sync.
+- `src/app/(tabs)/index.tsx`: Added `useFocusEffect` to reload data on tab focus.
+
+### 5. Proof of Improvement
+- `npx tsc --noEmit`: 0 errors across workspace.
+- `code-review-graph update`: 34 files indexed cleanly.
+- When reading in Reader, Home and Stats reflect updated minutes in real time.
+- Changing goal in Settings instantly updates target and remaining time across all tabs.
+
 ### 6. Lessons & Downstream Impact
-- Habit tracking UI on mobile should match the natural mental model of the time horizon: 7-day horizontal row for weeks, calendar heatmap grid for months, and bar chart for annual trends.
+- In Expo Router multi-tab apps, screens stay mounted in memory. Hooks backed by local storage MUST subscribe to change events or refresh on `useFocusEffect` to avoid screen-to-screen state desynchronization.
 
 
 

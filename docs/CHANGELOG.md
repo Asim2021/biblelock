@@ -1,5 +1,22 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.27] - 2026-09-20
+ 
+### Fixed & Improved
+- **Real-Time Cross-Tab Timer Reactive Synchronization (`readingTimer.ts`, `mmkv.ts`, `index.tsx`, `DEC-020`, `TASK-035`):**
+  - Added reactive event subscriber sets (`goalListeners`, `progressListeners`) in `src/lib/mmkv.ts` broadcasting updates whenever reading seconds or daily goals change.
+  - Subscribed `useReadingTimer` to MMKV change events and added screen focus re-synchronization.
+  - Implemented bidirectional goal met handling:
+    - Automatically unshields apps and updates streak when reading completes goal, or when goal is decreased below current reading time.
+    - Automatically re-shields apps if the daily goal is increased above current reading time, keeping earned streaks intact.
+  - Added `useFocusEffect` to `src/app/(tabs)/index.tsx` to eliminate stale cached states when navigating between tabs.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- `code-review-graph update`: 34 files indexed cleanly.
+
+---
+
 ## [1.0.26] - 2026-09-20
  
 ### Added & Improved

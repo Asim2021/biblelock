@@ -171,14 +171,20 @@
     - `Month`: 30-day Calendar Heatmap Grid (7 columns × 5 rows) with telemetry metrics (`Total Time`, `Goal Met`, `Daily Avg`) and tap inspection.
     - `Year`: 12-Month Telemetry Pillar Chart (with 80px pillar tracks, benchmark line, and 3-letter month labels), active month inspection card, and 4-quarter seasonal progress matrix (`Q1`–`Q4`).
 
+- [x] `TASK-035`: Real-Time Cross-Tab Timer Reactive Synchronization & Dynamic Goal Transition Engine (`DEC-020`):
+  - Added `subscribeToGoalChanges` and `subscribeToProgressChanges` in `src/lib/mmkv.ts` broadcasting updates to all mounted listeners.
+  - Bound `useReadingTimer` in `src/lib/readingTimer.ts` to MMKV change subscribers and tab focus sync.
+  - Added bidirectional goal met handling: auto-unshields apps when goal is met or decreased below reading time; re-shields apps when goal is increased above current reading time. Preserves earned streak.
+  - Added `useFocusEffect` to `src/app/(tabs)/index.tsx` to refresh data on tab focus.
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `code-review-graph update`: Index updated cleanly.
-- `DEC-019` recorded in `docs/DECISIONS.md`.
+- `code-review-graph update`: Index updated cleanly (34 files indexed).
+- `DEC-019` and `DEC-020` recorded in `docs/DECISIONS.md`.
 
 ## Session Handoff Notes
 
-- Home tab now features a clean, responsive 7-day weekly streak matrix (`This Week`) without horizontal scroll.
-- Stats tab now features fully functional Month (30-day calendar heatmap) and Year (12-month bar chart) views for paid Sanctuary members.
-- `src/lib/mmkv.ts` computes weekly and rolling 12-month metrics from high-speed local storage keys.
+- Home, Reader, Stats, and Settings are now 100% unified in real-time.
+- Progress ticked in Reader is immediately visible on Home and Stats without requiring app reload.
+- Changing goal in Settings re-evaluates app shielding and updates remaining minutes across all screens instantly.

@@ -7,6 +7,9 @@ import {
   setDailyGoalMinutes as saveGoalMinutes,
   getStreak,
   updateStreakOnGoalMet,
+  subscribeToGoalChanges,
+  subscribeToProgressChanges,
+  getTodayDateKey,
 } from './mmkv';
 import { AppBlocker } from './appBlocker';
 
@@ -42,27 +45,54 @@ export function useReadingTimer(isScreenFocused: boolean = true): ReadingTimerSt
 
   const prevGoalMetRef = useRef(isGoalMet);
 
-  // Sync goal met transition locally
+  // Re-sync immediately when screen focus state changes
+  useEffect(() => {
+    if (isScreenFocused) {
+      setSecondsRead(getReadingProgress());
+      setGoalMinutesState(getDailyGoalMinutes());
+      setStreak(getStreak().currentStreak);
+    }
+  }, [isScreenFocused]);
+
+  // Subscribe to MMKV goal and progress changes across all mounted screens
+  useEffect(() => {
+    const unsubGoal = subscribeToGoalChanges((newGoal) => {
+      setGoalMinutesState(newGoal);
+    });
+    const unsubProgress = subscribeToProgressChanges((newSeconds, dateKey) => {
+      if (dateKey === getTodayDateKey()) {
+        setSecondsRead(newSeconds);
+      }
+    });
+
+    return () => {
+      unsubGoal();
+      unsubProgress();
+    };
+  }, []);
+
+  // Sync goal met transition: unshield if completed, re-shield if goal increased above progress
   useEffect(() => {
     if (isGoalMet && !prevGoalMetRef.current) {
       // Transitioned to completed goal!
       const { currentStreak } = updateStreakOnGoalMet();
       setStreak(currentStreak);
       AppBlocker.unshieldApps();
+    } else if (!isGoalMet && prevGoalMetRef.current) {
+      // Goal was increased above current reading seconds: re-shield apps!
+      AppBlocker.shieldApps();
     }
     prevGoalMetRef.current = isGoalMet;
   }, [isGoalMet, secondsRead, goalMinutes]);
 
-  // Tick reading timer when reader screen is actively focused — purely local MMKV
+  // Tick reading timer when reader screen is actively focused
   useEffect(() => {
     if (!isScreenFocused) return;
 
     const interval = setInterval(() => {
-      setSecondsRead((prev) => {
-        const next = prev + 1;
-        setReadingProgress(next);
-        return next;
-      });
+      const next = getReadingProgress() + 1;
+      setReadingProgress(next);
+      setSecondsRead(next);
     }, 1000);
 
     return () => clearInterval(interval);

@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import {
   Settings,
   ShieldCheck,
@@ -76,6 +76,12 @@ export default function HomeScreen() {
     const storedName = getUserName();
     setName(storedName);
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   useEffect(() => {
     loadData();

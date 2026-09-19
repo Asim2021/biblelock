@@ -137,8 +137,23 @@ export function getDailyGoalMinutes(): number {
   return storage.getNumber(STORAGE_KEYS.DAILY_GOAL_MINUTES) ?? 10;
 }
 
+const goalListeners = new Set<(minutes: number) => void>();
+const progressListeners = new Set<(seconds: number, dateKey: string) => void>();
+
+export function subscribeToGoalChanges(fn: (minutes: number) => void): () => void {
+  goalListeners.add(fn);
+  return () => goalListeners.delete(fn);
+}
+
+export function subscribeToProgressChanges(fn: (seconds: number, dateKey: string) => void): () => void {
+  progressListeners.add(fn);
+  return () => progressListeners.delete(fn);
+}
+
 export function setDailyGoalMinutes(minutes: number): void {
-  storage.set(STORAGE_KEYS.DAILY_GOAL_MINUTES, Math.max(1, minutes));
+  const sanitized = Math.max(1, minutes);
+  storage.set(STORAGE_KEYS.DAILY_GOAL_MINUTES, sanitized);
+  goalListeners.forEach((fn) => fn(sanitized));
 }
 
 export function getReadingProgress(dateKey: string = getTodayDateKey()): number {
@@ -147,6 +162,7 @@ export function getReadingProgress(dateKey: string = getTodayDateKey()): number 
 
 export function setReadingProgress(seconds: number, dateKey: string = getTodayDateKey()): void {
   storage.set(`${STORAGE_KEYS.READING_PROGRESS_PREFIX}${dateKey}`, seconds);
+  progressListeners.forEach((fn) => fn(seconds, dateKey));
 }
 
 export function addReadingSeconds(secondsDelta: number, dateKey: string = getTodayDateKey()): number {
