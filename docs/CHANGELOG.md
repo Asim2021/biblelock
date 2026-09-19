@@ -7,10 +7,13 @@
   - Moved 7 onboarding step wizard components from `src/app/onboarding/steps/` to `src/components/onboarding/`.
   - Re-pointed imports in `src/app/onboarding/index.tsx` and adjusted internal relative paths.
   - Eliminated all 7 Expo Router missing default export warnings (`Route "./onboarding/steps/<Step>.tsx" is missing the required default export`).
+- **Notification Handler Deprecation Warning (`TASK-033`):**
+  - Removed deprecated `shouldShowAlert: true` from `Notifications.setNotificationHandler` in `src/lib/scriptureShield.ts`.
+  - Kept modern `shouldShowBanner: true` and `shouldShowList: true` presentation options.
 
 ### Verified Impact
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `code-review-graph update`: 35 files updated.
+- `code-review-graph update`: Index updated cleanly.
 
 ---
 

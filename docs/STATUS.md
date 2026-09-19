@@ -158,6 +158,9 @@
   - Relocated 7 step components from `src/app/onboarding/steps/` to `src/components/onboarding/`.
   - Updated relative import paths across step components and `src/app/onboarding/index.tsx`.
   - Eliminated all 7 Expo Router missing default export route warnings.
+- [x] `TASK-033`: Remove Deprecated shouldShowAlert from Notification Handler:
+  - Removed deprecated `shouldShowAlert: true` from `Notifications.setNotificationHandler` in `src/lib/scriptureShield.ts`.
+  - Preserved modern `shouldShowBanner: true` and `shouldShowList: true` options.
 
 ## Verification Evidence
 
@@ -170,3 +173,4 @@
 - Root cause of `undefined is not a function` was `src/lib/mmkv.ts` delegating to `inst.delete(k)` which was renamed to `remove(k)` in `react-native-mmkv` v4.
 - Onboarding step components now live under `src/components/onboarding/` per Expo Router architecture.
 - Test Store key warning from RevenueCat is expected during development. Replace with `goog_...` and `appl_...` for production release.
+- Deprecated `shouldShowAlert` removed from notification handler.
