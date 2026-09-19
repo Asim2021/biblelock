@@ -631,4 +631,37 @@ Tapping "Unlock Sanctuary" or "Restore Purchases" in `paywall.tsx` failed with `
 ### 6. Lessons & Downstream Impact
 - When updating or abstracting native modules across major versions (e.g. MMKV v3 to v4 with Nitro), always check the C++ / TypeScript interface specs (`MMKV.nitro.ts`) for renamed methods (such as `delete` -> `remove`).
 
+---
+
+## [DEC-018] Relocate Onboarding Steps from App Router to Components
+
+- **Date:** 2026-09-20
+- **Status:** Validated
+- **Related Task:** TASK-032
+
+### 1. Problem / Trigger
+Metro console emitted 7 route warnings: `Route "./onboarding/steps/<Step>.tsx" is missing the required default export. Ensure a React component is exported as default.`
+
+### 2. Alternatives Evaluated
+- Add `export default` dummy exports to all step files: Rejected; pollutes navigation graph with unreachable routes.
+- Prefix directory with underscore (`_steps`): Expo Router does not officially support ignoring nested component folders via `_` prefix and still attempts route discovery.
+- Move step components to `src/components/onboarding/`: Official Expo Router architecture pattern (keep non-route components outside `src/app/`).
+
+### 3. Decision & Trade-offs
+Moved `src/app/onboarding/steps/` to `src/components/onboarding/`. Updated relative import paths across step components and in `src/app/onboarding/index.tsx`.
+
+### 4. Implementation Details
+- Relocated: `AppPickerStep.tsx`, `CarouselStep.tsx`, `LanguageStep.tsx`, `PaywallStep.tsx`, `PermissionStep.tsx`, `PlanStep.tsx`, `SurveyStep.tsx` to `src/components/onboarding/`.
+- Updated `src/app/onboarding/index.tsx` imports.
+- Removed empty `src/app/onboarding/steps/` directory.
+
+### 5. Proof of Improvement
+- `npx tsc --noEmit`: 0 errors.
+- `code-review-graph update`: 35 files updated.
+- Metro no longer treats onboarding steps as routes, eliminating all 7 route warnings.
+
+### 6. Lessons & Downstream Impact
+- Files placed inside `src/app/` must be restricted solely to screens and layouts (`_layout.tsx`, `index.tsx`, etc.). All subcomponents, modals, and multi-step wizard slides must live under `src/components/`.
+
+
 

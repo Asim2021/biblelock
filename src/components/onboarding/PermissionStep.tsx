@@ -3,7 +3,7 @@ import { View, Text, Pressable, ScrollView, Modal, AppState, AppStateStatus } fr
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Shield, ShieldCheck, Check, X, Lock, AlertTriangle, Bell, ExternalLink } from 'lucide-react-native';
 import * as Notifications from 'expo-notifications';
-import { AppBlocker } from '../../../lib/appBlocker';
+import { AppBlocker } from '../../lib/appBlocker';
 
 interface PermissionStepProps {
 	onBack: () => void;

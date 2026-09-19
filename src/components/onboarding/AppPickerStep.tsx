@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, TextInput, Modal, ActivityIndicator, Image, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Lock, AlertTriangle, Check, Search, ShieldAlert, Sparkles } from 'lucide-react-native';
-import { AppBlocker } from '../../../lib/appBlocker';
-import { usePurchases } from '../../../lib/purchases';
-import { AppIcon } from '../../../components/AppIcon';
+import { AppBlocker } from '../../lib/appBlocker';
+import { usePurchases } from '../../lib/purchases';
+import { AppIcon } from '../AppIcon';
 
 interface AppPickerStepProps {
 	blockedApps: string[];

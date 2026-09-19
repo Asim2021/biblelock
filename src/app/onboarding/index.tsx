@@ -12,12 +12,12 @@ import {
 import { usePurchases } from '../../lib/purchases';
 
 // LanguageStep hidden — English-only for now
-import { CarouselStep } from './steps/CarouselStep';
-import { SurveyStep } from './steps/SurveyStep';
-import { PlanStep } from './steps/PlanStep';
-import { AppPickerStep } from './steps/AppPickerStep';
-import { PaywallStep } from './steps/PaywallStep';
-import { PermissionStep } from './steps/PermissionStep';
+import { CarouselStep } from '../../components/onboarding/CarouselStep';
+import { SurveyStep } from '../../components/onboarding/SurveyStep';
+import { PlanStep } from '../../components/onboarding/PlanStep';
+import { AppPickerStep } from '../../components/onboarding/AppPickerStep';
+import { PaywallStep } from '../../components/onboarding/PaywallStep';
+import { PermissionStep } from '../../components/onboarding/PermissionStep';
 
 export default function OnboardingScreen() {
   const router = useRouter();

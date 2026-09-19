@@ -19,7 +19,7 @@ if .code-review-grapg exists in the root, use code-review-graph tools before Gre
 - **Code Review:** `detect_changes_tool` + `get_review_context_tool`
 - **Coverage & Callers:** `query_graph_tool` with callers_of/callees_of/tests_for
 - Fall back to Grep/Glob/Read only when the graph does not cover the query.
-- In the end or very last do run at root `code-review-graph update` to update the graph.
+- In the end or very last run directly at root `code-review-graph update`.
 
 ---
 

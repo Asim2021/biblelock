@@ -154,15 +154,19 @@
   - Resolved `[Purchases] Purchase failed: undefined is not a function` in `setDevOverride(null)` during purchase/restore calls.
   - Guarded `purchasePackage` in `src/lib/purchases.ts` against null/missing package objects.
   - Hardened `paywall.tsx` package discovery with direct accessors (`annual`, `monthly`, `lifetime`) and fallback protection.
+- [x] `TASK-032`: Relocate Onboarding Steps from App Router to Components (`DEC-018`):
+  - Relocated 7 step components from `src/app/onboarding/steps/` to `src/components/onboarding/`.
+  - Updated relative import paths across step components and `src/app/onboarding/index.tsx`.
+  - Eliminated all 7 Expo Router missing default export route warnings.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
 - `code-review-graph update`: Index updated cleanly.
-- `DEC-017` recorded in `docs/DECISIONS.md`.
+- `DEC-017` and `DEC-018` recorded in `docs/DECISIONS.md`.
 
 ## Session Handoff Notes
 
 - Root cause of `undefined is not a function` was `src/lib/mmkv.ts` delegating to `inst.delete(k)` which was renamed to `remove(k)` in `react-native-mmkv` v4.
-- `setDevOverride(null)` in `purchasePackage` / `restorePurchases` now executes cleanly.
-- Remote config blob disk write error on Android is non-fatal internal SDK cache behavior.
+- Onboarding step components now live under `src/components/onboarding/` per Expo Router architecture.
+- Test Store key warning from RevenueCat is expected during development. Replace with `goog_...` and `appl_...` for production release.

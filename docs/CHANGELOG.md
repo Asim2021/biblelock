@@ -1,5 +1,19 @@
 # Project Changelog & Verified Outcomes
  
+## [1.0.25] - 2026-09-20
+ 
+### Fixed
+- **Onboarding Route Warnings Resolution (`DEC-018`, `TASK-032`):**
+  - Moved 7 onboarding step wizard components from `src/app/onboarding/steps/` to `src/components/onboarding/`.
+  - Re-pointed imports in `src/app/onboarding/index.tsx` and adjusted internal relative paths.
+  - Eliminated all 7 Expo Router missing default export warnings (`Route "./onboarding/steps/<Step>.tsx" is missing the required default export`).
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- `code-review-graph update`: 35 files updated.
+
+---
+
 ## [1.0.24] - 2026-09-20
  
 ### Fixed

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Clock, Plus, Trash2, Timer, Check } from 'lucide-react-native';
-import { TimePickerModal } from '../../../components/TimePickerModal';
+import { TimePickerModal } from '../TimePickerModal';
 
 interface PlanStepProps {
 	userName: string;

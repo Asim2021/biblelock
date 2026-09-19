@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { LanguageCode } from '../../../types/onboarding';
+import { LanguageCode } from '../../types/onboarding';
 
 interface LanguageStepProps {
   selectedLanguage: LanguageCode;
