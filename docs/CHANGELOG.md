@@ -1,5 +1,34 @@
 # Project Changelog & Verified Outcomes
  
+## [1.0.21] - 2026-09-20
+ 
+### Added & Improved
+- **Devotional Polish & Spiritual Connection Across Onboarding Pages 3–5 (`AppPickerStep.tsx`, `PaywallStep.tsx`, `PermissionStep.tsx`):**
+  - **Page 3 (Distractions):** Refined headline to *"Guard your heart from the noise that steals your peace"*, subtitle to quiet pauses until the soul is nourished in the Bible, status card to *"Silenced until you spend your daily time with Jesus"*, and aligned limit alerts to Covenant/Sanctuary plans.
+  - **Page 4 (Sanctuary):** Replaced generic SaaS copy with devotional phrasing: *"Deepen your walk with Jesus"*, devotion to Christ, substituted `Bookmark` icon for `Rocket`, elevated feature benefits, and added inspiring CTAs *"Begin 7 Days in the Sanctuary (Free)"* and *"Continue on the Free Covenant Plan"*.
+  - **Page 5 (Activation):** Updated headline to *"Let's protect your time with Jesus"*, gentle pause descriptions, notification card to *"Peaceful Reminders"*, finish button to *"Begin My Walk with Jesus ✨"*, and refreshed privacy modal with reverent, quiet-time language.
+
+### Verified Impact
+- `npx tsc --noEmit`: Clean compilation with 0 errors across the repository.
+ 
+---
+ 
+## [1.0.20] - 2026-09-17
+ 
+### Added & Improved
+- **Humanized Onboarding Plan Copy & Typography Scale (`PlanStep.tsx`, `AppPickerStep.tsx`, `PaywallStep.tsx`, `PermissionStep.tsx`):**
+  - **Page 1 (Times):** Updated title to *"When would you like your time with Jesus, [Name]?"*, set encouraging subtitle, and added micro-copy reassuring disciples that reading times can be changed or added anytime in Settings.
+  - **Page 2 (Duration):** Updated title to *"How much time can you give each day, [Name]?"*, added consistency-focused subtitle, upgraded minute labels to `text-xs`, and updated summary card to *"Your quiet time is protected every day at:"*.
+  - **Page 3 (Distractions):** Reframed blocking to self-protection with *"Shield yourself from your biggest distractions"* and updated status to *"apps shielded"*.
+  - **Page 4 (Sanctuary):** Elevated paywall copy to spiritual focus with *"Build an unbreakable spiritual rhythm"*.
+  - **Page 5 (Permissions):** Replaced cold Android OS jargon with *"One final step to protect your time"*, 100% on-device privacy guarantee, and prominent *"Activate Bible Shield"* CTA.
+  - **Typography & Buttons:** Scaled primary display titles to `text-[32px] leading-[40px]`, subtitles to `text-base leading-relaxed`, and enlarged all navigation buttons to `text-lg font-sans-bold py-4.5`.
+
+### Verified Impact
+- `npx tsc --noEmit`: Clean compilation with 0 errors across the repository.
+ 
+---
+ 
 ## [1.0.19] - 2026-09-17
  
 ### Added & Improved

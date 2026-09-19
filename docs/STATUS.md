@@ -122,19 +122,17 @@
     - Unlocked 1 scheduled reminder for Free disciples; gated multiple reminder creation behind Sanctuary (`requirePremium('Multiple daily reminders')`) with lock icons.
     - Integrated `<TimePickerModal />` for adding new reminder times, syncing to MMKV (`setScheduledReadingTimes`).
 
-- [x] `TASK-025`: Onboarding Name Input Polish & Pre-populated Identity (`SurveyStep.tsx`, `onboarding/index.tsx`):
-  - Pre-populated default `userName` with `"Disciple"` in `onboarding/index.tsx` to align with the app's faith-centered identity while keeping it fully editable.
-  - Upgraded the name `<TextInput />` in `SurveyStep.tsx` with centered text alignment, enlarged typography (`text-xl`), generous padding (`px-6 py-5`), and `selectTextOnFocus` for effortless single-tap replacement.
-- [x] `FIX-011`: Resolved NativeWind / `react-native-css` TextInput Render Crash (`SurveyStep.tsx`):
-  - Root cause: `react-native-css` config defines `{ nativeStyleMapping: { textAlign: true } }` for `TextInput`. Compiling Tailwind `text-center` into `nativeStyleMapping` called `path.split(".")` on boolean `true`, throwing `TypeError: undefined is not a function`.
-  - Fix: Removed `text-center` from Tailwind `className` and set `style={{ textAlign: 'center' }}` directly on `<TextInput />`, bypassing the broken library mapping while maintaining perfect center alignment.
+- [x] `TASK-027`: Devotional Polish & Spiritual Connection Across Onboarding Pages 3–5 (`AppPickerStep.tsx`, `PaywallStep.tsx`, `PermissionStep.tsx`):
+  - Page 3 of 5 (Distractions): Updated headline to "Guard your heart from the noise that steals your peace", subtitle to pausing distractions until the soul is nourished in the Bible, status subtext to "Silenced until you spend your daily time with Jesus", and limit alerts to Covenant/Sanctuary tiers.
+  - Page 4 of 5 (Sanctuary): Updated headline to "Deepen your walk with Jesus", subtitle to devotion to Christ, replaced "Rocket" icon with "Bookmark", elevated feature list items to sacred focus, and refined CTAs to "Begin 7 Days in the Sanctuary (Free)" and "Continue on the Free Covenant Plan".
+  - Page 5 of 5 (Activation): Updated headline to "Let's protect your time with Jesus", subtext to pausing distractions to meet with Jesus, reminder badge to "Peaceful Reminders", finish CTA to "Begin My Walk with Jesus ✨", and refined privacy modal to quiet time with Jesus.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- Name Input: Centered via native style, 20px vertical padding, 24px horizontal padding, pre-populated with "Disciple", and auto-selects text on focus without `react-native-css` runtime crash.
+- Devotional Polish: Pages 3 to 5 fully aligned with Jesus, Bible, and Covenant/Sanctuary nomenclature with zero jargon.
 
 ## Session Handoff Notes
 
-- Name input in onboarding renders cleanly without runtime exceptions and text is centered with generous padding.
+- Pages 1 through 5 of onboarding are now completely refined with warm, faith-affirming devotional copy and unified typography.
 
