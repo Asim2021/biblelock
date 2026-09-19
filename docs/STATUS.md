@@ -61,7 +61,7 @@
   - Configured `src/app/auth/callback.tsx` to route unconditionally to `/(tabs)`.
 - [x] `TASK-018`: RevenueCat SDK Configuration & Dynamic Paywall Integration:
   - Configured `initRevenueCat()` in `src/app/_layout.tsx` at app boot.
-  - Connected RevenueCat Public Key (`test_SpCwlFTYjEmutuIhmDWmQnZjEzs`) in `.env`.
+  - Connected RevenueCat Public Key (`test_***`) in `.env`.
   - Added secret key vs public SDK key guards in `src/lib/purchases.ts` and made entitlement checks resilient to `premium`/`pro`/any active entitlement.
   - Dynamically bound `src/app/paywall.tsx` to live RevenueCat packages (`$rc_monthly`, `$rc_annual`, `$rc_lifetime`) and dynamic product prices with restore support.
 - [x] `TASK-019`: Paywall Dynamic Dual-Theme Alignment:
@@ -142,17 +142,24 @@
   - Removed `--font-mono` tokens from `global.css`.
   - Simplified `src/lib/mmkv.ts` by removing `DEFAULT_IOS_BLOCKED_CATEGORIES` and redundant runtime reflection in `storage.delete(k)`.
 
+- [x] `TASK-030`: Full Security Audit & Hardening (`DEC-016`):
+  - **HIGH-1:** Removed dead Supabase secrets (`sbp_` management token, `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`) from `.env` and `.env.example`. Keys should be rotated in Supabase dashboard.
+  - **HIGH-2:** Guarded `getDevOverride()` / `setDevOverride()` behind `__DEV__` so "Simulate Free/Pro" toggle is inert in production builds, preventing paywall bypass.
+  - **MED-1:** Gated RevenueCat `LOG_LEVEL.DEBUG` behind `__DEV__`; production uses `LOG_LEVEL.ERROR`.
+  - **MED-2:** Enabled `EntitlementVerificationMode.INFORMATIONAL` in `Purchases.configure()` for MITM response verification.
+  - **LOW-2:** Redacted hardcoded RevenueCat test key from `docs/STATUS.md` and `docs/CHANGELOG.md`.
+  - **LOW-4:** Added type validation (string book, positive integer chapter/verse) to deep link notification handler in `_layout.tsx`.
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
 - Metro bundling validated without missing module errors.
-- `DEC-015` documented in `docs/DECISIONS.md`.
-- Net code reduction: -750+ lines, -5 dependencies.
+- `DEC-016` documented in `docs/DECISIONS.md`.
+- All 6 security findings fixed in source.
 
 ## Session Handoff Notes
 
 - Entire repository is clean, lean, and strictly offline-first.
-- All dead Supabase sync code, fake auth session mock layers, and unused font packages have been cleanly eliminated with zero breakage of current reader, timer, blocker, paywall, or notification functionality.
-
-
-
+- All dead Supabase secrets removed from `.env`. **Rotate keys in Supabase dashboard.**
+- Dev premium override (`Simulate Free/Pro`) is now `__DEV__`-gated — cannot bypass paywall in production.
+- RevenueCat SDK now uses `INFORMATIONAL` entitlement verification and production-only error logging.

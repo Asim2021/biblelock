@@ -203,7 +203,7 @@
 ### Added & Integrated
 - **RevenueCat SDK Configuration & Live Paywall:**
   - Initialized `initRevenueCat()` in `src/app/_layout.tsx` at startup.
-  - Connected RevenueCat Public Key (`test_SpCwlFTYjEmutuIhmDWmQnZjEzs`) in `.env`.
+  - Connected RevenueCat Public Key (`test_***`) in `.env`.
   - Added secret key vs public SDK key guard in `src/lib/purchases.ts`.
   - Expanded `checkEntitlements` in `src/lib/purchases.ts` to support `premium`, `pro`, or any active entitlement.
   - Dynamically bound `src/app/paywall.tsx` to live RevenueCat packages (`$rc_monthly`, `$rc_annual`, `$rc_lifetime`) and dynamic product price strings with full restore purchases support.

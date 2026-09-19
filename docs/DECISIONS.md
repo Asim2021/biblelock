@@ -555,6 +555,45 @@ Selected **Option B**. Pruned 5 packages from `package.json`, removed 8 dead fil
 ### 6. Lessons & Downstream Impact
 When deprecating a cloud backend in favor of local-first storage, clean up the mock auth context layers and legacy routes completely rather than leaving stubs; direct local storage calls are far more readable and maintainable.
 
+---
 
+## [DEC-016] Full Security Audit & Hardening
 
+- **Date:** 2026-09-20
+- **Status:** Validated
+- **Related Task:** TASK-030
+
+### 1. Problem / Trigger
+Pre-release security audit identified 2 high, 3 medium, and 4 low findings across secrets management, premium paywall bypass, RevenueCat posture, MMKV storage, and deep linking.
+
+### 2. Alternatives Evaluated
+- Full MMKV encryption: deferred since no secret data stored (only first name, streaks, bookmarks). HIGH-2 fix eliminates the main risk.
+- `EntitlementVerificationMode.ENFORCED`: deferred until telemetry confirms low `FAILED` rate on real traffic; starting with `INFORMATIONAL`.
+
+### 3. Decision & Trade-offs
+- **HIGH-1:** Remove dead Supabase secrets from `.env` and `.env.example`. Supabase project should be deactivated or keys rotated.
+- **HIGH-2:** Guard `getDevOverride()` / `setDevOverride()` behind `__DEV__` — production builds cannot flip premium status.
+- **MED-1:** `LOG_LEVEL.DEBUG` → `__DEV__` only; production uses `LOG_LEVEL.ERROR`.
+- **MED-2:** Enable `Purchases.ENTITLEMENT_VERIFICATION_MODE.INFORMATIONAL` for cryptographic response verification.
+- **LOW-2:** Redact hardcoded RevenueCat test key from docs.
+- **LOW-4:** Validate deep link params (book string, chapter/verse positive integers).
+
+### 4. Implementation Details
+- `.env`: Supabase section deleted (3 secrets removed).
+- `.env.example`: Supabase section deleted.
+- `src/lib/purchases.ts`: `__DEV__` guards on override functions, conditional log level, entitlement verification mode.
+- `src/app/_layout.tsx`: Type validation on notification deep link params.
+- `docs/STATUS.md`, `docs/CHANGELOG.md`: Key redacted to `test_***`.
+
+### 5. Proof of Improvement
+- `npx tsc --noEmit`: 0 errors.
+- `git ls-files -- .env`: not tracked (confirmed).
+- No `sbp_`, `eyJ` (JWT), or `sk_` tokens in any tracked source file.
+- Dev override returns `null` in production builds regardless of MMKV state.
+
+### 6. Lessons & Downstream Impact
+- QA dev toggles should always be `__DEV__`-gated from initial implementation, not retroactively.
+- `EXPO_PUBLIC_*` env vars are bundled into JS — never put non-public secrets under that prefix.
+- RevenueCat `EntitlementVerificationMode` should be upgraded to `ENFORCED` once telemetry proves low `FAILED` rate.
+- Rotate Supabase credentials in dashboard (treat as compromised since they were on-disk).
 

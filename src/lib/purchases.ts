@@ -16,6 +16,7 @@ export type DevOverrideMode = 'free' | 'pro' | null;
 const overrideListeners = new Set<(override: DevOverrideMode) => void>();
 
 export function getDevOverride(): DevOverrideMode {
+  if (typeof __DEV__ !== 'undefined' && !__DEV__) return null;
   const val = storage.getString(DEV_OVERRIDE_KEY);
   if (val === 'free' || val === 'pro') return val;
   const legacy = storage.getBoolean(LEGACY_DEV_KEY);
@@ -25,6 +26,7 @@ export function getDevOverride(): DevOverrideMode {
 }
 
 export function setDevOverride(mode: DevOverrideMode): void {
+  if (typeof __DEV__ !== 'undefined' && !__DEV__) return;
   if (mode === null) {
     storage.delete(DEV_OVERRIDE_KEY);
     storage.delete(LEGACY_DEV_KEY);
@@ -69,8 +71,11 @@ export function initRevenueCat() {
   }
 
   try {
-    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
-    Purchases.configure({ apiKey });
+    Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.ERROR);
+    Purchases.configure({
+      apiKey,
+      entitlementVerificationMode: Purchases.ENTITLEMENT_VERIFICATION_MODE.INFORMATIONAL,
+    });
     isConfigured = true;
     console.info('[Purchases] RevenueCat configured successfully with public key');
   } catch (e) {

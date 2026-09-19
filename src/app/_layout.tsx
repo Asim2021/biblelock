@@ -39,13 +39,16 @@ function RootNavigation() {
   // Listen for notification taps and direct deep linking to the exact verse
   useEffect(() => {
     const handleNotificationData = (data: any) => {
-      if (data?.book && data?.chapter && data?.verse) {
+      const book = typeof data?.book === 'string' ? data.book : undefined;
+      const chapter = Number(data?.chapter);
+      const verse = Number(data?.verse);
+      if (book && !isNaN(chapter) && chapter > 0 && !isNaN(verse) && verse > 0) {
         router.push({
           pathname: '/reader',
           params: {
-            book: data.book,
-            chapter: data.chapter,
-            verse: data.verse,
+            book,
+            chapter: String(chapter),
+            verse: String(verse),
           },
         } as any);
       } else if (data?.url === 'bibleunlock://reader') {
