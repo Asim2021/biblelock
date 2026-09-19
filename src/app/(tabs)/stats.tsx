@@ -5,11 +5,11 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { RotateCw, Flame, Zap, Clock, Award, MoreHorizontal, Share2, BookOpen, Lock } from 'lucide-react-native';
 import { useReadingTimer } from '../../lib/readingTimer';
 import { useFeatureGate } from '../../lib/useFeatureGate';
-import { getUserName, getImpactStats, getBlockedApps, getReadingHistory30Days } from '../../lib/mmkv';
+import { getUserName, getImpactStats, getBlockedApps, getReadingHistory30Days, getReadingHistoryYear } from '../../lib/mmkv';
 import { BadgesGrid } from '../../components/BadgesGrid';
 import { BadgeShareModal } from '../../components/BadgeShareModal';
 import { DailyDevotionalCard } from '../../components/DailyDevotionalCard';
-import { BadgeItem, ImpactStats, HabitDay } from '../../types/onboarding';
+import { BadgeItem, ImpactStats, HabitDay, YearMonthData } from '../../types/onboarding';
 import { useTheme } from '../../lib/themeContext';
 
 export default function StatsScreen() {
@@ -23,7 +23,10 @@ export default function StatsScreen() {
 	const [impact, setImpact] = useState<ImpactStats>({ minutesRead: 0, hoursSaved: 0, sessions: 0 });
 	const [selectedBadge, setSelectedBadge] = useState<BadgeItem | null>(null);
 	const [history, setHistory] = useState<HabitDay[]>([]);
+	const [yearHistory, setYearHistory] = useState<YearMonthData[]>([]);
 	const [historyPeriod, setHistoryPeriod] = useState<'week' | 'month' | 'year'>('week');
+	const [selectedDay, setSelectedDay] = useState<HabitDay | null>(null);
+	const [selectedMonth, setSelectedMonth] = useState<YearMonthData | null>(null);
 
 	const timer = useReadingTimer(false);
 
@@ -32,6 +35,8 @@ export default function StatsScreen() {
 			return;
 		}
 		setHistoryPeriod(period);
+		setSelectedDay(null);
+		setSelectedMonth(null);
 	};
 
 	const loadData = useCallback(() => {
@@ -40,6 +45,7 @@ export default function StatsScreen() {
 
 		setImpact(getImpactStats());
 		setHistory(getReadingHistory30Days());
+		setYearHistory(getReadingHistoryYear());
 	}, []);
 
 	useFocusEffect(
@@ -359,86 +365,587 @@ export default function StatsScreen() {
 						<Flame size={16} color='#ff7b42' />
 					</View>
 
-					<View className='flex-row items-center justify-between'>
-						{weekDays.map((wd, i) => {
-							const isToday = wd.dayIndex === todayDayOfWeek;
-							const isPastOrToday = wd.dayIndex <= todayDayOfWeek;
-							const hasRead = isToday ? minutesToday > 0 : isPastOrToday;
-							const dayMins = isToday ? minutesToday : isPastOrToday ? (timer.streak > 0 ? 1 : 0) : 0;
+					{/* VIEW 1: WEEK */}
+					{historyPeriod === 'week' && (
+						<View className='flex-row items-center justify-between'>
+							{weekDays.map((wd, i) => {
+								const isToday = wd.dayIndex === todayDayOfWeek;
+								const isPastOrToday = wd.dayIndex <= todayDayOfWeek;
+								const hasRead = isToday ? minutesToday > 0 : isPastOrToday;
+								const dayMins = isToday ? minutesToday : isPastOrToday ? (timer.streak > 0 ? 1 : 0) : 0;
 
-							return (
-								<View key={`${wd.label}-${i}`} className='items-center'>
-									<View
-										style={{
-											width: 36,
-											height: 36,
-											borderRadius: 18,
-											alignItems: 'center',
-											justifyContent: 'center',
-											borderWidth: 1,
-											marginBottom: 6,
-											backgroundColor: isToday
-												? colors.accentBg
-												: isPastOrToday
-													? colors.surfaceSubtle
-													: colors.surface,
-											borderColor: isToday
-												? colors.accent
-												: isPastOrToday
-													? colors.border
-													: colors.borderSubtle,
-										}}
-									>
-										<Text
+								return (
+									<View key={`${wd.label}-${i}`} className='items-center'>
+										<View
 											style={{
-												fontSize: 12,
-												fontFamily: 'Inter_700Bold',
-												color: isToday
+												width: 36,
+												height: 36,
+												borderRadius: 18,
+												alignItems: 'center',
+												justifyContent: 'center',
+												borderWidth: 1,
+												marginBottom: 6,
+												backgroundColor: isToday
+													? colors.accentBg
+													: isPastOrToday
+														? colors.surfaceSubtle
+														: colors.surface,
+												borderColor: isToday
 													? colors.accent
 													: isPastOrToday
-														? colors.textPrimary
-														: colors.textMuted,
+														? colors.border
+														: colors.borderSubtle,
 											}}
 										>
-											{wd.label}
+											<Text
+												style={{
+													fontSize: 12,
+													fontFamily: 'Inter_700Bold',
+													color: isToday
+														? colors.accent
+														: isPastOrToday
+															? colors.textPrimary
+															: colors.textMuted,
+												}}
+											>
+												{wd.label}
+											</Text>
+										</View>
+
+										<Text
+											style={{
+												fontSize: 10,
+												fontFamily: isToday ? 'Inter_700Bold' : 'Inter_400Regular',
+												color: isToday ? colors.accent : colors.textSecondary,
+											}}
+										>
+											{dayMins}m
+										</Text>
+
+										{/* Active day underline marker */}
+										{isToday ? (
+											<View
+												style={{
+													width: 20,
+													height: 2,
+													backgroundColor: colors.accent,
+													borderRadius: 1,
+													marginTop: 6,
+												}}
+											/>
+										) : (
+											<View
+												style={{
+													width: 20,
+													height: 2,
+													backgroundColor: 'transparent',
+													marginTop: 6,
+												}}
+											/>
+										)}
+									</View>
+								);
+							})}
+						</View>
+					)}
+
+					{/* VIEW 2: MONTH (30-Day Calendar Heatmap Grid) */}
+					{historyPeriod === 'month' && (() => {
+						const monthTotalMinutes = history.reduce((acc, d) => acc + (d.minutesRead || 0), 0);
+						const monthCompletedCount = history.filter((d) => d.completed).length;
+						const monthDailyAvg = Math.round(monthTotalMinutes / (history.length || 30));
+						const dayNamesOrder = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+						const startDayIndex = history.length > 0 ? dayNamesOrder.indexOf(history[0].dayLabel) : 0;
+						const leadingSpacers = Math.max(0, startDayIndex);
+
+						return (
+							<View>
+								{/* Telemetry Summary Strip */}
+								<View
+									style={{
+										flexDirection: 'row',
+										justifyContent: 'space-between',
+										paddingVertical: 8,
+										paddingHorizontal: 12,
+										borderRadius: 12,
+										backgroundColor: colors.surfaceSubtle,
+										borderWidth: 1,
+										borderColor: colors.border,
+										marginBottom: 10,
+									}}
+								>
+									<View>
+										<Text style={{ fontSize: 9, fontFamily: 'Inter_700Bold', color: colors.textMuted, textTransform: 'uppercase' }}>
+											Total Time
+										</Text>
+										<Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: colors.accent }}>
+											{monthTotalMinutes}m
+										</Text>
+									</View>
+									<View style={{ alignItems: 'center' }}>
+										<Text style={{ fontSize: 9, fontFamily: 'Inter_700Bold', color: colors.textMuted, textTransform: 'uppercase' }}>
+											Goal Met
+										</Text>
+										<Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
+											{monthCompletedCount}/30d
+										</Text>
+									</View>
+									<View style={{ alignItems: 'flex-end' }}>
+										<Text style={{ fontSize: 9, fontFamily: 'Inter_700Bold', color: colors.textMuted, textTransform: 'uppercase' }}>
+											Daily Avg
+										</Text>
+										<Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
+											{monthDailyAvg}m/d
+										</Text>
+									</View>
+								</View>
+
+								{/* Interactive Day Inspection Banner */}
+								<View
+									style={{
+										paddingVertical: 6,
+										paddingHorizontal: 10,
+										borderRadius: 8,
+										backgroundColor: colors.surfaceSubtle,
+										borderWidth: 1,
+										borderColor: colors.borderSubtle,
+										marginBottom: 12,
+									}}
+								>
+									<Text
+										style={{
+											fontSize: 11,
+											fontFamily: 'Inter_500Medium',
+											color: selectedDay ? colors.accent : colors.textSecondary,
+											textAlign: 'center',
+										}}
+									>
+										{selectedDay
+											? `${selectedDay.date} (${selectedDay.dayLabel}) • ${selectedDay.minutesRead || 0}m read • ${selectedDay.completed ? 'Goal Met ✓' : (selectedDay.minutesRead || 0) > 0 ? 'Partial Reading' : 'No Reading'}`
+											: 'Tap any day to view reading details'}
+									</Text>
+								</View>
+
+								{/* Day of Week Headers */}
+								<View style={{ flexDirection: 'row', marginBottom: 6 }}>
+									{['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((dl, idx) => (
+										<View key={`dow-${idx}`} style={{ flex: 1, alignItems: 'center' }}>
+											<Text style={{ fontSize: 10, fontFamily: 'Inter_700Bold', color: colors.textMuted }}>
+												{dl}
+											</Text>
+										</View>
+									))}
+								</View>
+
+								{/* 30-Day Grid */}
+								<View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+									{Array.from({ length: leadingSpacers }).map((_, idx) => (
+										<View key={`spacer-${idx}`} style={{ width: '14.28%', height: 38 }} />
+									))}
+									{history.map((day) => {
+										const isCompleted = day.completed;
+										const isToday = day.isToday;
+										const isSelected = selectedDay?.date === day.date;
+										const hasMinutes = (day.minutesRead || 0) > 0;
+
+										return (
+											<Pressable
+												key={day.date}
+												onPress={() => setSelectedDay(day)}
+												style={{ width: '14.28%', height: 38, alignItems: 'center', justifyContent: 'center' }}
+											>
+												<View
+													style={{
+														width: 32,
+														height: 32,
+														borderRadius: 8,
+														alignItems: 'center',
+														justifyContent: 'center',
+														borderWidth: isSelected ? 2 : 1,
+														borderColor: isSelected
+															? colors.accent
+															: isCompleted
+															? colors.success
+															: isToday
+															? colors.accent
+															: colors.borderSubtle,
+														backgroundColor: isCompleted
+															? (colors.successBg || '#1a4a35')
+															: isToday
+															? colors.accentBg
+															: hasMinutes
+															? colors.surfaceSubtle
+															: colors.surface,
+													}}
+												>
+													<Text
+														style={{
+															fontSize: 11,
+															fontFamily: isToday || isCompleted || isSelected ? 'Inter_700Bold' : 'Inter_400Regular',
+															color: isCompleted
+																? colors.success
+																: isToday || isSelected
+																? colors.accent
+																: hasMinutes
+																? colors.textPrimary
+																: colors.textMuted,
+														}}
+													>
+														{day.dayNumber}
+													</Text>
+												</View>
+											</Pressable>
+										);
+									})}
+								</View>
+							</View>
+						);
+					})()}
+
+					{/* VIEW 3: YEAR (12-Month Activity Telemetry & Quarterly Seasons) */}
+					{historyPeriod === 'year' && (() => {
+						const yearTotalMinutes = yearHistory.reduce((acc, m) => acc + m.minutesRead, 0);
+						const yearTotalHours = (yearTotalMinutes / 60).toFixed(1);
+						const yearActiveDays = yearHistory.reduce((acc, m) => acc + m.daysCompleted, 0);
+						const bestMonth = yearHistory.reduce<YearMonthData | null>((best, m) => {
+							if (!best) return m;
+							return m.minutesRead > best.minutesRead ? m : best;
+						}, null);
+						const maxMonthMinutes = Math.max(...yearHistory.map((m) => m.minutesRead), 60);
+
+						// Active month defaults to current month if unselected
+						const activeMonth =
+							selectedMonth ||
+							yearHistory.find((m) => m.isCurrentMonth) ||
+							(yearHistory.length > 0 ? yearHistory[yearHistory.length - 1] : null);
+
+						// Quarterly progress for current year
+						const curYear = new Date().getFullYear();
+						const curMonthIdx = new Date().getMonth();
+						const curQuarterIdx = Math.floor(curMonthIdx / 3);
+
+						const curYearMonths = yearHistory.filter((m) => m.year === curYear);
+						const q1Months = curYearMonths.filter((m) => m.monthIndex >= 0 && m.monthIndex <= 2);
+						const q2Months = curYearMonths.filter((m) => m.monthIndex >= 3 && m.monthIndex <= 5);
+						const q3Months = curYearMonths.filter((m) => m.monthIndex >= 6 && m.monthIndex <= 8);
+						const q4Months = curYearMonths.filter((m) => m.monthIndex >= 9 && m.monthIndex <= 11);
+
+						const quarters = [
+							{
+								label: 'Q1',
+								period: 'Jan–Mar',
+								minutes: q1Months.reduce((a, m) => a + m.minutesRead, 0),
+								days: q1Months.reduce((a, m) => a + m.daysCompleted, 0),
+								isCurrent: curQuarterIdx === 0,
+							},
+							{
+								label: 'Q2',
+								period: 'Apr–Jun',
+								minutes: q2Months.reduce((a, m) => a + m.minutesRead, 0),
+								days: q2Months.reduce((a, m) => a + m.daysCompleted, 0),
+								isCurrent: curQuarterIdx === 1,
+							},
+							{
+								label: 'Q3',
+								period: 'Jul–Sep',
+								minutes: q3Months.reduce((a, m) => a + m.minutesRead, 0),
+								days: q3Months.reduce((a, m) => a + m.daysCompleted, 0),
+								isCurrent: curQuarterIdx === 2,
+							},
+							{
+								label: 'Q4',
+								period: 'Oct–Dec',
+								minutes: q4Months.reduce((a, m) => a + m.minutesRead, 0),
+								days: q4Months.reduce((a, m) => a + m.daysCompleted, 0),
+								isCurrent: curQuarterIdx === 3,
+							},
+						];
+
+						return (
+							<View>
+								{/* Telemetry Summary Strip */}
+								<View
+									style={{
+										flexDirection: 'row',
+										justifyContent: 'space-between',
+										paddingVertical: 10,
+										paddingHorizontal: 14,
+										borderRadius: 12,
+										backgroundColor: colors.surfaceSubtle,
+										borderWidth: 1,
+										borderColor: colors.border,
+										marginBottom: 12,
+									}}
+								>
+									<View>
+										<Text style={{ fontSize: 9, fontFamily: 'Inter_700Bold', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+											Annual Time
+										</Text>
+										<Text style={{ fontSize: 14, fontFamily: 'Inter_700Bold', color: colors.accent, marginTop: 2 }}>
+											{yearTotalHours} hrs
+										</Text>
+									</View>
+									<View style={{ alignItems: 'center' }}>
+										<Text style={{ fontSize: 9, fontFamily: 'Inter_700Bold', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+											Days in Word
+										</Text>
+										<Text style={{ fontSize: 14, fontFamily: 'Inter_700Bold', color: colors.textPrimary, marginTop: 2 }}>
+											{yearActiveDays} / 365
+										</Text>
+									</View>
+									<View style={{ alignItems: 'flex-end' }}>
+										<Text style={{ fontSize: 9, fontFamily: 'Inter_700Bold', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+											Best Month
+										</Text>
+										<Text style={{ fontSize: 14, fontFamily: 'Inter_700Bold', color: colors.textPrimary, marginTop: 2 }}>
+											{bestMonth && bestMonth.minutesRead > 0 ? `${bestMonth.monthLabel} (${bestMonth.minutesRead}m)` : '—'}
+										</Text>
+									</View>
+								</View>
+
+								{/* Active Month Inspection Card */}
+								{activeMonth && (
+									<View
+										style={{
+											padding: 12,
+											borderRadius: 14,
+											backgroundColor: colors.surfaceSubtle,
+											borderWidth: 1,
+											borderColor: activeMonth.isCurrentMonth ? colors.accent : colors.border,
+											marginBottom: 14,
+										}}
+									>
+										<View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+											<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+												<Text style={{ fontSize: 14, fontFamily: 'Inter_700Bold', color: colors.textPrimary, marginRight: 8 }}>
+													{activeMonth.monthLabel} {activeMonth.year}
+												</Text>
+												{activeMonth.isCurrentMonth && (
+													<View
+														style={{
+															paddingHorizontal: 6,
+															paddingVertical: 2,
+															borderRadius: 6,
+															backgroundColor: colors.accentBg,
+															borderWidth: 1,
+															borderColor: colors.accent,
+														}}
+													>
+														<Text style={{ fontSize: 8, fontFamily: 'Inter_700Bold', color: colors.accent, letterSpacing: 0.5 }}>
+															CURRENT
+														</Text>
+													</View>
+												)}
+											</View>
+											<Text
+												style={{
+													fontSize: 13,
+													fontFamily: 'Inter_700Bold',
+													color: activeMonth.minutesRead > 0 ? colors.accent : colors.textMuted,
+												}}
+											>
+												{activeMonth.minutesRead} min read
+											</Text>
+										</View>
+
+										<View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+											<Text style={{ fontSize: 11, color: colors.textSecondary }}>
+												Days Met: <Text style={{ fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>{activeMonth.daysCompleted}/{activeMonth.totalDays}</Text>
+											</Text>
+											<Text style={{ fontSize: 11, color: colors.textSecondary }}>
+												Fidelity: <Text style={{ fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>{Math.round((activeMonth.daysCompleted / activeMonth.totalDays) * 100)}%</Text>
+											</Text>
+										</View>
+									</View>
+								)}
+
+								{/* 12-Month Telemetry Pillar Chart */}
+								<View
+									style={{
+										paddingVertical: 14,
+										paddingHorizontal: 6,
+										borderRadius: 16,
+										backgroundColor: colors.surface,
+										borderWidth: 1,
+										borderColor: colors.border,
+										position: 'relative',
+									}}
+								>
+									{/* Benchmark Baseline Target Line */}
+									<View
+										style={{
+											position: 'absolute',
+											top: 35,
+											left: 12,
+											right: 12,
+											height: 1,
+											borderTopWidth: 1,
+											borderStyle: 'dashed',
+											borderColor: colors.borderSubtle,
+										}}
+									/>
+									<View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, paddingHorizontal: 6 }}>
+										<Text style={{ fontSize: 9, fontFamily: 'Inter_700Bold', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+											Monthly Activity Telemetry
+										</Text>
+										<Text style={{ fontSize: 9, fontFamily: 'Inter_500Medium', color: colors.textMuted }}>
+											Target: 5h/mo
 										</Text>
 									</View>
 
+									<View
+										style={{
+											height: 105,
+											flexDirection: 'row',
+											alignItems: 'flex-end',
+											justifyContent: 'space-between',
+										}}
+									>
+										{yearHistory.map((m) => {
+											const isSelected = activeMonth?.monthIndex === m.monthIndex && activeMonth?.year === m.year;
+											const hasRead = m.minutesRead > 0;
+											const fillPercent = Math.min(100, Math.max(hasRead ? 14 : 0, Math.round((m.minutesRead / maxMonthMinutes) * 100)));
+
+											return (
+												<Pressable
+													key={`${m.year}-${m.monthIndex}`}
+													onPress={() => setSelectedMonth(m)}
+													style={{ flex: 1, alignItems: 'center' }}
+												>
+													{/* Pillar Column Track */}
+													<View
+														style={{
+															width: 16,
+															height: 80,
+															borderRadius: 5,
+															backgroundColor: colors.surfaceSubtle,
+															borderWidth: 1,
+															borderColor: isSelected
+																? colors.accent
+																: m.isCurrentMonth
+																? colors.accent
+																: colors.borderSubtle,
+															justifyContent: 'flex-end',
+															overflow: 'hidden',
+														}}
+													>
+														{/* Filled Progress Bar */}
+														<View
+															style={{
+																width: '100%',
+																height: `${fillPercent}%`,
+																backgroundColor: isSelected
+																	? colors.accent
+																	: m.isCurrentMonth
+																	? colors.accent
+																	: hasRead
+																	? colors.success
+																	: 'transparent',
+																borderRadius: 3,
+															}}
+														/>
+													</View>
+
+													{/* Month Abbreviation Label */}
+													<Text
+														style={{
+															fontSize: 9,
+															fontFamily: m.isCurrentMonth || isSelected ? 'Inter_700Bold' : 'Inter_500Medium',
+															color: isSelected
+																? colors.accent
+																: m.isCurrentMonth
+																? colors.accent
+																: colors.textSecondary,
+															marginTop: 6,
+														}}
+													>
+														{m.monthLabel}
+													</Text>
+
+													{/* Current Month Active Dot */}
+													{m.isCurrentMonth ? (
+														<View
+															style={{
+																width: 4,
+																height: 4,
+																borderRadius: 2,
+																backgroundColor: colors.accent,
+																marginTop: 2,
+															}}
+														/>
+													) : (
+														<View style={{ width: 4, height: 4, marginTop: 2 }} />
+													)}
+												</Pressable>
+											);
+										})}
+									</View>
+								</View>
+
+								{/* 4-Quarter Annual Rhythm Section */}
+								<View style={{ marginTop: 14 }}>
 									<Text
 										style={{
 											fontSize: 10,
-											fontFamily: isToday ? 'Inter_700Bold' : 'Inter_400Regular',
-											color: isToday ? colors.accent : colors.textSecondary,
+											fontFamily: 'Inter_700Bold',
+											color: colors.textMuted,
+											textTransform: 'uppercase',
+											letterSpacing: 0.5,
+											marginBottom: 8,
 										}}
 									>
-										{dayMins}m
+										{curYear} Seasonal Quarters
 									</Text>
-
-									{/* Active day underline marker */}
-									{isToday ? (
-										<View
-											style={{
-												width: 20,
-												height: 2,
-												backgroundColor: colors.accent,
-												borderRadius: 1,
-												marginTop: 6,
-											}}
-										/>
-									) : (
-										<View
-											style={{
-												width: 20,
-												height: 2,
-												backgroundColor: 'transparent',
-												marginTop: 6,
-											}}
-										/>
-									)}
+									<View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+										{quarters.map((q) => (
+											<View
+												key={q.label}
+												style={{
+													flex: 1,
+													marginHorizontal: 3,
+													paddingVertical: 8,
+													paddingHorizontal: 6,
+													borderRadius: 10,
+													backgroundColor: colors.surfaceSubtle,
+													borderWidth: 1,
+													borderColor: q.isCurrent ? colors.accent : colors.borderSubtle,
+													alignItems: 'center',
+												}}
+											>
+												<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+													<Text
+														style={{
+															fontSize: 11,
+															fontFamily: 'Inter_700Bold',
+															color: q.isCurrent ? colors.accent : colors.textPrimary,
+														}}
+													>
+														{q.label}
+													</Text>
+													{q.isCurrent && (
+														<View style={{ width: 4, height: 4, borderRadius: 2, backgroundColor: colors.accent, marginLeft: 3 }} />
+													)}
+												</View>
+												<Text style={{ fontSize: 8, color: colors.textMuted, marginTop: 2 }}>
+													{q.period}
+												</Text>
+												<Text
+													style={{
+														fontSize: 10,
+														fontFamily: 'Inter_700Bold',
+														color: q.minutes > 0 ? colors.accent : colors.textMuted,
+														marginTop: 4,
+													}}
+												>
+													{q.minutes > 0 ? `${q.minutes}m` : '—'}
+												</Text>
+											</View>
+										))}
+									</View>
 								</View>
-							);
-						})}
-					</View>
+							</View>
+						);
+					})()}
 				</View>
 
 				{/* Card 3: Milestone Progress Bar */}

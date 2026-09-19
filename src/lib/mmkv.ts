@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { OnboardingData, HabitDay, ImpactStats } from '../types/onboarding';
+import { OnboardingData, HabitDay, ImpactStats, YearMonthData } from '../types/onboarding';
 
 // ponytail: fallback storage in memory for web/testing/server environments
 class MemoryStorage {
@@ -355,7 +355,38 @@ export function isBlockingPaused(): boolean {
   return true;
 }
 
-// 30-Day Habit Timeline
+// Weekly & 30-Day Habit Timeline
+export function getWeeklyHabitDays(): HabitDay[] {
+  const days: HabitDay[] = [];
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const goalSeconds = getDailyGoalMinutes() * 60;
+
+  const now = new Date();
+  const currentDayOfWeek = now.getDay(); // 0 = Sun, 6 = Sat
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - currentDayOfWeek + i);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateKey = `${year}-${month}-${day}`;
+
+    const progressSec = getReadingProgress(dateKey);
+    const completed = progressSec >= goalSeconds;
+
+    days.push({
+      date: dateKey,
+      dayLabel: dayNames[i],
+      dayNumber: d.getDate(),
+      completed,
+      isToday: i === currentDayOfWeek,
+      minutesRead: Math.floor(progressSec / 60),
+    });
+  }
+
+  return days;
+}
 
 export function getReadingHistory30Days(): HabitDay[] {
   const days: HabitDay[] = [];
@@ -379,10 +410,57 @@ export function getReadingHistory30Days(): HabitDay[] {
       dayNumber: d.getDate(),
       completed,
       isToday: i === 0,
+      minutesRead: Math.floor(progressSec / 60),
     });
   }
 
   return days;
+}
+
+export function getReadingHistoryYear(): YearMonthData[] {
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth();
+  const goalSeconds = getDailyGoalMinutes() * 60;
+
+  const monthsData: YearMonthData[] = [];
+
+  for (let offset = 11; offset >= 0; offset--) {
+    let targetMonth = currentMonth - offset;
+    let targetYear = currentYear;
+    while (targetMonth < 0) {
+      targetMonth += 12;
+      targetYear -= 1;
+    }
+
+    const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+    let totalSeconds = 0;
+    let daysCompleted = 0;
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const monthStr = String(targetMonth + 1).padStart(2, '0');
+      const dayStr = String(day).padStart(2, '0');
+      const dateKey = `${targetYear}-${monthStr}-${dayStr}`;
+      const progressSec = getReadingProgress(dateKey);
+      totalSeconds += progressSec;
+      if (progressSec >= goalSeconds) {
+        daysCompleted++;
+      }
+    }
+
+    monthsData.push({
+      monthIndex: targetMonth,
+      monthLabel: monthNames[targetMonth],
+      year: targetYear,
+      minutesRead: Math.floor(totalSeconds / 60),
+      daysCompleted,
+      totalDays: daysInMonth,
+      isCurrentMonth: offset === 0,
+    });
+  }
+
+  return monthsData;
 }
 
 // Impact Stats & Sessions

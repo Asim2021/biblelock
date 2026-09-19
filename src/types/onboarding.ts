@@ -25,6 +25,17 @@ export interface HabitDay {
   dayNumber: number; // 3
   completed: boolean;
   isToday: boolean;
+  minutesRead?: number;
+}
+
+export interface YearMonthData {
+  monthIndex: number; // 0-11
+  monthLabel: string; // "Jan", "Feb"
+  year: number;
+  minutesRead: number;
+  daysCompleted: number;
+  totalDays: number;
+  isCurrentMonth: boolean;
 }
 
 export interface ImpactStats {

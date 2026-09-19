@@ -658,10 +658,46 @@ Moved `src/app/onboarding/steps/` to `src/components/onboarding/`. Updated relat
 ### 5. Proof of Improvement
 - `npx tsc --noEmit`: 0 errors.
 - `code-review-graph update`: 35 files updated.
-- Metro no longer treats onboarding steps as routes, eliminating all 7 route warnings.
+
+---
+
+## [DEC-019] Weekly Streak on Home & Dedicated Month/Year Analytics in Stats
+
+- **Date:** 2026-09-20
+- **Status:** Validated
+- **Related Task:** TASK-034
+
+### 1. Problem / Trigger
+The Home tab previously rendered a horizontal 30-day streak scroller (`Last30DaysTracker`), which caused horizontal scrolling friction and contradicted the Stats tab, where `Month` and `Year` were gated behind a paywall (`🔒`). In Stats, selecting `Month` or `Year` (even for paid users) did not alter the display and still rendered the 7-day week row.
+
+### 2. Alternatives Evaluated
+- **Option A (Only remove locks in Stats):** Leaves Month and Year as non-functional UI placeholders.
+- **Option B (30-day horizontal bar chart for Month, 365 daily squares for Year):** 30 vertical bars on a narrow mobile viewport provide only ~8px per bar with no day-of-week context; 365 daily squares cannot fit on mobile without zooming.
+- **Option C (Responsive 7-day Weekly Streak on Home, 30-day Calendar Heatmap Grid for Month in Stats, 12-Month Bar Chart for Year in Stats):** Selected. Eliminates horizontal scrolling on Home with a zero-scroll 7-column layout. Implements an intuitive calendar heatmap grid for Month (7 columns × 5 rows) and a 12-month activity bar chart with annual metrics for Year.
+
+### 3. Decision & Trade-offs
+- Built `WeeklyStreakTracker.tsx` and wired it into `src/app/(tabs)/index.tsx`.
+- Extended `HabitDay` with `minutesRead` and added `YearMonthData` to `src/types/onboarding.ts`.
+- Added `getWeeklyHabitDays()` and `getReadingHistoryYear()` in `src/lib/mmkv.ts`.
+- Rebuilt Stats Card 2 to dynamically render:
+  - **Week**: 7-day row (`S M Tu W Th F S`) with daily minutes and active underline.
+  - **Month**: Telemetry summary strip (`Total Time`, `Goal Met`, `Daily Avg`), interactive day inspection banner, and 30-day calendar heatmap grid.
+  - **Year**: Telemetry summary strip (`Annual Time`, `Active Days`, `Best Month`), interactive month inspection banner, and 12-month activity bar chart.
+
+### 4. Implementation Details
+- `src/components/WeeklyStreakTracker.tsx`: Replaced 30-day horizontal scroller with a clean 7-column matrix (Sunday to Saturday) with completion checkmarks, today dot, and day numbers.
+- `src/lib/mmkv.ts`: Added `getWeeklyHabitDays()` (Sunday to Saturday for current week) and `getReadingHistoryYear()` (12-month rolling summary from MMKV daily keys).
+- `src/app/(tabs)/index.tsx`: Updated imports and state to use `WeeklyStreakTracker`.
+- `src/app/(tabs)/stats.tsx`: Implemented Month 30-day calendar heatmap grid and upgraded Year view into a high-density telemetry dashboard with 80px pillar tracks, benchmark target lines, dedicated month inspector card (defaulting to current month), and 4-quarter seasonal progress matrix (`Q1`–`Q4`).
+
+### 5. Proof of Improvement
+- `npx tsc --noEmit`: 0 errors.
+- `code-review-graph update`: clean index update.
+- Eliminated the sparse empty-void appearance on Year view: 12 structured pillar tracks stand tall regardless of historical data density.
+- Users gain 4-quarter seasonal progression tracking across the spiritual year.
 
 ### 6. Lessons & Downstream Impact
-- Files placed inside `src/app/` must be restricted solely to screens and layouts (`_layout.tsx`, `index.tsx`, etc.). All subcomponents, modals, and multi-step wizard slides must live under `src/components/`.
+- Habit tracking UI on mobile should match the natural mental model of the time horizon: 7-day horizontal row for weeks, calendar heatmap grid for months, and bar chart for annual trends.
 
 
 

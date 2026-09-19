@@ -25,14 +25,14 @@ import { usePurchases } from '../../lib/purchases';
 import { AppBlocker } from '../../lib/appBlocker';
 import {
   getUserName,
-  getReadingHistory30Days,
+  getWeeklyHabitDays,
   getImpactStats,
   isBlockingPaused,
   getPauseBlockingUntil,
   setPauseBlockingUntil,
   getLastReadPosition,
 } from '../../lib/mmkv';
-import { Last30DaysTracker } from '../../components/Last30DaysTracker';
+import { WeeklyStreakTracker } from '../../components/WeeklyStreakTracker';
 import { DailyDevotionalCard } from '../../components/DailyDevotionalCard';
 import { PauseBlockingModal } from '../../components/PauseBlockingModal';
 import { HabitDay, ImpactStats } from '../../types/onboarding';
@@ -70,7 +70,7 @@ export default function HomeScreen() {
     const paused = isBlockingPaused();
     setIsPaused(paused);
     setPauseUntil(getPauseBlockingUntil());
-    setHistory(getReadingHistory30Days());
+    setHistory(getWeeklyHabitDays());
     setImpact(getImpactStats());
 
     const storedName = getUserName();
@@ -445,8 +445,8 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* Horizontal 30-Day Activity Tracker */}
-        <Last30DaysTracker history={history} />
+        {/* Weekly Activity Streak Tracker */}
+        <WeeklyStreakTracker history={history} />
 
         {/* Your Impact Section */}
         <View className="my-3">

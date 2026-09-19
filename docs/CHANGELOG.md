@@ -1,5 +1,24 @@
 # Project Changelog & Verified Outcomes
+
+## [1.0.26] - 2026-09-20
  
+### Added & Improved
+- **Weekly Streak Tracker on Home (`src/components/WeeklyStreakTracker.tsx`, `src/app/(tabs)/index.tsx`, `DEC-019`):**
+  - Replaced horizontal 30-day scroller with a clean, responsive 7-column matrix (Sunday through Saturday).
+  - Displays day of week (`Sun` - `Sat`), completion checkmarks, glowing today indicator dot, and day of month numbers.
+  - Aligns Home visual language with the Stats tab week view without requiring horizontal scrolling.
+- **Dedicated Month & Year Streak Analytics in Stats (`src/app/(tabs)/stats.tsx`, `src/lib/mmkv.ts`):**
+  - Extended `HabitDay` with `minutesRead` and added `YearMonthData` model to `src/types/onboarding.ts`.
+  - Added `getWeeklyHabitDays()` and `getReadingHistoryYear()` in `src/lib/mmkv.ts` to compute metrics from local storage.
+  - Implemented **Month View**: Telemetry strip (`Total Time`, `Goal Met`, `Daily Avg`), interactive day inspection banner, and 30-day Calendar Heatmap Grid (7 columns × 5 rows).
+  - Implemented **Year View**: Telemetry strip (`Annual Time`, `Days in Word`, `Best Month`), dedicated active month inspection card, 12-Month Telemetry Pillar Chart with 80px column tracks and benchmark target line, and 4-quarter seasonal progress matrix (`Q1`–`Q4`).
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- `code-review-graph update`: Index updated cleanly.
+ 
+---
+
 ## [1.0.25] - 2026-09-20
  
 ### Fixed

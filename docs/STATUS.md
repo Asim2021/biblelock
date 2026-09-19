@@ -162,15 +162,23 @@
   - Removed deprecated `shouldShowAlert: true` from `Notifications.setNotificationHandler` in `src/lib/scriptureShield.ts`.
   - Preserved modern `shouldShowBanner: true` and `shouldShowList: true` options.
 
+- [x] `TASK-034`: Weekly Streak on Home & Dedicated Month/Year Analytics in Stats (`DEC-019`):
+  - Created `WeeklyStreakTracker.tsx` on Home replacing 30-day horizontal scroller with a clean 7-column matrix (Sunday to Saturday) with completion checkmarks and today indicator.
+  - Extended `HabitDay` with `minutesRead` and added `YearMonthData` to `src/types/onboarding.ts`.
+  - Added `getWeeklyHabitDays()` and `getReadingHistoryYear()` in `src/lib/mmkv.ts`.
+  - Rebuilt Stats Card 2 to dynamically render:
+    - `Week`: 7-day row (`S M Tu W Th F S`) with daily reading minutes and active underline.
+    - `Month`: 30-day Calendar Heatmap Grid (7 columns × 5 rows) with telemetry metrics (`Total Time`, `Goal Met`, `Daily Avg`) and tap inspection.
+    - `Year`: 12-Month Telemetry Pillar Chart (with 80px pillar tracks, benchmark line, and 3-letter month labels), active month inspection card, and 4-quarter seasonal progress matrix (`Q1`–`Q4`).
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
 - `code-review-graph update`: Index updated cleanly.
-- `DEC-017` and `DEC-018` recorded in `docs/DECISIONS.md`.
+- `DEC-019` recorded in `docs/DECISIONS.md`.
 
 ## Session Handoff Notes
 
-- Root cause of `undefined is not a function` was `src/lib/mmkv.ts` delegating to `inst.delete(k)` which was renamed to `remove(k)` in `react-native-mmkv` v4.
-- Onboarding step components now live under `src/components/onboarding/` per Expo Router architecture.
-- Test Store key warning from RevenueCat is expected during development. Replace with `goog_...` and `appl_...` for production release.
-- Deprecated `shouldShowAlert` removed from notification handler.
+- Home tab now features a clean, responsive 7-day weekly streak matrix (`This Week`) without horizontal scroll.
+- Stats tab now features fully functional Month (30-day calendar heatmap) and Year (12-month bar chart) views for paid Sanctuary members.
+- `src/lib/mmkv.ts` computes weekly and rolling 12-month metrics from high-speed local storage keys.
