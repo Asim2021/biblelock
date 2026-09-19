@@ -20,7 +20,6 @@ import {
   Trophy,
   X,
 } from 'lucide-react-native';
-import { useAuth } from '../../lib/auth';
 import { useReadingTimer } from '../../lib/readingTimer';
 import { usePurchases } from '../../lib/purchases';
 import { AppBlocker } from '../../lib/appBlocker';
@@ -43,7 +42,6 @@ import { useTheme } from '../../lib/themeContext';
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, profile } = useAuth();
   const { colors, isDark } = useTheme();
   const { isPremium } = usePurchases();
 
@@ -76,9 +74,8 @@ export default function HomeScreen() {
     setImpact(getImpactStats());
 
     const storedName = getUserName();
-    const fallbackName = profile?.display_name || user?.user_metadata?.full_name || 'Disciple';
-    setName(storedName !== 'Disciple' ? storedName : fallbackName);
-  }, [profile, user]);
+    setName(storedName);
+  }, []);
 
   useEffect(() => {
     loadData();

@@ -53,9 +53,6 @@
   --font-sans-semibold: "Inter_600SemiBold";
   --font-sans-bold: "Inter_700Bold";
 
-  --font-mono: "JetBrainsMono_400Regular";
-  --font-mono-medium: "JetBrainsMono_500Medium";
-
   /* Border Radii */
   --radius-xs: 4px;
   --radius-sm: 6px;

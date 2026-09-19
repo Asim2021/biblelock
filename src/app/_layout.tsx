@@ -1,13 +1,10 @@
 import React, { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator } from 'react-native';
 import {
   useFonts,
   EBGaramond_400Regular,
   EBGaramond_400Regular_Italic,
-  EBGaramond_500Medium,
   EBGaramond_600SemiBold,
   EBGaramond_700Bold,
 } from '@expo-google-fonts/eb-garamond';
@@ -17,14 +14,9 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
-import {
-  JetBrainsMono_400Regular,
-  JetBrainsMono_500Medium,
-} from '@expo-google-fonts/jetbrains-mono';
 
 import '../../global.css';
 import * as Notifications from 'expo-notifications';
-import { AuthProvider, useAuth } from '../lib/auth';
 import { ScriptureShield } from '../lib/scriptureShield';
 import {
   isOnboardingCompleted,
@@ -33,12 +25,14 @@ import {
   getBibleTranslation,
 } from '../lib/mmkv';
 import { initRevenueCat } from '../lib/purchases';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ThemeProvider as NavigationThemeProvider, DarkTheme, DefaultTheme } from 'expo-router/react-navigation';
+import { ThemeProvider as AppThemeProvider, useTheme } from '../lib/themeContext';
 
 // Keep splash screen visible while loading resources
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function RootNavigation() {
-  const { user, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -79,8 +73,6 @@ function RootNavigation() {
   }, [router]);
 
   useEffect(() => {
-    if (isLoading) return;
-
     const firstSegment = (segments as string[])[0];
     const inOnboarding = firstSegment === 'onboarding';
     const onboardingDone = isOnboardingCompleted();
@@ -92,13 +84,12 @@ function RootNavigation() {
     } else if (inOnboarding) {
       router.replace('/(tabs)' as any);
     }
-  }, [user, isLoading, segments]);
+  }, [segments]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="onboarding/index" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen
         name="paywall"
         options={{
@@ -111,17 +102,11 @@ function RootNavigation() {
   );
 }
 
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { ThemeProvider as NavigationThemeProvider, DarkTheme, DefaultTheme } from 'expo-router/react-navigation';
-import { ThemeProvider as AppThemeProvider, useTheme } from '../lib/themeContext';
-
 function ThemedNavigationWrapper() {
   const { isDark } = useTheme();
   return (
     <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
-      <AuthProvider>
-        <RootNavigation />
-      </AuthProvider>
+      <RootNavigation />
     </NavigationThemeProvider>
   );
 }
@@ -130,15 +115,12 @@ export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts({
     EBGaramond_400Regular,
     EBGaramond_400Regular_Italic,
-    EBGaramond_500Medium,
     EBGaramond_600SemiBold,
     EBGaramond_700Bold,
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
-    JetBrainsMono_400Regular,
-    JetBrainsMono_500Medium,
   });
 
   useEffect(() => {

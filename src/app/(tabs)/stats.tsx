@@ -20,7 +20,6 @@ import {
   BookOpen,
   Lock,
 } from 'lucide-react-native';
-import { useAuth } from '../../lib/auth';
 import { useReadingTimer } from '../../lib/readingTimer';
 import { useFeatureGate } from '../../lib/useFeatureGate';
 import {
@@ -38,7 +37,6 @@ import { useTheme } from '../../lib/themeContext';
 export default function StatsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, profile } = useAuth();
   const { colors, isDark } = useTheme();
   const { isPremium, requirePremium } = useFeatureGate();
 
@@ -60,12 +58,11 @@ export default function StatsScreen() {
 
   const loadData = useCallback(() => {
     const storedName = getUserName();
-    const fallbackName = profile?.display_name || user?.user_metadata?.full_name || 'Disciple';
-    setName(storedName !== 'Disciple' ? storedName : fallbackName);
+    setName(storedName);
 
     setImpact(getImpactStats());
     setHistory(getReadingHistory30Days());
-  }, [profile, user]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {

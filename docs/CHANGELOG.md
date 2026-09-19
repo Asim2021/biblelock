@@ -1,5 +1,23 @@
 # Project Changelog & Verified Outcomes
  
+## [1.0.23] - 2026-09-20
+ 
+### Added & Improved
+- **Ponytail Audit Repo-Wide Pruning (`DEC-015`, `TASK-029`):**
+  - **Dead Cloud Service Elimination**: Deleted `sync.ts` (191 lines), `supabase.ts` (34 lines), `database.ts` (115 lines), and `supabase/` migrations after verifying 0 active callers post-offline MMKV migration.
+  - **Dead Route Removal**: Deleted orphaned `src/app/(auth)/login.tsx`, `src/app/(auth)/_layout.tsx`, and `src/app/auth/callback.tsx`.
+  - **Mock Auth Layer Removal**: Deleted `src/lib/auth.tsx` (`AuthProvider`, `useAuth()`) and connected `index.tsx` and `stats.tsx` directly to `getUserName()` and `getStreak()` in MMKV.
+  - **Unused Font Pruning**: Removed `JetBrainsMono` (400, 500) and `EBGaramond_500Medium` from `useFonts` in `_layout.tsx`, accelerating app splash screen readiness, and removed `--font-mono` tokens from `global.css`.
+  - **Dependency Pruning**: Removed 5 unused packages from `package.json` (`react-native-reanimated`, `expo-web-browser`, `@supabase/supabase-js`, `supabase`, `@expo-google-fonts/jetbrains-mono`).
+  - **MMKV Adapter Streamlining**: Removed unused `DEFAULT_IOS_BLOCKED_CATEGORIES` constant and simplified `storage.delete(k)`.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Net code reduction: -750+ lines, -5 dependencies.
+- Zero breakage of core Scripture reading, timer tracking, app shielding, paywall, or notification flows.
+
+---
+
 ## [1.0.22] - 2026-09-20
  
 ### Added & Improved

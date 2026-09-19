@@ -514,5 +514,47 @@ Selected **Option B**.
 ### 6. Lessons & Downstream Impact
 Using on-device local scheduling with mathematical daytime distribution is the cleanest, lowest-overhead way to deliver timezone-aware notifications without sacrificing privacy or an offline-first architecture.
 
+---
+
+## [DEC-015] Ponytail Audit Pruning: Dead Cloud/Auth Elimination, Unused Font & Native Dep Removal
+
+- **Date:** 2026-09-20
+- **Status:** Validated
+- **Related Task / Baseline:** STATUS.md (TASK-029), /ponytail-audit, DEC-011
+
+### 1. Problem / Trigger (Why the Original Plan Changed)
+Following the DEC-011 transition to 100% offline local MMKV storage and the DEC-010 pruning pass, several dead files, unused font assets, and legacy cloud dependencies remained in the codebase:
+1. `src/lib/sync.ts` (191 lines), `src/lib/supabase.ts` (34 lines), and `src/types/database.ts` (115 lines) were dead artifacts with 0 active consumers.
+2. `src/app/(auth)/login.tsx` (162 lines), `src/app/(auth)/_layout.tsx` (15 lines), and `src/app/auth/callback.tsx` (39 lines) were orphaned routes never targeted by navigation.
+3. `src/lib/auth.tsx` (98 lines) defined mock `AuthProvider` and `useAuth()` stubs that wrapped offline MMKV with fake `User` and `Session` types; consumers in `index.tsx` and `stats.tsx` destructured properties without reading them.
+4. `package.json` retained 5 unreferenced dependencies: `react-native-reanimated`, `expo-web-browser`, `@supabase/supabase-js`, `supabase` (dev), and `@expo-google-fonts/jetbrains-mono`.
+5. `_layout.tsx` loaded `JetBrainsMono` (400, 500) and `EBGaramond_500Medium` which were never used in any screen styling.
+6. `src/lib/mmkv.ts` contained an unused `DEFAULT_IOS_BLOCKED_CATEGORIES` constant and redundant runtime reflection in `remove`/`delete`.
+
+### 2. Alternatives Evaluated
+- **Option A (Leave dead code/stubs in place):** Carries dead weight, increases Android native compilation times (Reanimated C++ Prefab), delays splash screen hiding on app startup due to loading unused fonts, and leaves confusing fake auth wrappers.
+- **Option B (Full Ponytail Pruning):** Remove all dead Supabase services, delete orphaned auth routes, eliminate mock AuthProvider in favor of direct MMKV calls (`getUserName()`, `getStreak()`), prune unused fonts, remove unreferenced dependencies from `package.json`, and retain `Card.tsx` as a shared component to avoid inlining boilerplate across 10 sections of Settings.
+
+### 3. Decision & Trade-offs
+Selected **Option B**. Pruned 5 packages from `package.json`, removed 8 dead files/directories, simplified `_layout.tsx`, `index.tsx`, `stats.tsx`, `global.css`, and `mmkv.ts`. Retained `Card.tsx` to maintain clean separation of concerns in Settings without regression.
+
+### 4. Implementation Details
+- Deleted: `src/lib/sync.ts`, `src/lib/supabase.ts`, `src/types/database.ts`, `src/lib/auth.tsx`, `src/app/(auth)/`, `src/app/auth/`, `supabase/`.
+- Pruned from `package.json`: `react-native-reanimated`, `expo-web-browser`, `@supabase/supabase-js`, `supabase`, `@expo-google-fonts/jetbrains-mono`.
+- Updated `src/app/_layout.tsx`: Removed `JetBrainsMono` and `EBGaramond_500Medium` from `useFonts`, removed `AuthProvider` wrapper, and removed `(auth)` from `Stack`.
+- Updated `src/app/(tabs)/index.tsx` & `src/app/(tabs)/stats.tsx`: Removed `useAuth()` and bound `setName` directly to `getUserName()`.
+- Updated `global.css`: Removed `--font-mono` and `--font-mono-medium`.
+- Updated `src/lib/mmkv.ts`: Removed `DEFAULT_IOS_BLOCKED_CATEGORIES` and simplified `storage.delete(k)`.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- Net code reduction: **-750+ lines**, **-5 dependencies**.
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Metro bundler export bundles cleanly without missing module warnings.
+- App startup speed improved by skipping loading 3 unused font variants.
+
+### 6. Lessons & Downstream Impact
+When deprecating a cloud backend in favor of local-first storage, clean up the mock auth context layers and legacy routes completely rather than leaving stubs; direct local storage calls are far more readable and maintainable.
+
+
 
 

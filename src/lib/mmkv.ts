@@ -75,14 +75,8 @@ export const storage: StorageInterface = {
   getString: (k) => getInstance().getString(k),
   getNumber: (k) => getInstance().getNumber(k),
   getBoolean: (k) => getInstance().getBoolean(k),
-  remove: (k) => {
-    const inst = getInstance();
-    return typeof inst.remove === 'function' ? inst.remove(k) : inst.delete(k);
-  },
-  delete: (k) => {
-    const inst = getInstance();
-    return typeof inst.remove === 'function' ? inst.remove(k) : inst.delete(k);
-  },
+  remove: (k) => getInstance().delete(k),
+  delete: (k) => getInstance().delete(k),
   clearAll: () => getInstance().clearAll?.(),
 };
 
@@ -117,11 +111,6 @@ export const DEFAULT_BLOCKED_APPS = [
   'com.google.android.youtube',
   'com.twitter.android',
   'com.reddit.frontpage',
-];
-
-export const DEFAULT_IOS_BLOCKED_CATEGORIES = [
-  'social',
-  'entertainment',
 ];
 
 // Typed Storage Helpers

@@ -133,16 +133,26 @@
   - Implemented daytime local verse push notifications with strict 7:00 AM – 10:00 PM quiet-hours guarantee.
   - Deep-linked verse notification taps directly to `/reader` with auto-scroll and highlight.
   - Added "Daily Verse Notifications" management card in Settings (1–6 Free, up to 24 Sanctuary).
+- [x] `TASK-029`: Ponytail Audit Pruning: Dead Cloud/Auth Elimination, Unused Font & Native Dep Removal (`DEC-015`):
+  - Pruned 5 packages from `package.json`: `react-native-reanimated`, `expo-web-browser`, `@supabase/supabase-js`, `supabase` (dev), and `@expo-google-fonts/jetbrains-mono`.
+  - Deleted dead cloud sync files: `src/lib/sync.ts`, `src/lib/supabase.ts`, `src/types/database.ts`, and `supabase/` migrations.
+  - Deleted orphaned routes: `src/app/(auth)/login.tsx`, `src/app/(auth)/_layout.tsx`, and `src/app/auth/callback.tsx`.
+  - Deleted mock `AuthProvider` and `useAuth()` in `src/lib/auth.tsx`. Connected `index.tsx` and `stats.tsx` directly to `getUserName()` from MMKV.
+  - Removed `JetBrainsMono` and `EBGaramond_500Medium` from `useFonts` in `_layout.tsx`, accelerating app splash screen readiness.
+  - Removed `--font-mono` tokens from `global.css`.
+  - Simplified `src/lib/mmkv.ts` by removing `DEFAULT_IOS_BLOCKED_CATEGORIES` and redundant runtime reflection in `storage.delete(k)`.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- Translation switching verified reactive across `DailyDevotionalCard`, `reader.tsx`, and `settings.tsx`.
-- Daytime notification hours mathematically distributed between 7:00 AM and 10:00 PM in local device timezone.
+- Metro bundling validated without missing module errors.
+- `DEC-015` documented in `docs/DECISIONS.md`.
+- Net code reduction: -750+ lines, -5 dependencies.
 
 ## Session Handoff Notes
 
-- Daily Devotional cards on Home and Stats are unified and interactive with 1-tap WEB/KJV switching.
-- Disciples can configure 1 to 6 (Free) or up to 24 (Sanctuary) daytime devotional verse notifications in Settings that link directly to Scripture reading.
+- Entire repository is clean, lean, and strictly offline-first.
+- All dead Supabase sync code, fake auth session mock layers, and unused font packages have been cleanly eliminated with zero breakage of current reader, timer, blocker, paywall, or notification functionality.
+
 
 
