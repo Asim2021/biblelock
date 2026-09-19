@@ -50,7 +50,7 @@ const FEATURES = [
 export default function PaywallScreen() {
 	const router = useRouter();
 	const { colors, isDark } = useTheme();
-	const { offerings, purchasePackage, restorePurchases } = usePurchases();
+	const { offerings, purchasePackage, restorePurchases, isLoading } = usePurchases();
 	const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual' | 'lifetime'>('annual');
 	const [isProcessing, setIsProcessing] = useState(false);
 
@@ -65,15 +65,21 @@ export default function PaywallScreen() {
 	}
 
 	const currentPackages = offerings?.current?.availablePackages || [];
-	const annualPkg = currentPackages.find(
-		(p) => p.identifier.toLowerCase().includes('annual') || (p.packageType as string) === 'ANNUAL',
-	);
-	const monthlyPkg = currentPackages.find(
-		(p) => p.identifier.toLowerCase().includes('monthly') || (p.packageType as string) === 'MONTHLY',
-	);
-	const lifetimePkg = currentPackages.find(
-		(p) => p.identifier.toLowerCase().includes('lifetime') || (p.packageType as string) === 'LIFETIME',
-	);
+	const annualPkg =
+		offerings?.current?.annual ||
+		currentPackages.find(
+			(p) => p.identifier.toLowerCase().includes('annual') || (p.packageType as string) === 'ANNUAL',
+		);
+	const monthlyPkg =
+		offerings?.current?.monthly ||
+		currentPackages.find(
+			(p) => p.identifier.toLowerCase().includes('monthly') || (p.packageType as string) === 'MONTHLY',
+		);
+	const lifetimePkg =
+		offerings?.current?.lifetime ||
+		currentPackages.find(
+			(p) => p.identifier.toLowerCase().includes('lifetime') || (p.packageType as string) === 'LIFETIME',
+		);
 
 	const annualPrice = annualPkg?.product?.priceString || '$29.99';
 	const monthlyPrice = monthlyPkg?.product?.priceString || '$4.99';
@@ -85,14 +91,20 @@ export default function PaywallScreen() {
 		if (selectedPlan === 'annual') targetPackage = annualPkg;
 		else if (selectedPlan === 'monthly') targetPackage = monthlyPkg;
 		else if (selectedPlan === 'lifetime') targetPackage = lifetimePkg;
-		if (!targetPackage) targetPackage = currentPackages[0];
+		if (!targetPackage && currentPackages.length > 0) targetPackage = currentPackages[0];
 
 		let success = false;
 		if (targetPackage) {
 			success = await purchasePackage(targetPackage);
 		} else {
-			// Mock / Dev fallback
-			success = await purchasePackage({} as any);
+			if (typeof __DEV__ !== 'undefined' && __DEV__) {
+				success = await purchasePackage({ identifier: selectedPlan } as any);
+			} else {
+				Alert.alert(
+					'Product Unavailable',
+					'Unable to connect to store products. Please check your internet connection or try again shortly.'
+				);
+			}
 		}
 
 		setIsProcessing(false);

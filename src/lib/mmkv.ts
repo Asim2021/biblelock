@@ -75,8 +75,18 @@ export const storage: StorageInterface = {
   getString: (k) => getInstance().getString(k),
   getNumber: (k) => getInstance().getNumber(k),
   getBoolean: (k) => getInstance().getBoolean(k),
-  remove: (k) => getInstance().delete(k),
-  delete: (k) => getInstance().delete(k),
+  remove: (k) => {
+    const inst = getInstance();
+    return typeof inst.remove === 'function' ? inst.remove(k) : inst.delete?.(k);
+  },
+  delete: (k) => {
+    const inst = getInstance();
+    if (typeof inst.remove === 'function') {
+      inst.remove(k);
+    } else if (typeof inst.delete === 'function') {
+      inst.delete(k);
+    }
+  },
   clearAll: () => getInstance().clearAll?.(),
 };
 

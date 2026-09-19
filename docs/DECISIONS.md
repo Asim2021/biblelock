@@ -597,3 +597,38 @@ Pre-release security audit identified 2 high, 3 medium, and 4 low findings acros
 - RevenueCat `EntitlementVerificationMode` should be upgraded to `ENFORCED` once telemetry proves low `FAILED` rate.
 - Rotate Supabase credentials in dashboard (treat as compromised since they were on-disk).
 
+---
+
+## [DEC-017] Fix MMKV v4 Method Signature & Purchase Flow Hardening
+
+- **Date:** 2026-09-20
+- **Status:** Validated
+- **Related Task:** TASK-031
+
+### 1. Problem / Trigger
+Tapping "Unlock Sanctuary" or "Restore Purchases" in `paywall.tsx` failed with `[Purchases] Purchase failed: undefined is not a function`. Additionally, RevenueCat SDK logged warnings regarding remote config blob disk cache on Android.
+
+### 2. Alternatives Evaluated
+- Downgrade `react-native-mmkv` to v3: Rejected; v4 is required for Nitro Modules and React Native 0.86 New Architecture.
+- Keep `storage.delete(k)` mapped to `inst.delete(k)`: Crashes because MMKV v4 C++ HybridObject only exposes `remove(key: string): boolean`.
+
+### 3. Decision & Trade-offs
+- In `src/lib/mmkv.ts`, update `storage.remove` and `storage.delete` to check `typeof inst.remove === 'function'` and call `inst.remove(k)` with fallback to `inst.delete(k)`.
+- In `src/lib/purchases.ts`, add explicit parameter validation in `purchasePackage(pkg)` to prevent empty objects (`{}`) from being passed into the native module.
+- In `src/app/paywall.tsx`, use direct package accessors (`offerings?.current?.annual`, `monthly`, `lifetime`) and guard the fallback flow.
+- Clarified that Android `Failed to persist remote config blob` log is non-fatal SDK caching behavior.
+
+### 4. Implementation Details
+- `src/lib/mmkv.ts`: Updated `storage.remove` and `storage.delete` adapters.
+- `src/lib/purchases.ts`: Added validation for `pkg?.identifier` and robust error message extraction.
+- `src/app/paywall.tsx`: Added `isLoading` destructuring and safe dev/production fallback handling.
+
+### 5. Proof of Improvement
+- `npx tsc --noEmit`: 0 errors.
+- `code-review-graph update`: 29 files updated, 104 nodes, 1033 edges indexed.
+- `setDevOverride(null)` in `purchases.ts` now deletes keys without throwing `TypeError`.
+
+### 6. Lessons & Downstream Impact
+- When updating or abstracting native modules across major versions (e.g. MMKV v3 to v4 with Nitro), always check the C++ / TypeScript interface specs (`MMKV.nitro.ts`) for renamed methods (such as `delete` -> `remove`).
+
+

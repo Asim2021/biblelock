@@ -149,17 +149,20 @@
   - **MED-2:** Enabled `EntitlementVerificationMode.INFORMATIONAL` in `Purchases.configure()` for MITM response verification.
   - **LOW-2:** Redacted hardcoded RevenueCat test key from `docs/STATUS.md` and `docs/CHANGELOG.md`.
   - **LOW-4:** Added type validation (string book, positive integer chapter/verse) to deep link notification handler in `_layout.tsx`.
+- [x] `TASK-031`: Fix MMKV v4 Method Signature & Purchase Flow Hardening (`DEC-017`):
+  - Fixed `storage.delete(k)` and `storage.remove(k)` in `src/lib/mmkv.ts` to call native `inst.remove(k)` (MMKV v4 Nitro specification).
+  - Resolved `[Purchases] Purchase failed: undefined is not a function` in `setDevOverride(null)` during purchase/restore calls.
+  - Guarded `purchasePackage` in `src/lib/purchases.ts` against null/missing package objects.
+  - Hardened `paywall.tsx` package discovery with direct accessors (`annual`, `monthly`, `lifetime`) and fallback protection.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- Metro bundling validated without missing module errors.
-- `DEC-016` documented in `docs/DECISIONS.md`.
-- All 6 security findings fixed in source.
+- `code-review-graph update`: Index updated cleanly.
+- `DEC-017` recorded in `docs/DECISIONS.md`.
 
 ## Session Handoff Notes
 
-- Entire repository is clean, lean, and strictly offline-first.
-- All dead Supabase secrets removed from `.env`. **Rotate keys in Supabase dashboard.**
-- Dev premium override (`Simulate Free/Pro`) is now `__DEV__`-gated — cannot bypass paywall in production.
-- RevenueCat SDK now uses `INFORMATIONAL` entitlement verification and production-only error logging.
+- Root cause of `undefined is not a function` was `src/lib/mmkv.ts` delegating to `inst.delete(k)` which was renamed to `remove(k)` in `react-native-mmkv` v4.
+- `setDevOverride(null)` in `purchasePackage` / `restorePurchases` now executes cleanly.
+- Remote config blob disk write error on Android is non-fatal internal SDK cache behavior.

@@ -1,5 +1,22 @@
 # Project Changelog & Verified Outcomes
  
+## [1.0.24] - 2026-09-20
+ 
+### Fixed
+- **MMKV v4 `remove` vs `delete` Signature Alignment (`src/lib/mmkv.ts`, `DEC-017`):**
+  - Resolved `[Purchases] Purchase failed: undefined is not a function` during subscription and restore attempts.
+  - Aligned `storage.delete(k)` and `storage.remove(k)` with `react-native-mmkv` v4 Nitro HybridObject interface which exposes `remove(key: string): boolean`.
+  - Added dual-compatibility check for `inst.remove` and `inst.delete`.
+- **Purchase Flow & Package Resolution Hardening (`src/lib/purchases.ts`, `src/app/paywall.tsx`):**
+  - Added strict parameter validation to `purchasePackage(pkg)` in `purchases.ts` preventing empty `{}` objects from reaching the native RevenueCat bridge.
+  - Updated `paywall.tsx` to utilize direct package accessors (`offerings?.current?.annual`, `monthly`, `lifetime`) with safe dev-mode fallback.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- `code-review-graph update`: Index cleanly synchronized.
+
+---
+
 ## [1.0.23] - 2026-09-20
  
 ### Added & Improved

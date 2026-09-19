@@ -159,14 +159,24 @@ export function usePurchases(): PurchasesState {
       return true;
     }
 
+    if (!pkg || !pkg.identifier) {
+      console.warn('[Purchases] Cannot purchase: package is undefined or missing an identifier');
+      if (typeof __DEV__ !== 'undefined' && __DEV__) {
+        console.info('[Purchases] DEV mode: granting pro dev override for missing package');
+        setDevOverride('pro');
+        return true;
+      }
+      return false;
+    }
+
     try {
       setDevOverride(null);
       const { customerInfo: updatedInfo } = await Purchases.purchasePackage(pkg);
       setCustomerInfo(updatedInfo);
       return checkEntitlements(updatedInfo);
     } catch (e: any) {
-      if (!e.userCancelled) {
-        console.warn('[Purchases] Purchase failed:', e.message);
+      if (!e?.userCancelled) {
+        console.warn('[Purchases] Purchase failed:', e?.message || e);
       }
       return false;
     }
