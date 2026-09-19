@@ -106,6 +106,8 @@ export const STORAGE_KEYS = {
   BOOKMARKS: 'user_bookmarks',
   COLLECTIONS: 'user_collections',
   THEME_MODE: 'theme_mode',
+  DAILY_VERSE_NOTIFICATIONS_ENABLED: 'daily_verse_notifications_enabled',
+  DAILY_VERSE_NOTIFICATION_COUNT: 'daily_verse_notification_count',
 } as const;
 
 // Default Presets
@@ -155,6 +157,8 @@ export function addReadingSeconds(secondsDelta: number, dateKey: string = getTod
   return updated;
 }
 
+const translationListeners = new Set<(tr: 'WEB' | 'KJV') => void>();
+
 export function getBibleTranslation(): 'WEB' | 'KJV' {
   const val = storage.getString(STORAGE_KEYS.TRANSLATION);
   return val === 'KJV' ? 'KJV' : 'WEB';
@@ -162,6 +166,31 @@ export function getBibleTranslation(): 'WEB' | 'KJV' {
 
 export function setBibleTranslation(translation: 'WEB' | 'KJV'): void {
   storage.set(STORAGE_KEYS.TRANSLATION, translation);
+  translationListeners.forEach((fn) => fn(translation));
+}
+
+export function subscribeBibleTranslation(listener: (tr: 'WEB' | 'KJV') => void): () => void {
+  translationListeners.add(listener);
+  return () => {
+    translationListeners.delete(listener);
+  };
+}
+
+export function getDailyVerseNotificationsEnabled(): boolean {
+  return storage.getBoolean(STORAGE_KEYS.DAILY_VERSE_NOTIFICATIONS_ENABLED) ?? false;
+}
+
+export function setDailyVerseNotificationsEnabled(enabled: boolean): void {
+  storage.set(STORAGE_KEYS.DAILY_VERSE_NOTIFICATIONS_ENABLED, enabled);
+}
+
+export function getDailyVerseNotificationCount(): number {
+  const count = storage.getNumber(STORAGE_KEYS.DAILY_VERSE_NOTIFICATION_COUNT);
+  return typeof count === 'number' && count >= 1 ? count : 3;
+}
+
+export function setDailyVerseNotificationCount(count: number): void {
+  storage.set(STORAGE_KEYS.DAILY_VERSE_NOTIFICATION_COUNT, count);
 }
 
 export function getBlockedApps(): string[] {

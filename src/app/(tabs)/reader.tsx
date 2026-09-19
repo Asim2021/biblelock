@@ -9,11 +9,9 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { getBooks, getChapter, Verse } from '../../lib/bible';
+import { getBooks, getChapter, Verse, useBibleTranslation } from '../../lib/bible';
 import { useReadingTimer } from '../../lib/readingTimer';
 import {
-  getBibleTranslation,
-  setBibleTranslation,
   getLastReadPosition,
   setLastReadPosition,
   saveBookmark,
@@ -50,9 +48,7 @@ export default function ReaderScreen() {
     verse?: string;
   }>();
 
-  const [translation, setTranslationState] = useState<'WEB' | 'KJV'>(() =>
-    getBibleTranslation()
-  );
+  const [translation, setTranslationState] = useBibleTranslation();
 
   const allBooks = getBooks(translation);
 
@@ -186,7 +182,6 @@ export default function ReaderScreen() {
   // Switch translation
   const handleToggleTranslation = (newTr: 'WEB' | 'KJV') => {
     setTranslationState(newTr);
-    setBibleTranslation(newTr);
   };
 
   // Switch chapter

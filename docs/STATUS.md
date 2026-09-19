@@ -126,13 +126,23 @@
   - Page 3 of 5 (Distractions): Updated headline to "Guard your heart from the noise that steals your peace", subtitle to pausing distractions until the soul is nourished in the Bible, status subtext to "Silenced until you spend your daily time with Jesus", and limit alerts to Covenant/Sanctuary tiers.
   - Page 4 of 5 (Sanctuary): Updated headline to "Deepen your walk with Jesus", subtitle to devotion to Christ, replaced "Rocket" icon with "Bookmark", elevated feature list items to sacred focus, and refined CTAs to "Begin 7 Days in the Sanctuary (Free)" and "Continue on the Free Covenant Plan".
   - Page 5 of 5 (Activation): Updated headline to "Let's protect your time with Jesus", subtext to pausing distractions to meet with Jesus, reminder badge to "Peaceful Reminders", finish CTA to "Begin My Walk with Jesus ✨", and refined privacy modal to quiet time with Jesus.
+- [x] `TASK-028`: Daily Devotional Parity, Reactive Translation Sync & Daytime Verse Notifications (`DEC-014`):
+  - Unified card title to "Daily Devotional" on both Home and Stats pages.
+  - Upgraded Daily Devotional card with interactive `[ WEB | KJV ]` pill and dynamic verse re-resolution.
+  - Built `useBibleTranslation()` hook syncing translation changes in real-time across Home, Stats, Reader, and Settings.
+  - Implemented daytime local verse push notifications with strict 7:00 AM – 10:00 PM quiet-hours guarantee.
+  - Deep-linked verse notification taps directly to `/reader` with auto-scroll and highlight.
+  - Added "Daily Verse Notifications" management card in Settings (1–6 Free, up to 24 Sanctuary).
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- Devotional Polish: Pages 3 to 5 fully aligned with Jesus, Bible, and Covenant/Sanctuary nomenclature with zero jargon.
+- Translation switching verified reactive across `DailyDevotionalCard`, `reader.tsx`, and `settings.tsx`.
+- Daytime notification hours mathematically distributed between 7:00 AM and 10:00 PM in local device timezone.
 
 ## Session Handoff Notes
 
-- Pages 1 through 5 of onboarding are now completely refined with warm, faith-affirming devotional copy and unified typography.
+- Daily Devotional cards on Home and Stats are unified and interactive with 1-tap WEB/KJV switching.
+- Disciples can configure 1 to 6 (Free) or up to 24 (Sanctuary) daytime devotional verse notifications in Settings that link directly to Scripture reading.
+
 

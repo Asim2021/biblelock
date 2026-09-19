@@ -467,4 +467,52 @@ Selected **Option B**. Kept the fast, clean 15-minute increment habit-building g
 ### 6. Lessons & Downstream Impact
 Always surface onboarding habit preferences in post-onboarding settings so users maintain continuous agency over their notifications and routine.
 
+---
+
+## [DEC-014] Daily Devotional Title Parity, Globally Reactive Bible Translation Sync, and Daytime Verse Push Notifications
+
+- **Date:** 2026-09-20
+- **Status:** Validated
+- **Related Task / Baseline:** STATUS.md (TASK-028), implementation_plan.md
+
+### 1. Problem / Trigger (Why the Original Plan Changed)
+1. **Title Inconsistency**: The Daily Devotional card was titled "Daily Devotional" on the Home tab (`index.tsx`), but titled "Daily Scripture" on the Stats tab (`stats.tsx`).
+2. **Translation Inflexibility**: The translation indicator on the Daily Devotional card was a non-interactive static text badge (`<Text>{translation}</Text>`). Furthermore, translation state across `DailyDevotionalCard`, `reader.tsx`, and `settings.tsx` lived in disconnected local states without reactive cross-screen propagation.
+3. **Daily Verse Notification Request**: The user requested a feature allowing disciples to receive curated Scripture verses via push notifications throughout the day (1–6 on Free tier, up to 24 on Paid tier), with taps landing directly on that verse, and guaranteed delivery strictly during daytime waking hours (7:00 AM to 10:00 PM) across any user timezone (USA, India, etc.) without night disturbance.
+
+### 2. Alternatives Evaluated
+- **Option A (Remote Cloud Push Server with Cron and Timezone Tracking):** Host a backend server, collect APNs/FCM device tokens, query timezone offsets, and trigger remote pushes.
+  - *Cons:* Directly violates DEC-011 (pure offline-first storage mode); introduces server maintenance costs, network failure points, and unnecessary privacy exposure.
+- **Option B (Native On-Device `expo-notifications` with Local Math Distribution):** Use local notification scheduling with native `DAILY` triggers.
+  - *Pros:* 100% offline-first; automatically adheres to device clock in the user's native local timezone without server math; zero infrastructure cost; instant responsiveness.
+
+### 3. Decision & Trade-offs
+Selected **Option B**.
+1. Unified the card title to "Daily Devotional" across Home and Stats.
+2. Built `useBibleTranslation()` hook backed by MMKV listeners in `mmkv.ts` and `bible.ts`.
+3. Upgraded `DailyDevotionalCard.tsx` with an interactive `[ WEB | KJV ]` pill and `verseIndex` tracking for instant verse re-resolution upon switching.
+4. Implemented `scheduleDailyVerseNotifications` strictly within 7:00 AM – 10:00 PM waking hours (`calculateDaytimeHours`).
+5. Connected `Notifications.addNotificationResponseReceivedListener` in `_layout.tsx` for 1-tap deep-linking directly to `/reader` with book, chapter, and verse auto-scrolled and highlighted.
+6. Added a comprehensive "Daily Verse Notifications" management card in Settings with frequency controls (1–6 Free, up to 24 Sanctuary), stepper, quick presets, and live schedule preview.
+
+### 4. Implementation Details
+- `src/lib/mmkv.ts`: Added `subscribeBibleTranslation` listener pattern, `DAILY_VERSE_NOTIFICATIONS_ENABLED`, and `DAILY_VERSE_NOTIFICATION_COUNT` keys and helpers.
+- `src/lib/bible.ts`: Exported `INSPIRATIONAL_VERSES`, `resolveVerseItem`, and `useBibleTranslation` hook.
+- `src/components/DailyDevotionalCard.tsx`: Replaced static text with interactive `[ WEB | KJV ]` toggle pill and reactive translation hook.
+- `src/lib/scriptureShield.ts`: Added `calculateDaytimeHours`, `cancelDailyVerseNotifications`, and `scheduleDailyVerseNotifications`. Protected evening reminders from canceling verse notifications.
+- `src/app/_layout.tsx`: Added notification response deep-link listener routing to `/reader`, and synced verse notifications on boot.
+- `src/app/(tabs)/reader.tsx` & `src/app/(tabs)/settings.tsx`: Wired `useBibleTranslation` for real-time synchronization across all tabs.
+- `src/app/(tabs)/settings.tsx`: Added "Daily Verse Notifications" settings UI card.
+- `src/app/(tabs)/stats.tsx`: Standardized `<DailyDevotionalCard />` title.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit`: Clean compilation with 0 errors across workspace.
+- 1-tap translation switching updates card text, Settings selection, and Reader simultaneously.
+- Daytime notifications strictly bound between 7:00 AM and 10:00 PM in local time.
+- Tapping verse notification opens `/reader` with targeted chapter and verse highlighted.
+
+### 6. Lessons & Downstream Impact
+Using on-device local scheduling with mathematical daytime distribution is the cleanest, lowest-overhead way to deliver timezone-aware notifications without sacrificing privacy or an offline-first architecture.
+
+
 

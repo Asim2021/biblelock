@@ -1,5 +1,28 @@
 # Project Changelog & Verified Outcomes
  
+## [1.0.22] - 2026-09-20
+ 
+### Added & Improved
+- **Daily Devotional Title Consistency & Interactive Translation Pill (`DailyDevotionalCard.tsx`, `stats.tsx`):**
+  - Standardized card title to *"Daily Devotional"* across both Home and Stats pages.
+  - Replaced static translation text with an interactive `[ WEB | KJV ]` toggle pill.
+  - Tracked `verseIndex` so switching translation preserves the current verse and immediately renders its text in the selected version.
+- **Global Reactive Bible Translation Sync (`bible.ts`, `mmkv.ts`, `reader.tsx`, `settings.tsx`):**
+  - Created `useBibleTranslation()` hook backed by MMKV subscriber listeners.
+  - Switching translations in the Daily Devotional card, Reader header, or Settings instantly updates all screens in real-time.
+- **Daytime Devotional Verse Push Notifications (`scriptureShield.ts`, `settings.tsx`, `_layout.tsx`):**
+  - Implemented on-device local push notifications delivering curated Scripture verses throughout the day.
+  - Frequency controls: 1 to 6 on Free Covenant tier; up to 24 on Sanctuary tier.
+  - **Daytime Quiet-Hours Guarantee**: Mathematical distribution strictly between 7:00 AM and 10:00 PM in the user's native local device timezone; 10:01 PM – 6:59 AM is 100% silent.
+  - **1-Tap Direct Verse Deep Linking**: Tapping any verse notification routes straight into `/reader` with auto-scroll and radiant gold highlighting.
+  - **Settings Management Card**: Complete UI with master switch, quiet hours badge, stepper controls, preset chips, and live schedule preview.
+
+### Verified Impact
+- `npx tsc --noEmit`: Clean compilation with 0 errors across entire workspace.
+- `DEC-014` fully documented.
+
+---
+
 ## [1.0.21] - 2026-09-20
  
 ### Added & Improved

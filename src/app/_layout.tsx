@@ -23,9 +23,15 @@ import {
 } from '@expo-google-fonts/jetbrains-mono';
 
 import '../../global.css';
+import * as Notifications from 'expo-notifications';
 import { AuthProvider, useAuth } from '../lib/auth';
 import { ScriptureShield } from '../lib/scriptureShield';
-import { isOnboardingCompleted } from '../lib/mmkv';
+import {
+  isOnboardingCompleted,
+  getDailyVerseNotificationsEnabled,
+  getDailyVerseNotificationCount,
+  getBibleTranslation,
+} from '../lib/mmkv';
 import { initRevenueCat } from '../lib/purchases';
 
 // Keep splash screen visible while loading resources
@@ -35,6 +41,42 @@ function RootNavigation() {
   const { user, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  // Listen for notification taps and direct deep linking to the exact verse
+  useEffect(() => {
+    const handleNotificationData = (data: any) => {
+      if (data?.book && data?.chapter && data?.verse) {
+        router.push({
+          pathname: '/reader',
+          params: {
+            book: data.book,
+            chapter: data.chapter,
+            verse: data.verse,
+          },
+        } as any);
+      } else if (data?.url === 'bibleunlock://reader') {
+        router.push('/reader' as any);
+      }
+    };
+
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data;
+      handleNotificationData(data);
+    });
+
+    Notifications.getLastNotificationResponseAsync()
+      .then((response) => {
+        if (response) {
+          const data = response.notification.request.content.data;
+          handleNotificationData(data);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      sub.remove();
+    };
+  }, [router]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -104,6 +146,12 @@ export default function RootLayout() {
       SplashScreen.hideAsync().catch(() => {});
       ScriptureShield.scheduleEveningReminder().catch(() => {});
       ScriptureShield.checkAndTriggerNotification().catch(() => {});
+      if (getDailyVerseNotificationsEnabled()) {
+        ScriptureShield.scheduleDailyVerseNotifications(
+          getDailyVerseNotificationCount(),
+          getBibleTranslation()
+        ).catch(() => {});
+      }
       initRevenueCat();
     }
   }, [fontsLoaded, fontError]);

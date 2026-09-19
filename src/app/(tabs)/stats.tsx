@@ -523,7 +523,7 @@ export default function StatsScreen() {
 
         {/* Daily Devotional Card */}
         <View className="my-3">
-          <DailyDevotionalCard title="Daily Scripture" />
+          <DailyDevotionalCard />
         </View>
 
         {/* Section: Lifetime Activity */}

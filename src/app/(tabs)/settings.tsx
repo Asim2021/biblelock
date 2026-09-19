@@ -33,6 +33,8 @@ import {
   Sun,
   X,
   RotateCcw,
+  Minus,
+  Sparkles,
 } from 'lucide-react-native';
 import { usePurchases } from '../../lib/purchases';
 import { useFeatureGate } from '../../lib/useFeatureGate';
@@ -41,8 +43,6 @@ import {
   getUserName,
   getDailyGoalMinutes,
   setDailyGoalMinutes,
-  getBibleTranslation,
-  setBibleTranslation,
   getBlockedApps,
   setBlockedApps,
   DEFAULT_BLOCKED_APPS,
@@ -53,7 +53,13 @@ import {
   ThemeMode,
   getScheduledReadingTimes,
   setScheduledReadingTimes,
+  getDailyVerseNotificationsEnabled,
+  setDailyVerseNotificationsEnabled,
+  getDailyVerseNotificationCount,
+  setDailyVerseNotificationCount,
 } from '../../lib/mmkv';
+import { useBibleTranslation } from '../../lib/bible';
+import { ScriptureShield, calculateDaytimeHours } from '../../lib/scriptureShield';
 import { AppIcon } from '../../components/AppIcon';
 import { useTheme } from '../../lib/themeContext';
 import { Card } from '../../components/Card';
@@ -61,6 +67,13 @@ import { Button } from '../../components/Button';
 import { TimePickerModal } from '../../components/TimePickerModal';
 
 const GOAL_OPTIONS = [5, 10, 15, 30];
+
+function formatSlotTime(h: number, m: number): string {
+  const period = h >= 12 ? 'PM' : 'AM';
+  const displayHour = h % 12 === 0 ? 12 : h % 12;
+  const displayMin = m < 10 ? `0${m}` : `${m}`;
+  return `${displayHour}:${displayMin} ${period}`;
+}
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -72,8 +85,12 @@ export default function SettingsScreen() {
   const [dailyGoal, setDailyGoal] = useState(() => getDailyGoalMinutes());
   const [showCustomGoalInput, setShowCustomGoalInput] = useState(false);
   const [customGoalText, setCustomGoalText] = useState('');
-  const [translation, setTranslationState] = useState<'WEB' | 'KJV'>(() =>
-    getBibleTranslation()
+  const [translation, setTranslationState] = useBibleTranslation();
+  const [verseNotifsEnabled, setVerseNotifsEnabled] = useState(() =>
+    getDailyVerseNotificationsEnabled()
+  );
+  const [verseNotifCount, setVerseNotifCount] = useState(() =>
+    getDailyVerseNotificationCount()
   );
   const [blockedList, setBlockedListState] = useState<string[]>(() =>
     getBlockedApps()
@@ -178,9 +195,44 @@ export default function SettingsScreen() {
     setShowCustomGoalInput(false);
   };
 
-  const handleSelectTranslation = (tr: 'WEB' | 'KJV') => {
+  const handleSelectTranslation = async (tr: 'WEB' | 'KJV') => {
     setTranslationState(tr);
-    setBibleTranslation(tr);
+    if (verseNotifsEnabled) {
+      await ScriptureShield.scheduleDailyVerseNotifications(verseNotifCount, tr);
+    }
+  };
+
+  const handleToggleVerseNotifications = async (val: boolean) => {
+    setVerseNotifsEnabled(val);
+    setDailyVerseNotificationsEnabled(val);
+    if (val) {
+      const success = await ScriptureShield.scheduleDailyVerseNotifications(
+        verseNotifCount,
+        translation
+      );
+      if (!success) {
+        Alert.alert(
+          'Permission Needed',
+          'Please enable notifications so Bible Unlock can deliver your daily devotional verses.'
+        );
+      }
+    } else {
+      await ScriptureShield.cancelDailyVerseNotifications();
+    }
+  };
+
+  const handleUpdateVerseNotifCount = async (count: number) => {
+    if (count > 6 && !isPremium) {
+      if (!requirePremium('Receive up to 24 daily verses')) {
+        return;
+      }
+    }
+    const clamped = Math.max(1, Math.min(count, 24));
+    setVerseNotifCount(clamped);
+    setDailyVerseNotificationCount(clamped);
+    if (verseNotifsEnabled) {
+      await ScriptureShield.scheduleDailyVerseNotifications(clamped, translation);
+    }
   };
 
   const handleToggleApp = (pkgName: string) => {
@@ -1244,6 +1296,238 @@ export default function SettingsScreen() {
                 thumbColor={eveningReminder ? '#ffffff' : colors.textMuted}
               />
             </View>
+          </Card>
+        </View>
+
+        {/* Daily Devotional Verse Notifications */}
+        <View className="mb-5">
+          <View className="flex-row items-center justify-between mb-2 px-1">
+            <Text
+              style={{
+                fontSize: 11,
+                fontFamily: 'Inter_600SemiBold',
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                color: colors.textSecondary,
+              }}
+            >
+              Daily Verse Notifications
+            </Text>
+            {isPremium && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: colors.accentBg,
+                  paddingHorizontal: 8,
+                  paddingVertical: 2,
+                  borderRadius: 6,
+                }}
+              >
+                <Crown size={10} color={colors.accent} style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 10, fontFamily: 'Inter_700Bold', color: colors.accent }}>
+                  SANCTUARY
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <Card variant="dark" style={{ padding: 16 }}>
+            {/* Master Toggle */}
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 mr-3">
+                <View className="flex-row items-center">
+                  <Sparkles size={16} color={colors.accent} style={{ marginRight: 6 }} />
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      fontFamily: 'Inter_600SemiBold',
+                      color: colors.textPrimary,
+                    }}
+                  >
+                    Devotional Verses to Phone
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4, lineHeight: 17 }}>
+                  Receive inspiring Scripture notifications spaced through your day. Tap any notification to read in context.
+                </Text>
+              </View>
+              <Switch
+                value={verseNotifsEnabled}
+                onValueChange={handleToggleVerseNotifications}
+                trackColor={{ false: colors.surfaceSubtle, true: colors.accent }}
+                thumbColor={verseNotifsEnabled ? '#ffffff' : colors.textMuted}
+              />
+            </View>
+
+            {/* Quiet Hours Guarantee Banner */}
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: colors.surfaceSubtle,
+                padding: 10,
+                borderRadius: 10,
+                marginTop: 14,
+                borderWidth: 1,
+                borderColor: colors.borderSubtle,
+              }}
+            >
+              <Moon size={14} color={colors.accent} style={{ marginRight: 8 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 11, fontFamily: 'Inter_600SemiBold', color: colors.textPrimary }}>
+                  Daytime Delivery Only (7:00 AM – 10:00 PM)
+                </Text>
+                <Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 1 }}>
+                  Automatically adapts to your local timezone. 10:00 PM to 7:00 AM is 100% quiet.
+                </Text>
+              </View>
+            </View>
+
+            {verseNotifsEnabled && (
+              <View style={{ marginTop: 16 }}>
+                {/* Frequency Header & Stepper */}
+                <View className="flex-row items-center justify-between mb-3">
+                  <View>
+                    <Text
+                      style={{
+                        fontSize: 13,
+                        fontFamily: 'Inter_600SemiBold',
+                        color: colors.textPrimary,
+                      }}
+                    >
+                      Verses Per Day
+                    </Text>
+                    <Text style={{ fontSize: 11, color: colors.textSecondary }}>
+                      {!isPremium ? '1 to 6 on Free • Up to 24 on Sanctuary' : 'Up to 24 on Sanctuary'}
+                    </Text>
+                  </View>
+
+                  {/* Stepper Controls */}
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: colors.surfaceSubtle,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      padding: 2,
+                    }}
+                  >
+                    <Pressable
+                      onPress={() => handleUpdateVerseNotifCount(verseNotifCount - 1)}
+                      disabled={verseNotifCount <= 1}
+                      hitSlop={6}
+                      accessibilityRole="button"
+                      accessibilityLabel="Decrease verse notifications"
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        opacity: verseNotifCount <= 1 ? 0.3 : 1,
+                      }}
+                    >
+                      <Minus size={15} color={colors.textPrimary} />
+                    </Pressable>
+
+                    <View style={{ minWidth: 36, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
+                      <Text
+                        style={{
+                          fontSize: 15,
+                          fontFamily: 'Inter_700Bold',
+                          color: colors.accent,
+                        }}
+                      >
+                        {verseNotifCount}
+                      </Text>
+                    </View>
+
+                    <Pressable
+                      onPress={() => handleUpdateVerseNotifCount(verseNotifCount + 1)}
+                      hitSlop={6}
+                      accessibilityRole="button"
+                      accessibilityLabel="Increase verse notifications"
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {!isPremium && verseNotifCount >= 6 ? (
+                        <Lock size={13} color={colors.accent} />
+                      ) : (
+                        <Plus size={15} color={colors.textPrimary} />
+                      )}
+                    </Pressable>
+                  </View>
+                </View>
+
+                {/* Quick Presets Chips */}
+                <View className="flex-row justify-between mb-3">
+                  {[1, 2, 3, 6, 12, 24].map((n) => {
+                    const isLocked = !isPremium && n > 6;
+                    const isSelected = verseNotifCount === n;
+                    return (
+                      <Pressable
+                        key={n}
+                        onPress={() => handleUpdateVerseNotifCount(n)}
+                        style={{
+                          flex: 1,
+                          marginHorizontal: 2,
+                          paddingVertical: 8,
+                          borderRadius: 8,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: isSelected ? colors.accentBg : colors.surfaceSubtle,
+                          borderWidth: 1,
+                          borderColor: isSelected ? colors.accent : colors.borderSubtle,
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_500Medium',
+                              color: isSelected ? colors.accent : colors.textPrimary,
+                            }}
+                          >
+                            {n}x
+                          </Text>
+                          {isLocked && (
+                            <Lock size={9} color={colors.accent} style={{ marginLeft: 2 }} />
+                          )}
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                {/* Schedule Preview */}
+                <View
+                  style={{
+                    backgroundColor: colors.surfaceSubtle,
+                    borderRadius: 10,
+                    padding: 10,
+                    borderWidth: 1,
+                    borderColor: colors.borderSubtle,
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontFamily: 'Inter_600SemiBold', color: colors.textSecondary, marginBottom: 4 }}>
+                    Today's Daytime Schedule ({translation}):
+                  </Text>
+                  <Text style={{ fontSize: 12, color: colors.textPrimary, fontFamily: 'Inter_500Medium', lineHeight: 18 }}>
+                    {calculateDaytimeHours(verseNotifCount)
+                      .map((s) => formatSlotTime(s.hour, s.minute))
+                      .join(' • ')}
+                  </Text>
+                </View>
+              </View>
+            )}
           </Card>
         </View>
 

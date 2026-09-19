@@ -1,5 +1,11 @@
+import { useState, useEffect, useCallback } from 'react';
 import kjvData from '../../assets/bible/kjv.json';
 import webData from '../../assets/bible/web.json';
+import {
+  getBibleTranslation,
+  setBibleTranslation,
+  subscribeBibleTranslation,
+} from './mmkv';
 
 export interface Verse {
   verse: number;
@@ -68,7 +74,7 @@ export function getChapter(
 
 // Fixed rotation for daily verse
 // Curated inspirational verses
-const INSPIRATIONAL_VERSES = [
+export const INSPIRATIONAL_VERSES = [
   { book: 'Psalms', chapter: 23, verseNum: 1 },
   { book: 'John', chapter: 3, verseNum: 16 },
   { book: 'Philippians', chapter: 4, verseNum: 13 },
@@ -99,7 +105,7 @@ export interface DailyVerseItem {
   index: number;
 }
 
-function resolveVerseItem(
+export function resolveVerseItem(
   translation: 'KJV' | 'WEB',
   index: number
 ): DailyVerseItem {
@@ -140,5 +146,19 @@ export function getRandomVerse(
     nextIdx = (nextIdx + 1) % INSPIRATIONAL_VERSES.length;
   }
   return resolveVerseItem(translation, nextIdx);
+}
+
+export function useBibleTranslation() {
+  const [translation, setTranslation] = useState<'WEB' | 'KJV'>(getBibleTranslation);
+
+  useEffect(() => {
+    return subscribeBibleTranslation(setTranslation);
+  }, []);
+
+  const changeTranslation = useCallback((tr: 'WEB' | 'KJV') => {
+    setBibleTranslation(tr);
+  }, []);
+
+  return [translation, changeTranslation] as const;
 }
 

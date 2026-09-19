@@ -2,9 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Sparkles, Share2, ExternalLink, RotateCcw } from 'lucide-react-native';
-import { getBibleTranslation } from '../lib/mmkv';
-import { getDailyVerse, getRandomVerse, DailyVerseItem } from '../lib/bible';
-
+import { getDailyVerse, getRandomVerse, resolveVerseItem, useBibleTranslation } from '../lib/bible';
 import { useTheme } from '../lib/themeContext';
 
 interface DailyDevotionalCardProps {
@@ -18,14 +16,16 @@ export function DailyDevotionalCard({
 }: DailyDevotionalCardProps) {
   const router = useRouter();
   const { colors } = useTheme();
-  const translation = getBibleTranslation();
-  const [verse, setVerse] = useState<DailyVerseItem>(() => getDailyVerse(translation));
+  const [translation, setTranslation] = useBibleTranslation();
+  const [verseIndex, setVerseIndex] = useState<number>(() => getDailyVerse(translation).index);
   const [isRotating, setIsRotating] = useState(false);
+
+  const verse = resolveVerseItem(translation, verseIndex);
 
   const handleRefresh = () => {
     setIsRotating(true);
-    const next = getRandomVerse(translation, verse.index);
-    setVerse(next);
+    const next = getRandomVerse(translation, verseIndex);
+    setVerseIndex(next.index);
     setTimeout(() => setIsRotating(false), 300);
   };
 
@@ -78,9 +78,63 @@ export function DailyDevotionalCard({
             {title}
           </Text>
         </View>
-        <Text style={{ fontSize: 11, color: colors.textMuted }}>
-          {translation}
-        </Text>
+
+        {/* Translation Toggle Pill */}
+        <View
+          style={{
+            flexDirection: 'row',
+            backgroundColor: colors.surfaceSubtle,
+            borderRadius: 8,
+            padding: 2,
+            borderWidth: 1,
+            borderColor: colors.border,
+          }}
+        >
+          <Pressable
+            onPress={() => setTranslation('WEB')}
+            hitSlop={6}
+            accessibilityRole="button"
+            accessibilityLabel="Switch to WEB translation"
+            style={{
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+              borderRadius: 6,
+              backgroundColor: translation === 'WEB' ? colors.accent : 'transparent',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 11,
+                fontFamily: 'Inter_700Bold',
+                color: translation === 'WEB' ? '#141413' : colors.textSecondary,
+              }}
+            >
+              WEB
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setTranslation('KJV')}
+            hitSlop={6}
+            accessibilityRole="button"
+            accessibilityLabel="Switch to KJV translation"
+            style={{
+              paddingHorizontal: 8,
+              paddingVertical: 3,
+              borderRadius: 6,
+              backgroundColor: translation === 'KJV' ? colors.accent : 'transparent',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 11,
+                fontFamily: 'Inter_700Bold',
+                color: translation === 'KJV' ? '#141413' : colors.textSecondary,
+              }}
+            >
+              KJV
+            </Text>
+          </Pressable>
+        </View>
       </View>
 
       {showSubtitle && (
