@@ -551,7 +551,7 @@ export interface VerseCollection {
 }
 
 export interface Bookmark {
-  id: string;
+  id: string; // format: bm_${bookName}_${chapter}_${verse}
   title: string;
   bookIndex: number;
   bookName: string;
@@ -559,30 +559,43 @@ export interface Bookmark {
   verseNumber: number;
   verseText: string;
   color: string;
-  collectionId?: string;
-  collectionName?: string;
+  collectionIds: string[]; // which collections this verse belongs to
+  collectionId?: string; // deprecated, migrated to collectionIds
+  collectionName?: string; // deprecated
   note?: string;
   createdAt: number;
   isPinnedLastRead?: boolean;
 }
 
-export const DEFAULT_COLLECTIONS: VerseCollection[] = [
-  { id: 'prayers', name: 'Daily Prayers', color: '#f59e0b', createdAt: 1 },
-  { id: 'peace', name: 'Peace & Comfort', color: '#d97706', createdAt: 2 },
-  { id: 'strength', name: 'Strength & Healing', color: '#10b981', createdAt: 3 },
+export const COLLECTION_COLORS = [
+  '#3b82f6', // Blue
+  '#10b981', // Green
+  '#f43f5e', // Rose
+  '#a855f7', // Purple
+  '#f59e0b', // Yellow
+  '#d97706', // Ochre / Amber
 ];
+
+export const DEFAULT_COLLECTIONS: VerseCollection[] = [];
+
+export function getBookmarkId(bookName: string, chapter: number, verse: number): string {
+  return `bm_${bookName.replace(/\s+/g, '_')}_${chapter}_${verse}`;
+}
 
 export function getCollections(): VerseCollection[] {
   const json = storage.getString(STORAGE_KEYS.COLLECTIONS);
-  if (!json) {
-    storage.set(STORAGE_KEYS.COLLECTIONS, JSON.stringify(DEFAULT_COLLECTIONS));
-    return DEFAULT_COLLECTIONS;
-  }
+  if (!json) return [];
   try {
     const list = JSON.parse(json);
-    return Array.isArray(list) && list.length > 0 ? list : DEFAULT_COLLECTIONS;
+    if (!Array.isArray(list)) return [];
+    // Migration: purge legacy default collections so user starts with clean slate
+    const filtered = list.filter((c) => c.id !== 'prayers' && c.id !== 'peace' && c.id !== 'strength');
+    if (filtered.length !== list.length) {
+      storage.set(STORAGE_KEYS.COLLECTIONS, JSON.stringify(filtered));
+    }
+    return filtered;
   } catch {
-    return DEFAULT_COLLECTIONS;
+    return [];
   }
 }
 
@@ -596,13 +609,47 @@ export function deleteCollection(id: string): void {
   const list = getCollections();
   const filtered = list.filter((c) => c.id !== id);
   storage.set(STORAGE_KEYS.COLLECTIONS, JSON.stringify(filtered));
+
+  // Cascade to bookmarks: remove this collectionId from all bookmarks
+  const bookmarks = getBookmarks();
+  const updatedBookmarks: Bookmark[] = [];
+  for (const bm of bookmarks) {
+    if (bm.collectionIds && bm.collectionIds.includes(id)) {
+      const remaining = bm.collectionIds.filter((cid) => cid !== id);
+      if (remaining.length > 0) {
+        updatedBookmarks.push({ ...bm, collectionIds: remaining });
+      }
+      // If remaining.length === 0, bookmark is dropped (cascade delete)
+    } else {
+      updatedBookmarks.push(bm);
+    }
+  }
+  storage.set(STORAGE_KEYS.BOOKMARKS, JSON.stringify(updatedBookmarks));
 }
 
 export function getBookmarks(): Bookmark[] {
   const json = storage.getString(STORAGE_KEYS.BOOKMARKS);
   if (!json) return [];
   try {
-    return JSON.parse(json);
+    const list = JSON.parse(json);
+    if (!Array.isArray(list)) return [];
+    let needsRewrite = false;
+    const migrated = list.map((item: any) => {
+      let cids = Array.isArray(item.collectionIds) ? item.collectionIds : (item.collectionId ? [item.collectionId] : []);
+      // Strip legacy default collection IDs
+      const cleaned = cids.filter((cid: string) => cid !== 'prayers' && cid !== 'peace' && cid !== 'strength');
+      if (cleaned.length !== cids.length || !Array.isArray(item.collectionIds)) {
+        needsRewrite = true;
+      }
+      return {
+        ...item,
+        collectionIds: cleaned,
+      };
+    });
+    if (needsRewrite) {
+      storage.set(STORAGE_KEYS.BOOKMARKS, JSON.stringify(migrated));
+    }
+    return migrated;
   } catch {
     return [];
   }
@@ -618,6 +665,101 @@ export function deleteBookmark(id: string): void {
   const list = getBookmarks();
   const filtered = list.filter((b) => b.id !== id);
   storage.set(STORAGE_KEYS.BOOKMARKS, JSON.stringify(filtered));
+}
+
+export function getBookmarkByVerse(bookName: string, chapter: number, verse: number): Bookmark | undefined {
+  const id = getBookmarkId(bookName, chapter, verse);
+  const list = getBookmarks();
+  return list.find((b) => b.id === id || (b.bookName === bookName && b.chapterNumber === chapter && b.verseNumber === verse));
+}
+
+export function getCollectionIdsForVerse(bookName: string, chapter: number, verse: number): string[] {
+  return getBookmarkByVerse(bookName, chapter, verse)?.collectionIds || [];
+}
+
+export function saveVerseBookmark(
+  verseData: { bookIndex: number; bookName: string; chapterNumber: number; verseNumber: number; verseText: string; color?: string },
+  collectionIds: string[],
+  note?: string
+): Bookmark | null {
+  const id = getBookmarkId(verseData.bookName, verseData.chapterNumber, verseData.verseNumber);
+  if (collectionIds.length === 0) {
+    deleteBookmark(id);
+    return null;
+  }
+  const existing = getBookmarkByVerse(verseData.bookName, verseData.chapterNumber, verseData.verseNumber);
+  const bookmark: Bookmark = {
+    id,
+    title: `${verseData.bookName} ${verseData.chapterNumber}:${verseData.verseNumber}`,
+    bookIndex: verseData.bookIndex,
+    bookName: verseData.bookName,
+    chapterNumber: verseData.chapterNumber,
+    verseNumber: verseData.verseNumber,
+    verseText: verseData.verseText,
+    color: verseData.color || existing?.color || '#f59e0b',
+    collectionIds,
+    note: note !== undefined ? (note.trim() ? note.trim().slice(0, 200) : undefined) : existing?.note,
+    createdAt: existing?.createdAt || Date.now(),
+  };
+  saveBookmark(bookmark);
+  return bookmark;
+}
+
+export function addVerseToCollections(
+  verseData: { bookIndex: number; bookName: string; chapterNumber: number; verseNumber: number; verseText: string; color?: string },
+  collectionIds: string[],
+  note?: string
+): Bookmark {
+  const existing = getBookmarkByVerse(verseData.bookName, verseData.chapterNumber, verseData.verseNumber);
+  const merged = Array.from(new Set([...(existing?.collectionIds || []), ...collectionIds]));
+  return saveVerseBookmark(verseData, merged, note)!;
+}
+
+export function removeVerseFromCollection(bookmarkId: string, collectionId: string): void {
+  const list = getBookmarks();
+  const target = list.find((b) => b.id === bookmarkId);
+  if (!target) return;
+  const remainingIds = (target.collectionIds || []).filter((cid) => cid !== collectionId);
+  if (remainingIds.length === 0) {
+    deleteBookmark(bookmarkId);
+  } else {
+    saveBookmark({ ...target, collectionIds: remainingIds });
+  }
+}
+
+export function updateBookmarkNote(bookmarkId: string, note?: string): void {
+  const list = getBookmarks();
+  const target = list.find((b) => b.id === bookmarkId);
+  if (!target) return;
+  const trimmed = note?.trim() ? note.trim().slice(0, 200) : undefined;
+  saveBookmark({ ...target, note: trimmed });
+}
+
+export function getBookmarksForCollection(collectionId: string): Bookmark[] {
+  return getBookmarks().filter((b) => (b.collectionIds || []).includes(collectionId));
+}
+
+export function formatRelativeTime(timestamp: number): string {
+  const now = Date.now();
+  const diff = Math.max(0, now - timestamp);
+  const seconds = Math.floor(diff / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 60) return 'Just now';
+  if (minutes === 1) return '1 minute ago';
+  if (minutes < 60) return `${minutes} minutes ago`;
+  if (hours === 1) return '1 hour ago';
+  if (hours < 24) return `${hours} hours ago`;
+  if (days === 1) return 'Yesterday';
+  if (days < 30) return `${days} days ago`;
+
+  return new Date(timestamp).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 // Theme Settings

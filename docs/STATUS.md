@@ -177,14 +177,48 @@
   - Added bidirectional goal met handling: auto-unshields apps when goal is met or decreased below reading time; re-shields apps when goal is increased above current reading time. Preserves earned streak.
   - Added `useFocusEffect` to `src/app/(tabs)/index.tsx` to refresh data on tab focus.
 
+- [x] `TASK-036`: Library Collections Overhaul & Multi-Collection Bookmark Redesign (`DEC-021`):
+  - **Data Layer Migration & Helpers (`src/lib/mmkv.ts`):** Upgraded `Bookmark` model with `collectionIds: string[]` (replacing singular `collectionId`), added backward-compatible migration in `getBookmarks()`, composite ID indexing `getBookmarkId(book, chapter, verse)`, and added 7 CRUD helpers (`getBookmarkByVerse`, `getCollectionIdsForVerse`, `saveVerseBookmark`, `addVerseToCollections`, `removeVerseFromCollection`, `updateBookmarkNote`, `getBookmarksForCollection`, `formatRelativeTime`). Added cascade cleanup on collection delete.
+  - **Collection Picker Bottom Sheet (`src/components/BookmarkPickerSheet.tsx`):** Created full-featured bottom sheet with collection checkboxes ("Daily Prayers" pre-checked for new bookmarks), inline "+ Create New Collection" form with 6 color swatches, expandable verse note input with 200 character counter, Sanctuary tier gating (3 bookmarks, 3 collections), and confirm alert on complete uncheck.
+  - **Reader Screen Overhaul (`src/app/(tabs)/reader.tsx`):** Replaced layout-shifting top toast banner with floating absolute bottom overlay toast; wired FlatList `onViewableItemsChanged` (40% threshold) for accurate last-read verse persistence; wired bookmark button to trigger `BookmarkPickerSheet`; added tooltip pill (`[Edit]`) on tapping already bookmarked verses; added multi-collection count badge; synchronized `verseCollectionMap` on tab focus via `useFocusEffect`.
+  - **Library Screen Full-Screen Takeover (`src/app/(tabs)/library.tsx`):** Implemented full-screen collection detail takeover with back button, verse count, ↕ expand/collapse all toggle, and ⚙ sort settings; added per-verse options bottom sheet (View in Reader, View/Edit Note, Edit Collections, Copy Verse, Share Verse, Remove from Collection); added sort sheet (Date Added vs Book & Chapter order); added Note Edit modal with 200-char limit; wired `BookmarkPickerSheet` for editing collections directly from Library; removed obsolete inline preview card.
+
+- [x] `TASK-037`: Resolve Render Loops & Re-render Cascades in Reader and Home (`DEC-022`):
+  - **Reader Memoization & Effect Stabilization (`src/app/(tabs)/reader.tsx`):** Memoized `allBooks` and `currentChapterData` via `useMemo` to eliminate 66-object allocations and new references on every render. Scoped `saveCurrentLastRead` and `refreshBookmarks` so `useFocusEffect` does not re-trigger on every render. Added `extraData={verseCollectionMap}` to `<FlatList>`. Memoized `pickerVerseObject` passed to `BookmarkPickerSheet`.
+  - **Picker Sheet Dependency Scoping (`src/components/BookmarkPickerSheet.tsx`):** Scoped `useEffect` to verse identity primitives (`[visible, verse?.bookName, verse?.chapterNumber, verse?.verseNumber]`), preventing 7 state updates on every parent re-render.
+  - **Home Screen Background Polling Elimination (`src/app/(tabs)/index.tsx`):** Removed `timer.secondsRead` from `useEffect` so `loadData()` and native `AppBlocker.getStatus()` are not called every second while the user is reading in Reader.
+- [x] `TASK-038`: Free-Tier Single Collection & 5-Bookmark Quota, Zero Default Collections, and Bottom-Sheet Scroll (`DEC-023`):
+  - **Zero Default Collections & Migration (`src/lib/mmkv.ts`):** Initialized `DEFAULT_COLLECTIONS = []` and implemented automated legacy filter in `getCollections()` and `getBookmarks()` to purge obsolete hardcoded default IDs (`'prayers'`, `'peace'`, `'strength'`).
+  - **Free Tier Quota Adjustments (`src/components/BookmarkPickerSheet.tsx`, `src/app/(tabs)/library.tsx`):** Enforced 1-collection limit for Free users (`collections.length >= 1` triggers Sanctuary paywall on creating additional collections) and updated bookmark quota to 5 bookmarks for Free users (`allBookmarks.length >= 5` triggers Sanctuary paywall).
+  - **Zero Collections Empty State CTA (`src/components/BookmarkPickerSheet.tsx`):** When no collections exist, presented an empty state with a prominent golden background (`backgroundColor: colors.accent`) button `+ Create First Collection` to initiate user collection creation immediately. Styled top header `+ Create New` button with golden background.
+  - **Keyboard Scroll & Fixed Footer Architecture (`src/components/BookmarkPickerSheet.tsx`):** Anchored `Cancel`, `Done`, and `Create & Add` buttons in a fixed bottom footer outside the `ScrollView` directly above the keyboard. This guarantees action buttons are always in view and never cut off, while middle content (Name input, color swatches, collections, and note field) scrolls smoothly.
+  - **Multi-Collection Indicator Screen Overflow Fix (`src/app/(tabs)/reader.tsx`):** Constrained indicator pill to `maxWidth: '85%'` with `flexShrink: 1` and `ellipsizeMode="tail"`, preventing long multi-collection lists from overflowing the screen width. Updated bookmark icon tap to directly open the `BookmarkPickerSheet` for editing.
+
+- [x] `TASK-039`: Android System Navigation Bar Inset Compensation for Keyboard Avoidance (`DEC-024`):
+  - **Android 3-Button Navigation Bar Offset (`src/components/BookmarkPickerSheet.tsx`):** Added `navBarInset = Platform.OS === 'android' ? Math.max(insets.bottom, 56) + 16 : insets.bottom` and `effectiveKeyboardOffset = keyboardHeight > 0 ? keyboardHeight + navBarInset : 0`.
+  - **Fixed Footer Clearance above Keyboard:** Raised the sheet container above the soft keyboard and Samsung navigation bar, and provided `paddingBottom: 16` in the footer. Guarantees `Done`, `Cancel`, and `Create & Add` are 100% visible and tappable with a comfortable ~20px breathing gap above the keyboard on any Android or iOS device.
+
+- [x] `TASK-040`: Synchronous Render-Phase State Adjustment for Stale State Elimination (`DEC-025`):
+  - **Eliminated Asynchronous Effect Flash (`src/components/BookmarkPickerSheet.tsx`):** Replaced asynchronous `useEffect` state synchronization with synchronous `currentVerseKey !== prevVerseKey` render-phase adjustment.
+  - **Frame-1 Fresh State Rendering:** Tapping between verses with differing numbers of collections immediately presents the exact saved collections on frame 1 without delay or visual flicker.
+
+- [x] `TASK-041`: Calibrated Android Navigation Bar Spacing & Flush Keyboard Anchoring (`DEC-026`):
+  - **Zero-Gap Keyboard Anchoring (`src/components/BookmarkPickerSheet.tsx`):** Aligned `navBarInset` to exact 48dp on Android so the sheet sits flush on top of the keyboard without leaving an awkward gap exposing background text.
+  - **Navigation Panel Breathing Room (`src/components/BookmarkPickerSheet.tsx`):** Added dynamic `paddingBottom: 48 + 14` when keyboard is dismissed, providing 14dp of comfortable thumb space above the Android 3-button navigation panel (`||| O <`).
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `code-review-graph update`: Index updated cleanly (34 files indexed).
-- `DEC-019` and `DEC-020` recorded in `docs/DECISIONS.md`.
+- `code-review-graph update`: 30 files updated, 12 nodes, 352 edges cleanly indexed.
+- `DEC-021`, `DEC-022`, `DEC-023`, `DEC-024`, `DEC-025`, and `DEC-026` recorded in `docs/DECISIONS.md`.
 
 ## Session Handoff Notes
 
-- Home, Reader, Stats, and Settings are now 100% unified in real-time.
-- Progress ticked in Reader is immediately visible on Home and Stats without requiring app reload.
-- Changing goal in Settings re-evaluates app shielding and updates remaining minutes across all screens instantly.
+- Zero default collections active; existing devices automatically purge legacy default IDs.
+- Free tier allows strictly 1 collection and up to 5 bookmarks; exceeding limits directs users to the Sanctuary paywall.
+- Bookmark bottom sheet adapts gracefully to keyboard appearance with full vertical scrollability and golden CTA styling.
+- Navigation bar inset offset accounted for on Android, preventing keyboard overlap on modal action buttons.
+- Stale state flash eliminated; bookmark modal synchronizes fresh collection data synchronously before paint.
+- Modal footer provides clean 14dp space above navigation bar when closed and anchors flush to the keyboard when open.
+
+

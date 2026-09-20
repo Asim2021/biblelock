@@ -83,7 +83,7 @@ export function useReadingTimer(isScreenFocused: boolean = true): ReadingTimerSt
       AppBlocker.shieldApps();
     }
     prevGoalMetRef.current = isGoalMet;
-  }, [isGoalMet, secondsRead, goalMinutes]);
+  }, [isGoalMet]);
 
   // Tick reading timer when reader screen is actively focused
   useEffect(() => {
@@ -92,7 +92,6 @@ export function useReadingTimer(isScreenFocused: boolean = true): ReadingTimerSt
     const interval = setInterval(() => {
       const next = getReadingProgress() + 1;
       setReadingProgress(next);
-      setSecondsRead(next);
     }, 1000);
 
     return () => clearInterval(interval);

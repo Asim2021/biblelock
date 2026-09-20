@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,9 +14,11 @@ import { useReadingTimer } from '../../lib/readingTimer';
 import {
   getLastReadPosition,
   setLastReadPosition,
-  saveBookmark,
   getBookmarks,
+  getCollections,
+  VerseCollection,
 } from '../../lib/mmkv';
+import { BookmarkPickerSheet } from '../../components/BookmarkPickerSheet';
 import { Button } from '../../components/Button';
 import {
   Clock,
@@ -50,7 +52,7 @@ export default function ReaderScreen() {
 
   const [translation, setTranslationState] = useBibleTranslation();
 
-  const allBooks = getBooks(translation);
+  const allBooks = useMemo(() => getBooks(translation), [translation]);
 
   // Initialize position from query params if passed, or stored MMKV last read position
   const [bookIndex, setBookIndex] = useState(() => {
@@ -83,23 +85,73 @@ export default function ReaderScreen() {
     return null;
   });
 
-  const [bookmarkedVerses, setBookmarkedVerses] = useState<number[]>([]);
+  const [verseCollectionMap, setVerseCollectionMap] = useState<Record<number, string[]>>({});
+  const [allCollections, setAllCollections] = useState<VerseCollection[]>([]);
+  const [pickerVerse, setPickerVerse] = useState<Verse | null>(null);
+  const [isPickerVisible, setIsPickerVisible] = useState(false);
+  const [tooltipVerseNumber, setTooltipVerseNumber] = useState<number | null>(null);
+  const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [showBookModal, setShowBookModal] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const insets = useSafeAreaInsets();
 
-  const currentChapterData = getChapter(translation, bookIndex, chapterNumber);
+  // Accurate viewability tracking for last read position (topmost visible verse)
+  const lastVisibleVerseRef = useRef<number>(1);
+  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 40 }).current;
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: any[] }) => {
+    if (viewableItems.length > 0 && viewableItems[0].item?.verse) {
+      lastVisibleVerseRef.current = viewableItems[0].item.verse;
+    }
+  }).current;
+
+  const currentChapterData = useMemo(
+    () => getChapter(translation, bookIndex, chapterNumber),
+    [translation, bookIndex, chapterNumber]
+  );
   const currentBook = allBooks[bookIndex] || allBooks[0];
 
-  // Refresh saved bookmarks for this chapter
-  useEffect(() => {
+  // Refresh saved bookmarks and collections for this chapter
+  const refreshBookmarks = useCallback(() => {
     const list = getBookmarks();
-    const chapterBookmarks = list
-      .filter((b) => b.bookName === currentBook.name && b.chapterNumber === chapterNumber)
-      .map((b) => b.verseNumber);
-    setBookmarkedVerses(chapterBookmarks);
+    const map: Record<number, string[]> = {};
+    for (const b of list) {
+      if (b.bookName === currentBook.name && b.chapterNumber === chapterNumber) {
+        map[b.verseNumber] = b.collectionIds || [];
+      }
+    }
+    setVerseCollectionMap(map);
+    setAllCollections(getCollections());
   }, [currentBook.name, chapterNumber]);
+
+  // Persist current reading position
+  const saveCurrentLastRead = useCallback(() => {
+    if (currentBook) {
+      setLastReadPosition({
+        bookIndex,
+        bookName: currentBook.name,
+        chapterNumber,
+        verseNumber: lastVisibleVerseRef.current || targetVerse || 1,
+        updatedAt: Date.now(),
+      });
+    }
+  }, [bookIndex, chapterNumber, currentBook.name, targetVerse]);
+
+  // Refresh bookmarks on focus & save last-read on blur
+  useFocusEffect(
+    useCallback(() => {
+      refreshBookmarks();
+      return () => {
+        saveCurrentLastRead();
+      };
+    }, [refreshBookmarks, saveCurrentLastRead])
+  );
+
+  // Re-read bookmarks when chapter/book changes
+  useEffect(() => {
+    refreshBookmarks();
+  }, [bookIndex, chapterNumber, refreshBookmarks]);
 
   // Handle incoming query parameter changes while on screen
   useEffect(() => {
@@ -119,20 +171,12 @@ export default function ReaderScreen() {
       const v = parseInt(params.verse, 10);
       if (!isNaN(v)) setTargetVerse(v);
     }
-  }, [params.book, params.chapter, params.verse]);
+  }, [params.book, params.chapter, params.verse, allBooks]);
 
   // Persist current reading position whenever book or chapter changes
   useEffect(() => {
-    if (currentBook) {
-      setLastReadPosition({
-        bookIndex,
-        bookName: currentBook.name,
-        chapterNumber,
-        verseNumber: targetVerse || 1,
-        updatedAt: Date.now(),
-      });
-    }
-  }, [bookIndex, chapterNumber, currentBook?.name, targetVerse]);
+    saveCurrentLastRead();
+  }, [bookIndex, chapterNumber, saveCurrentLastRead]);
 
   // Scroll to targeted verse if requested
   useEffect(() => {
@@ -150,33 +194,29 @@ export default function ReaderScreen() {
     }
   }, [targetVerse, currentChapterData]);
 
-  const handleToggleBookmarkVerse = (verseItem: Verse) => {
-    const isBookmarked = bookmarkedVerses.includes(verseItem.verse);
-    if (isBookmarked) {
-      // Remove
-      setBookmarkedVerses((prev) => prev.filter((v) => v !== verseItem.verse));
-      setToastMessage(`Removed bookmark for ${currentBook.name} ${chapterNumber}:${verseItem.verse}`);
-    } else {
-      // Free users can save max 3 bookmarks
-      if (getBookmarks().length >= 3 && !requirePremium('Unlimited bookmarks')) {
-        return;
-      }
-      // Add
-      saveBookmark({
-        id: `bm_${Date.now()}_${verseItem.verse}`,
-        title: `${currentBook.name} ${chapterNumber}:${verseItem.verse}`,
-        bookIndex,
-        bookName: currentBook.name,
-        chapterNumber,
-        verseNumber: verseItem.verse,
-        verseText: verseItem.text,
-        color: '#f5b800',
-        createdAt: Date.now(),
-      });
-      setBookmarkedVerses((prev) => [...prev, verseItem.verse]);
-      setToastMessage(`Bookmarked ${currentBook.name} ${chapterNumber}:${verseItem.verse}`);
-    }
-    setTimeout(() => setToastMessage(null), 2500);
+  // Memoize verse object passed into BookmarkPickerSheet so child useEffect doesn't thrash
+  const pickerVerseObject = useMemo(() => {
+    if (!pickerVerse) return null;
+    return {
+      bookIndex,
+      bookName: currentBook.name,
+      chapterNumber,
+      verseNumber: pickerVerse.verse,
+      verseText: pickerVerse.text,
+    };
+  }, [pickerVerse, bookIndex, currentBook.name, chapterNumber]);
+
+  const handlePressBookmark = (verseItem: Verse) => {
+    // Open bottom sheet picker directly so user can view/change collections, edit note, or remove
+    setPickerVerse(verseItem);
+    setIsPickerVisible(true);
+    setTooltipVerseNumber(null);
+  };
+
+  const handleLongPressVerse = (verseItem: Verse) => {
+    setPickerVerse(verseItem);
+    setIsPickerVisible(true);
+    setTooltipVerseNumber(null);
   };
 
   // Switch translation
@@ -281,26 +321,6 @@ export default function ReaderScreen() {
         </View>
       </View>
 
-      {/* Bookmark Feedback Toast */}
-      {toastMessage && (
-        <View
-          style={{
-            backgroundColor: colors.accentBg,
-            borderBottomWidth: 1,
-            borderBottomColor: colors.accent,
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <BookmarkIcon size={14} color={colors.accent} style={{ marginRight: 6 }} />
-          <Text style={{ fontSize: 12, fontFamily: 'Inter_500Medium', color: colors.accent, textAlign: 'center' }}>
-            {toastMessage}
-          </Text>
-        </View>
-      )}
 
       {/* Book & Translation Selection Bar */}
       <View
@@ -465,7 +485,10 @@ export default function ReaderScreen() {
       <FlatList
         ref={flatListRef}
         data={currentChapterData?.verses || []}
+        extraData={verseCollectionMap}
         keyExtractor={(item) => String(item.verse)}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 }}
         ListHeaderComponent={
           <View className="mb-6 items-center">
@@ -494,17 +517,22 @@ export default function ReaderScreen() {
           </View>
         }
         renderItem={({ item }: { item: Verse }) => {
-          const isBookmarked = bookmarkedVerses.includes(item.verse);
+          const colIds = verseCollectionMap[item.verse];
+          const isBookmarked = colIds && colIds.length > 0;
+          const colCount = colIds ? colIds.length : 0;
           const isTargeted = targetVerse === item.verse;
+          const showTooltip = tooltipVerseNumber === item.verse;
+
+          const colNames =
+            (colIds || [])
+              .map((id) => allCollections.find((c) => c.id === id)?.name)
+              .filter(Boolean)
+              .join(', ') || 'Saved';
 
           return (
-            <Pressable
-              onLongPress={() => handleToggleBookmarkVerse(item)}
+            <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'baseline',
                 marginBottom: 14,
-                padding: 8,
                 borderRadius: 8,
                 backgroundColor: isTargeted
                   ? colors.accentBg
@@ -513,43 +541,137 @@ export default function ReaderScreen() {
                   : 'transparent',
                 borderLeftWidth: isTargeted ? 3 : 0,
                 borderLeftColor: colors.accent,
+                padding: 8,
               }}
             >
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontFamily: 'Inter_700Bold',
-                  color: colors.accent,
-                  marginRight: 12,
-                  width: 24,
-                  textAlign: 'right',
-                }}
-              >
-                {item.verse}
-              </Text>
-              <Text
-                style={{
-                  flex: 1,
-                  fontFamily: 'EBGaramond_400Regular',
-                  fontSize: 18,
-                  lineHeight: 30,
-                  color: colors.textPrimary,
-                }}
-              >
-                {item.text}
-              </Text>
               <Pressable
-                onPress={() => handleToggleBookmarkVerse(item)}
-                hitSlop={8}
-                style={{ marginLeft: 8, padding: 4 }}
+                onLongPress={() => handleLongPressVerse(item)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'baseline',
+                }}
               >
-                <BookmarkIcon
-                  size={15}
-                  color={isBookmarked ? colors.accent : colors.textMuted}
-                  fill={isBookmarked ? colors.accent : 'transparent'}
-                />
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'Inter_700Bold',
+                    color: colors.accent,
+                    marginRight: 12,
+                    width: 24,
+                    textAlign: 'right',
+                  }}
+                >
+                  {item.verse}
+                </Text>
+                <Text
+                  style={{
+                    flex: 1,
+                    fontFamily: 'EBGaramond_400Regular',
+                    fontSize: 18,
+                    lineHeight: 30,
+                    color: colors.textPrimary,
+                  }}
+                >
+                  {item.text}
+                </Text>
+                <Pressable
+                  onPress={() => handlePressBookmark(item)}
+                  hitSlop={8}
+                  style={{
+                    marginLeft: 8,
+                    padding: 4,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}
+                >
+                  <BookmarkIcon
+                    size={15}
+                    color={isBookmarked ? colors.accent : colors.textMuted}
+                    fill={isBookmarked ? colors.accent : 'transparent'}
+                  />
+                  {colCount > 1 && (
+                    <View
+                      style={{
+                        backgroundColor: colors.accent,
+                        borderRadius: 6,
+                        minWidth: 14,
+                        height: 14,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginLeft: 3,
+                        paddingHorizontal: 2,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 9,
+                          fontWeight: '700',
+                          color: colors.accentText || '#000000',
+                        }}
+                      >
+                        {colCount}
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
               </Pressable>
-            </Pressable>
+
+              {/* Tooltip Pill for Bookmarked Verse */}
+              {showTooltip && (
+                <Pressable
+                  onPress={() => {
+                    setTooltipVerseNumber(null);
+                    setPickerVerse(item);
+                    setIsPickerVisible(true);
+                  }}
+                  hitSlop={8}
+                  style={{
+                    marginTop: 6,
+                    marginLeft: 36,
+                    marginRight: 16,
+                    paddingVertical: 4,
+                    paddingHorizontal: 10,
+                    borderRadius: 8,
+                    backgroundColor: colors.surfaceElevated || colors.surfaceSubtle,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    alignSelf: 'flex-start',
+                    maxWidth: '85%',
+                  }}
+                >
+                  <BookmarkIcon
+                    size={11}
+                    color={colors.accent}
+                    fill={colors.accent}
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={{
+                      flexShrink: 1,
+                      fontSize: 12,
+                      color: colors.textSecondary,
+                      fontFamily: 'Inter_500Medium',
+                    }}
+                  >
+                    {colNames}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: colors.accent,
+                      fontFamily: 'Inter_700Bold',
+                      marginLeft: 8,
+                    }}
+                  >
+                    [Edit]
+                  </Text>
+                </Pressable>
+              )}
+            </View>
           );
         }}
         ListFooterComponent={
@@ -670,6 +792,71 @@ export default function ReaderScreen() {
           </SafeAreaView>
         </View>
       </Modal>
+
+      {/* Non-shifting Bottom Floating Toast */}
+      {toastMessage && (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            bottom: Math.max(insets.bottom + 16, 24),
+            left: 20,
+            right: 20,
+            backgroundColor: colors.surfaceElevated || colors.surface,
+            borderWidth: 1,
+            borderColor: colors.accent,
+            borderRadius: 12,
+            paddingHorizontal: 16,
+            paddingVertical: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 8,
+            elevation: 8,
+            zIndex: 999,
+          }}
+        >
+          <BookmarkIcon
+            size={15}
+            color={colors.accent}
+            fill={colors.accent}
+            style={{ marginRight: 8 }}
+          />
+          <Text
+            style={{
+              fontSize: 13,
+              fontFamily: 'Inter_600SemiBold',
+              color: colors.textPrimary,
+              textAlign: 'center',
+            }}
+          >
+            {toastMessage}
+          </Text>
+        </View>
+      )}
+
+      {/* Bookmark Picker Bottom Sheet */}
+      <BookmarkPickerSheet
+        visible={isPickerVisible}
+        verse={pickerVerseObject}
+        onDone={() => {
+          const v = pickerVerse;
+          setIsPickerVisible(false);
+          setPickerVerse(null);
+          refreshBookmarks();
+          if (v) {
+            setToastMessage(`Saved ${currentBook.name} ${chapterNumber}:${v.verse}`);
+            setTimeout(() => setToastMessage(null), 2500);
+          }
+        }}
+        onCancel={() => {
+          setIsPickerVisible(false);
+          setPickerVerse(null);
+        }}
+      />
     </SafeAreaView>
   );
 }

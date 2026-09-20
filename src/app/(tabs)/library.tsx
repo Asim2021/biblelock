@@ -7,6 +7,9 @@ import {
   TextInput,
   Modal,
   Alert,
+  Share,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -25,6 +28,13 @@ import {
   BookOpen,
   FileText,
   Pin,
+  ArrowLeft,
+  ChevronsUpDown,
+  ChevronsDownUp,
+  Settings,
+  Share2,
+  Copy,
+  CircleMinus,
 } from 'lucide-react-native';
 import {
   getLastReadPosition,
@@ -33,29 +43,26 @@ import {
   getCollections,
   saveCollection,
   deleteCollection,
+  removeVerseFromCollection,
+  updateBookmarkNote,
+  getBookmarksForCollection,
+  formatRelativeTime,
   LastReadPosition,
   Bookmark,
   VerseCollection,
+  COLLECTION_COLORS,
 } from '../../lib/mmkv';
+import { BookmarkPickerSheet } from '../../components/BookmarkPickerSheet';
 import { useTheme } from '../../lib/themeContext';
 import { useFeatureGate } from '../../lib/useFeatureGate';
 
 type TabType = 'collections' | 'pins' | 'notes';
 
-const COLLECTION_COLORS = [
-  '#3b82f6', // Blue
-  '#10b981', // Green
-  '#f43f5e', // Rose
-  '#a855f7', // Purple
-  '#f59e0b', // Yellow
-  '#d97706', // Ochre / Amber
-];
-
 export default function LibraryScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const { requirePremium } = useFeatureGate();
+  const { isPremium, requirePremium } = useFeatureGate();
 
   const [activeTab, setActiveTab] = useState<TabType>('collections');
   const [showHelperBanner, setShowHelperBanner] = useState(true);
@@ -71,8 +78,23 @@ export default function LibraryScreen() {
   const [collectionName, setCollectionName] = useState('');
   const [selectedColor, setSelectedColor] = useState(COLLECTION_COLORS[4]);
 
-  // Selected Collection to View Inside
+  // Selected Collection to View Inside (Full-Screen Detail Takeover)
   const [viewingCollection, setViewingCollection] = useState<VerseCollection | null>(null);
+  const [isAllExpanded, setIsAllExpanded] = useState(false);
+  const [expandedVerseIds, setExpandedVerseIds] = useState<Set<string>>(new Set());
+  const [sortMode, setSortMode] = useState<'date' | 'book'>('date');
+  const [isSortSheetVisible, setIsSortSheetVisible] = useState(false);
+
+  // Per-verse options bottom sheet
+  const [selectedVerseOptions, setSelectedVerseOptions] = useState<Bookmark | null>(null);
+
+  // Note editing modal
+  const [editingNoteBookmark, setEditingNoteBookmark] = useState<Bookmark | null>(null);
+  const [noteInput, setNoteInput] = useState('');
+
+  // Re-edit Bookmark (Collections) Sheet
+  const [pickerVerseData, setPickerVerseData] = useState<Bookmark | null>(null);
+  const [isPickerVisible, setIsPickerVisible] = useState(false);
 
   const loadData = useCallback(() => {
     setLastRead(getLastReadPosition());
@@ -98,7 +120,8 @@ export default function LibraryScreen() {
   };
 
   const handleOpenNewCollection = () => {
-    if (!requirePremium('Unlimited collections')) {
+    if (!isPremium && collections.length >= 1) {
+      requirePremium('Unlimited collections');
       return;
     }
     setEditingCollection(null);
@@ -129,7 +152,7 @@ export default function LibraryScreen() {
     };
 
     saveCollection(collectionToSave);
-    setCollections(getCollections());
+    loadData();
     setIsEditModalVisible(false);
   };
 
@@ -137,7 +160,7 @@ export default function LibraryScreen() {
     if (!editingCollection) return;
     Alert.alert(
       'Delete Collection',
-      `Are you sure you want to delete "${editingCollection.name}"? Verses will remain in your library.`,
+      `Are you sure you want to delete "${editingCollection.name}"? Verses saved in other collections will be kept.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -145,7 +168,7 @@ export default function LibraryScreen() {
           style: 'destructive',
           onPress: () => {
             deleteCollection(editingCollection.id);
-            setCollections(getCollections());
+            loadData();
             setIsEditModalVisible(false);
             if (viewingCollection?.id === editingCollection.id) {
               setViewingCollection(null);
@@ -167,11 +190,77 @@ export default function LibraryScreen() {
           style: 'destructive',
           onPress: () => {
             deleteBookmark(bm.id);
-            setBookmarks(getBookmarks());
+            loadData();
           },
         },
       ]
     );
+  };
+
+  const handleCopyVerse = async (bm: Bookmark) => {
+    const text = `"${bm.verseText}" — ${bm.bookName} ${bm.chapterNumber}:${bm.verseNumber}`;
+    if (typeof navigator !== 'undefined' && (navigator as any).clipboard?.writeText) {
+      try {
+        await (navigator as any).clipboard.writeText(text);
+        Alert.alert('Copied', 'Verse copied to clipboard.');
+        return;
+      } catch {}
+    }
+    try {
+      await Share.share({ message: text });
+    } catch {}
+  };
+
+  const handleShareVerse = async (bm: Bookmark) => {
+    const text = `"${bm.verseText}" — ${bm.bookName} ${bm.chapterNumber}:${bm.verseNumber}\nhttps://bibleunlock.app`;
+    try {
+      await Share.share({ message: text });
+    } catch {}
+  };
+
+  const handleRemoveVerseFromCurrentCollection = (bm: Bookmark) => {
+    if (!viewingCollection) return;
+    setSelectedVerseOptions(null);
+    const colId = viewingCollection.id;
+    if ((bm.collectionIds || []).length <= 1) {
+      Alert.alert(
+        'Remove Bookmark',
+        `This will remove ${bm.bookName} ${bm.chapterNumber}:${bm.verseNumber} completely as it is not saved in any other collection. Continue?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Remove',
+            style: 'destructive',
+            onPress: () => {
+              removeVerseFromCollection(bm.id, colId);
+              loadData();
+            },
+          },
+        ]
+      );
+    } else {
+      removeVerseFromCollection(bm.id, colId);
+      loadData();
+    }
+  };
+
+  const handleSaveNote = () => {
+    if (!editingNoteBookmark) return;
+    updateBookmarkNote(editingNoteBookmark.id, noteInput);
+    setEditingNoteBookmark(null);
+    loadData();
+  };
+
+  const toggleVerseRowExpansion = (id: string) => {
+    setExpandedVerseIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   // Filtered collections
@@ -210,31 +299,381 @@ export default function LibraryScreen() {
   }, [bookmarks, searchQuery]);
 
   // Count verses per collection
-  const getCollectionVerseCount = (collectionId: string, collectionName: string) => {
-    return bookmarks.filter(
-      (b) =>
-        b.collectionId === collectionId ||
-        b.collectionName === collectionName ||
-        (!b.collectionId && collectionId === 'prayers') // default bucket
-    ).length;
+  const getCollectionVerseCount = (collectionId: string) => {
+    return getBookmarksForCollection(collectionId).length;
   };
+
+  // Verses for currently viewed collection
+  const collectionBookmarks = useMemo(() => {
+    if (!viewingCollection) return [];
+    return getBookmarksForCollection(viewingCollection.id);
+  }, [viewingCollection, bookmarks]);
+
+  const sortedCollectionBookmarks = useMemo(() => {
+    const list = [...collectionBookmarks];
+    if (sortMode === 'date') {
+      return list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    }
+    return list.sort(
+      (a, b) =>
+        a.bookIndex - b.bookIndex ||
+        a.chapterNumber - b.chapterNumber ||
+        a.verseNumber - b.verseNumber
+    );
+  }, [collectionBookmarks, sortMode]);
 
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.background }}
       edges={['top', 'left', 'right']}
     >
-      {/* 1. Top Header Bar matching Al Quran */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 20,
-          paddingTop: 8,
-          paddingBottom: 10,
-        }}
-      >
+      {viewingCollection ? (
+        /* Full-Screen Collection Detail View */
+        <View style={{ flex: 1 }}>
+          {/* Top Bar: Back button, Title, More options */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: 16,
+              paddingTop: 8,
+              paddingBottom: 10,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.border,
+            }}
+          >
+            <Pressable
+              onPress={() => setViewingCollection(null)}
+              hitSlop={8}
+              style={{ flexDirection: 'row', alignItems: 'center' }}
+            >
+              <ArrowLeft size={22} color={colors.textPrimary} />
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontFamily: 'Inter_600SemiBold',
+                  color: colors.textPrimary,
+                  marginLeft: 8,
+                }}
+              >
+                Back
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => handleOpenEditCollection(viewingCollection)}
+              hitSlop={8}
+              style={{ padding: 6 }}
+            >
+              <MoreHorizontal size={22} color={colors.textSecondary} />
+            </Pressable>
+          </View>
+
+          {/* Sub-header Toolbar: Color Dot, Collection Name, Verse Count, ↕ Expand, ⚙ Sort */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: 20,
+              paddingVertical: 12,
+              backgroundColor: colors.surface,
+              borderBottomWidth: 1,
+              borderBottomColor: colors.borderSubtle,
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
+              <View
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: 6,
+                  backgroundColor: viewingCollection.color || '#f59e0b',
+                  marginRight: 10,
+                }}
+              />
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    fontSize: 17,
+                    fontFamily: 'EBGaramond_700Bold',
+                    color: colors.textPrimary,
+                  }}
+                  numberOfLines={1}
+                >
+                  {viewingCollection.name}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'Inter_400Regular',
+                    color: colors.textSecondary,
+                  }}
+                >
+                  {collectionBookmarks.length} {collectionBookmarks.length === 1 ? 'verse' : 'verses'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+              {/* Expand/Collapse All */}
+              <Pressable
+                onPress={() => setIsAllExpanded(!isAllExpanded)}
+                hitSlop={8}
+                style={{ padding: 4 }}
+              >
+                {isAllExpanded ? (
+                  <ChevronsDownUp size={20} color={colors.textSecondary} />
+                ) : (
+                  <ChevronsUpDown size={20} color={colors.textSecondary} />
+                )}
+              </Pressable>
+
+              {/* Sort Options */}
+              <Pressable
+                onPress={() => setIsSortSheetVisible(true)}
+                hitSlop={8}
+                style={{ padding: 4 }}
+              >
+                <Settings size={20} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Verses ScrollView */}
+          <ScrollView
+            contentContainerStyle={{
+              padding: 16,
+              paddingBottom: Math.max(insets.bottom + 20, 40),
+            }}
+          >
+            {sortedCollectionBookmarks.length === 0 ? (
+              <View
+                style={{
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingVertical: 60,
+                  paddingHorizontal: 24,
+                }}
+              >
+                <BookmarkIcon size={36} color={colors.textMuted} style={{ marginBottom: 12 }} />
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontFamily: 'Inter_600SemiBold',
+                    color: colors.textPrimary,
+                    marginBottom: 6,
+                  }}
+                >
+                  No verses saved here yet
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontFamily: 'Inter_400Regular',
+                    color: colors.textSecondary,
+                    textAlign: 'center',
+                    lineHeight: 20,
+                  }}
+                >
+                  Tap the bookmark icon while reading scripture to add verses to this collection.
+                </Text>
+              </View>
+            ) : (
+              sortedCollectionBookmarks.map((bm) => {
+                const isRowExpanded = isAllExpanded || expandedVerseIds.has(bm.id);
+                return (
+                  <View
+                    key={bm.id}
+                    style={{
+                      backgroundColor: colors.surface,
+                      borderRadius: 14,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      borderLeftWidth: 4,
+                      borderLeftColor: viewingCollection.color || colors.accent,
+                      marginBottom: 12,
+                      padding: 14,
+                    }}
+                  >
+                    {/* Row Header */}
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: 4,
+                      }}
+                    >
+                      <Pressable
+                        onPress={() =>
+                          handleOpenScripture(bm.bookName, bm.chapterNumber, bm.verseNumber)
+                        }
+                        style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 15,
+                            fontFamily: 'Inter_700Bold',
+                            color: colors.textPrimary,
+                          }}
+                        >
+                          {bm.bookName} {bm.chapterNumber}:{bm.verseNumber}
+                        </Text>
+                        {bm.note && (
+                          <View
+                            style={{
+                              marginLeft: 8,
+                              paddingHorizontal: 6,
+                              paddingVertical: 2,
+                              borderRadius: 6,
+                              backgroundColor: colors.accentBg,
+                            }}
+                          >
+                            <FileText size={11} color={colors.accent} />
+                          </View>
+                        )}
+                      </Pressable>
+
+                      <Pressable
+                        hitSlop={8}
+                        onPress={() => setSelectedVerseOptions(bm)}
+                        style={{ padding: 4 }}
+                      >
+                        <MoreHorizontal size={18} color={colors.textSecondary} />
+                      </Pressable>
+                    </View>
+
+                    {/* Relative timestamp & expand toggle */}
+                    <Pressable
+                      onPress={() => toggleVerseRowExpansion(bm.id)}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        marginBottom: isRowExpanded || bm.note ? 8 : 0,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontFamily: 'Inter_400Regular',
+                          color: colors.textMuted,
+                        }}
+                      >
+                        {formatRelativeTime(bm.createdAt)}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontFamily: 'Inter_500Medium',
+                          color: colors.accent,
+                        }}
+                      >
+                        {isRowExpanded ? 'Collapse' : 'Expand'}
+                      </Text>
+                    </Pressable>
+
+                    {/* Expanded verse text */}
+                    {isRowExpanded && bm.verseText && (
+                      <Pressable
+                        onPress={() =>
+                          handleOpenScripture(bm.bookName, bm.chapterNumber, bm.verseNumber)
+                        }
+                      >
+                        <Text
+                          style={{
+                            fontSize: 15,
+                            fontFamily: 'EBGaramond_400Regular_Italic',
+                            color: colors.textPrimary,
+                            lineHeight: 24,
+                            marginBottom: bm.note ? 8 : 0,
+                          }}
+                        >
+                          "{bm.verseText}"
+                        </Text>
+                      </Pressable>
+                    )}
+
+                    {/* Note pill with quick edit */}
+                    {bm.note && (
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          backgroundColor: colors.surfaceSubtle,
+                          borderRadius: 10,
+                          paddingHorizontal: 10,
+                          paddingVertical: 8,
+                          marginTop: 4,
+                        }}
+                      >
+                        <View
+                          style={{
+                            flex: 1,
+                            flexDirection: 'row',
+                            alignItems: 'flex-start',
+                            marginRight: 8,
+                          }}
+                        >
+                          <FileText
+                            size={13}
+                            color={colors.accent}
+                            style={{ marginTop: 2, marginRight: 6 }}
+                          />
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              fontFamily: 'Inter_400Regular',
+                              color: colors.textSecondary,
+                              flex: 1,
+                            }}
+                            numberOfLines={2}
+                          >
+                            {bm.note}
+                          </Text>
+                        </View>
+                        <Pressable
+                          hitSlop={8}
+                          onPress={() => {
+                            setEditingNoteBookmark(bm);
+                            setNoteInput(bm.note || '');
+                          }}
+                          style={{ padding: 4 }}
+                        >
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              fontFamily: 'Inter_600SemiBold',
+                              color: colors.accent,
+                            }}
+                          >
+                            Edit
+                          </Text>
+                        </Pressable>
+                      </View>
+                    )}
+                  </View>
+                );
+              })
+            )}
+          </ScrollView>
+        </View>
+      ) : (
+        <View style={{ flex: 1 }}>
+          {/* 1. Top Header Bar matching Al Quran */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingHorizontal: 20,
+              paddingTop: 8,
+              paddingBottom: 10,
+            }}
+          >
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Pressable
             onPress={() => router.push('/settings' as any)}
@@ -444,13 +883,13 @@ export default function LibraryScreen() {
 
             {/* List of Collections */}
             {filteredCollections.map((col) => {
-              const count = getCollectionVerseCount(col.id, col.name);
+              const count = getCollectionVerseCount(col.id);
               return (
                 <Pressable
                   key={col.id}
                   onPress={() => {
-                    // Filter pins to this collection
                     setViewingCollection(col);
+                    setIsAllExpanded(false);
                   }}
                   style={{
                     flexDirection: 'row',
@@ -527,133 +966,6 @@ export default function LibraryScreen() {
                 New Collection
               </Text>
             </Pressable>
-
-            {/* If a collection was tapped, show its verses */}
-            {viewingCollection && (
-              <View
-                style={{
-                  marginTop: 24,
-                  padding: 16,
-                  borderRadius: 20,
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                }}
-              >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 12,
-                    paddingBottom: 8,
-                    borderBottomWidth: 1,
-                    borderBottomColor: colors.border,
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <View
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: 5,
-                        backgroundColor: viewingCollection.color,
-                        marginRight: 8,
-                      }}
-                    />
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        fontFamily: 'Inter_600SemiBold',
-                        color: colors.textPrimary,
-                      }}
-                    >
-                      {viewingCollection.name}
-                    </Text>
-                  </View>
-                  <Pressable onPress={() => setViewingCollection(null)} hitSlop={8}>
-                    <X size={16} color={colors.textSecondary} />
-                  </Pressable>
-                </View>
-
-                {bookmarks.filter(
-                  (b) =>
-                    b.collectionId === viewingCollection.id ||
-                    b.collectionName === viewingCollection.name ||
-                    (!b.collectionId && viewingCollection.id === 'prayers')
-                ).length === 0 ? (
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontFamily: 'Inter_400Regular',
-                      color: colors.textMuted,
-                      textAlign: 'center',
-                      paddingVertical: 16,
-                    }}
-                  >
-                    No verses added to this collection yet. In the Reader, tap the bookmark icon on any verse to add it.
-                  </Text>
-                ) : (
-                  bookmarks
-                    .filter(
-                      (b) =>
-                        b.collectionId === viewingCollection.id ||
-                        b.collectionName === viewingCollection.name ||
-                        (!b.collectionId && viewingCollection.id === 'prayers')
-                    )
-                    .map((bm) => (
-                      <Pressable
-                        key={bm.id}
-                        onPress={() =>
-                          handleOpenScripture(
-                            bm.bookName,
-                            bm.chapterNumber,
-                            bm.verseNumber
-                          )
-                        }
-                        style={{
-                          paddingVertical: 10,
-                          borderBottomWidth: 1,
-                          borderBottomColor: colors.borderSubtle,
-                        }}
-                      >
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                          <Text
-                            style={{
-                              fontSize: 14,
-                              fontFamily: 'Inter_600SemiBold',
-                              color: colors.textPrimary,
-                            }}
-                          >
-                            {bm.bookName} {bm.chapterNumber}:{bm.verseNumber}
-                          </Text>
-                          <Pressable
-                            onPress={(e) => {
-                              e.stopPropagation();
-                              handleDeleteBookmark(bm);
-                            }}
-                          >
-                            <Trash2 size={14} color={colors.danger} />
-                          </Pressable>
-                        </View>
-                        {bm.verseText && (
-                          <Text
-                            numberOfLines={2}
-                            style={{
-                              fontSize: 12,
-                              fontFamily: 'EBGaramond_400Regular_Italic',
-                              color: colors.textSecondary,
-                              marginTop: 2,
-                            }}
-                          >
-                            "{bm.verseText}"
-                          </Text>
-                        )}
-                      </Pressable>
-                    ))
-                )}
-              </View>
-            )}
           </View>
         )}
 
@@ -851,6 +1163,8 @@ export default function LibraryScreen() {
           </View>
         )}
       </ScrollView>
+        </View>
+      )}
 
       {/* 5. Bottom Sheet Modal: Edit / New Collection matching AL Quran App edit bookmark example.png */}
       <Modal
@@ -1049,6 +1363,523 @@ export default function LibraryScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+
+      {/* 6. Per-Verse Options Bottom Sheet matching Al Quran reference */}
+      <Modal
+        visible={selectedVerseOptions !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setSelectedVerseOptions(null)}
+      >
+        <Pressable
+          onPress={() => setSelectedVerseOptions(null)}
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: colors.surfaceElevated || colors.surface,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              borderWidth: 1,
+              borderColor: colors.border,
+              paddingHorizontal: 20,
+              paddingTop: 12,
+              paddingBottom: Math.max(insets.bottom + 12, 24),
+            }}
+          >
+            <View
+              style={{
+                width: 36,
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: colors.border,
+                alignSelf: 'center',
+                marginBottom: 14,
+              }}
+            />
+
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 16,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontFamily: 'EBGaramond_700Bold',
+                  color: colors.textPrimary,
+                }}
+              >
+                {selectedVerseOptions?.bookName} {selectedVerseOptions?.chapterNumber}:
+                {selectedVerseOptions?.verseNumber}
+              </Text>
+              <Pressable onPress={() => setSelectedVerseOptions(null)} hitSlop={8}>
+                <X size={18} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+
+            <View style={{ gap: 6 }}>
+              {/* View in Reader */}
+              <Pressable
+                onPress={() => {
+                  if (!selectedVerseOptions) return;
+                  const bm = selectedVerseOptions;
+                  setSelectedVerseOptions(null);
+                  handleOpenScripture(bm.bookName, bm.chapterNumber, bm.verseNumber);
+                }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  paddingHorizontal: 12,
+                  borderRadius: 12,
+                  backgroundColor: colors.surfaceSubtle,
+                }}
+              >
+                <BookOpen size={18} color={colors.accent} style={{ marginRight: 12 }} />
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontFamily: 'Inter_500Medium',
+                    color: colors.textPrimary,
+                  }}
+                >
+                  View in Reader
+                </Text>
+              </Pressable>
+
+              {/* View / Edit Note */}
+              <Pressable
+                onPress={() => {
+                  if (!selectedVerseOptions) return;
+                  const bm = selectedVerseOptions;
+                  setSelectedVerseOptions(null);
+                  setEditingNoteBookmark(bm);
+                  setNoteInput(bm.note || '');
+                }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  paddingHorizontal: 12,
+                  borderRadius: 12,
+                  backgroundColor: colors.surfaceSubtle,
+                }}
+              >
+                <FileText size={18} color={colors.accent} style={{ marginRight: 12 }} />
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontFamily: 'Inter_500Medium',
+                    color: colors.textPrimary,
+                  }}
+                >
+                  {selectedVerseOptions?.note ? 'Edit Note' : 'Add Note'}
+                </Text>
+              </Pressable>
+
+              {/* Edit Collections */}
+              <Pressable
+                onPress={() => {
+                  if (!selectedVerseOptions) return;
+                  const bm = selectedVerseOptions;
+                  setSelectedVerseOptions(null);
+                  setPickerVerseData(bm);
+                  setIsPickerVisible(true);
+                }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  paddingHorizontal: 12,
+                  borderRadius: 12,
+                  backgroundColor: colors.surfaceSubtle,
+                }}
+              >
+                <BookmarkIcon size={18} color={colors.accent} style={{ marginRight: 12 }} />
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontFamily: 'Inter_500Medium',
+                    color: colors.textPrimary,
+                  }}
+                >
+                  Edit Collections
+                </Text>
+              </Pressable>
+
+              {/* Copy Verse */}
+              <Pressable
+                onPress={() => {
+                  if (!selectedVerseOptions) return;
+                  handleCopyVerse(selectedVerseOptions);
+                  setSelectedVerseOptions(null);
+                }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  paddingHorizontal: 12,
+                  borderRadius: 12,
+                  backgroundColor: colors.surfaceSubtle,
+                }}
+              >
+                <Copy size={18} color={colors.textSecondary} style={{ marginRight: 12 }} />
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontFamily: 'Inter_500Medium',
+                    color: colors.textPrimary,
+                  }}
+                >
+                  Copy Verse
+                </Text>
+              </Pressable>
+
+              {/* Share Verse */}
+              <Pressable
+                onPress={() => {
+                  if (!selectedVerseOptions) return;
+                  handleShareVerse(selectedVerseOptions);
+                  setSelectedVerseOptions(null);
+                }}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 12,
+                  paddingHorizontal: 12,
+                  borderRadius: 12,
+                  backgroundColor: colors.surfaceSubtle,
+                }}
+              >
+                <Share2 size={18} color={colors.textSecondary} style={{ marginRight: 12 }} />
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontFamily: 'Inter_500Medium',
+                    color: colors.textPrimary,
+                  }}
+                >
+                  Share Verse
+                </Text>
+              </Pressable>
+
+              {/* Remove from Current Collection (only if inside collection detail) */}
+              {viewingCollection && (
+                <Pressable
+                  onPress={() => {
+                    if (!selectedVerseOptions) return;
+                    handleRemoveVerseFromCurrentCollection(selectedVerseOptions);
+                  }}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingVertical: 12,
+                    paddingHorizontal: 12,
+                    borderRadius: 12,
+                    backgroundColor: isDark ? '#2d1818' : '#fee2e2',
+                  }}
+                >
+                  <CircleMinus size={18} color={colors.danger} style={{ marginRight: 12 }} />
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      fontFamily: 'Inter_600SemiBold',
+                      color: colors.danger,
+                    }}
+                  >
+                    Remove from "{viewingCollection.name}"
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* 7. Sort Options Bottom Sheet matching Al Quran */}
+      <Modal
+        visible={isSortSheetVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsSortSheetVisible(false)}
+      >
+        <Pressable
+          onPress={() => setIsSortSheetVisible(false)}
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            justifyContent: 'flex-end',
+          }}
+        >
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{
+              backgroundColor: colors.surfaceElevated || colors.surface,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              borderWidth: 1,
+              borderColor: colors.border,
+              paddingHorizontal: 20,
+              paddingTop: 12,
+              paddingBottom: Math.max(insets.bottom + 12, 24),
+            }}
+          >
+            <View
+              style={{
+                width: 36,
+                height: 4,
+                borderRadius: 2,
+                backgroundColor: colors.border,
+                alignSelf: 'center',
+                marginBottom: 14,
+              }}
+            />
+            <Text
+              style={{
+                fontSize: 18,
+                fontFamily: 'EBGaramond_700Bold',
+                color: colors.textPrimary,
+                marginBottom: 16,
+              }}
+            >
+              Sort Verses
+            </Text>
+
+            <Pressable
+              onPress={() => {
+                setSortMode('date');
+                setIsSortSheetVisible(false);
+              }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingVertical: 14,
+                paddingHorizontal: 14,
+                borderRadius: 14,
+                backgroundColor:
+                  sortMode === 'date' ? (isDark ? '#1a261f' : '#f0ede4') : colors.surface,
+                borderWidth: 1,
+                borderColor: sortMode === 'date' ? colors.accent : colors.border,
+                marginBottom: 8,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontFamily: sortMode === 'date' ? 'Inter_600SemiBold' : 'Inter_400Regular',
+                  color: colors.textPrimary,
+                }}
+              >
+                Date Added (Newest First)
+              </Text>
+              {sortMode === 'date' && (
+                <Check size={18} color={colors.accent} strokeWidth={2.5} />
+              )}
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                setSortMode('book');
+                setIsSortSheetVisible(false);
+              }}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingVertical: 14,
+                paddingHorizontal: 14,
+                borderRadius: 14,
+                backgroundColor:
+                  sortMode === 'book' ? (isDark ? '#1a261f' : '#f0ede4') : colors.surface,
+                borderWidth: 1,
+                borderColor: sortMode === 'book' ? colors.accent : colors.border,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontFamily: sortMode === 'book' ? 'Inter_600SemiBold' : 'Inter_400Regular',
+                  color: colors.textPrimary,
+                }}
+              >
+                Book & Chapter (Canonical Order)
+              </Text>
+              {sortMode === 'book' && (
+                <Check size={18} color={colors.accent} strokeWidth={2.5} />
+              )}
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* 8. Note Editing Modal */}
+      <Modal
+        visible={editingNoteBookmark !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditingNoteBookmark(null)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
+        >
+          <Pressable
+            onPress={() => setEditingNoteBookmark(null)}
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(0,0,0,0.6)',
+              justifyContent: 'center',
+              paddingHorizontal: 20,
+            }}
+          >
+            <Pressable
+              onPress={(e) => e.stopPropagation()}
+              style={{
+                backgroundColor: colors.surfaceElevated || colors.surface,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: colors.border,
+                padding: 20,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontFamily: 'EBGaramond_700Bold',
+                  color: colors.textPrimary,
+                  marginBottom: 4,
+                }}
+              >
+                Verse Note
+              </Text>
+              <Text
+                style={{
+                  fontSize: 13,
+                  fontFamily: 'Inter_500Medium',
+                  color: colors.accent,
+                  marginBottom: 12,
+                }}
+              >
+                {editingNoteBookmark?.bookName} {editingNoteBookmark?.chapterNumber}:
+                {editingNoteBookmark?.verseNumber}
+              </Text>
+
+              <TextInput
+                value={noteInput}
+                onChangeText={setNoteInput}
+                placeholder="Add personal reflections, prayer, or context..."
+                placeholderTextColor={colors.textMuted}
+                maxLength={200}
+                multiline
+                numberOfLines={4}
+                autoFocus
+                style={{
+                  backgroundColor: colors.surface,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  borderRadius: 12,
+                  padding: 12,
+                  color: colors.textPrimary,
+                  fontSize: 14,
+                  minHeight: 90,
+                  textAlignVertical: 'top',
+                  marginBottom: 6,
+                }}
+              />
+
+              <Text
+                style={{
+                  fontSize: 11,
+                  color: colors.textMuted,
+                  textAlign: 'right',
+                  marginBottom: 16,
+                }}
+              >
+                {noteInput.length}/200
+              </Text>
+
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <Pressable
+                  onPress={() => setEditingNoteBookmark(null)}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 12,
+                    borderRadius: 12,
+                    backgroundColor: colors.surfaceSubtle,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontFamily: 'Inter_600SemiBold',
+                      color: colors.textSecondary,
+                    }}
+                  >
+                    Cancel
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={handleSaveNote}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 12,
+                    borderRadius: 12,
+                    backgroundColor: colors.accent,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontFamily: 'Inter_700Bold',
+                      color: colors.accentText || '#000000',
+                    }}
+                  >
+                    Save Note
+                  </Text>
+                </Pressable>
+              </View>
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* 9. Re-edit Bookmark Collections Picker Sheet */}
+      <BookmarkPickerSheet
+        visible={isPickerVisible}
+        verse={
+          pickerVerseData
+            ? {
+                bookIndex: pickerVerseData.bookIndex,
+                bookName: pickerVerseData.bookName,
+                chapterNumber: pickerVerseData.chapterNumber,
+                verseNumber: pickerVerseData.verseNumber,
+                verseText: pickerVerseData.verseText,
+              }
+            : null
+        }
+        onDone={() => {
+          setIsPickerVisible(false);
+          setPickerVerseData(null);
+          loadData();
+        }}
+        onCancel={() => {
+          setIsPickerVisible(false);
+          setPickerVerseData(null);
+        }}
+      />
     </SafeAreaView>
   );
 }

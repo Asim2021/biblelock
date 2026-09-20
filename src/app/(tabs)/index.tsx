@@ -85,7 +85,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     loadData();
-  }, [loadData, timer.secondsRead, timer.isGoalMet]);
+  }, [loadData, timer.isGoalMet]);
 
   const onRefresh = async () => {
     setRefreshing(true);
