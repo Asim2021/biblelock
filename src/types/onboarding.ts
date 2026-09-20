@@ -26,6 +26,7 @@ export interface HabitDay {
   completed: boolean;
   isToday: boolean;
   minutesRead?: number;
+  secondsRead?: number;
 }
 
 export interface YearMonthData {

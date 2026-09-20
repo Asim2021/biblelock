@@ -43,7 +43,13 @@ interface BookmarkPickerSheetProps {
 	onCancel: () => void;
 }
 
-export const BookmarkPickerSheet: React.FC<BookmarkPickerSheetProps> = ({ visible, verse, onDone, onCancel }) => {
+interface BookmarkPickerContentProps {
+	verse: VerseData;
+	onDone: () => void;
+	onCancel: () => void;
+}
+
+const BookmarkPickerContent: React.FC<BookmarkPickerContentProps> = ({ verse, onDone, onCancel }) => {
 	const insets = useSafeAreaInsets();
 	const { height: windowHeight } = useWindowDimensions();
 	const { colors, isDark } = useTheme();
@@ -58,11 +64,18 @@ export const BookmarkPickerSheet: React.FC<BookmarkPickerSheetProps> = ({ visibl
 	const navBarInset = Platform.OS === 'android' ? Math.max(insets.bottom, 48) : insets.bottom;
 	const effectiveKeyboardOffset = keyboardHeight > 0 ? keyboardHeight + navBarInset : 0;
 
-	const [collections, setCollections] = useState<VerseCollection[]>([]);
-	const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>([]);
-	const [note, setNote] = useState('');
-	const [isNoteExpanded, setIsNoteExpanded] = useState(false);
-	const [isEditing, setIsEditing] = useState(false);
+	const [collections, setCollections] = useState<VerseCollection[]>(() => getCollections());
+	const [existingBookmark] = useState(() => getBookmarkByVerse(verse.bookName, verse.chapterNumber, verse.verseNumber));
+	const [isEditing] = useState(() => !!existingBookmark);
+	const [selectedCollectionIds, setSelectedCollectionIds] = useState<string[]>(() => {
+		if (existingBookmark) {
+			return existingBookmark.collectionIds || [];
+		}
+		const cols = getCollections();
+		return cols.length > 0 ? [cols[0].id] : [];
+	});
+	const [note, setNote] = useState(() => existingBookmark?.note || '');
+	const [isNoteExpanded, setIsNoteExpanded] = useState(() => !!existingBookmark?.note);
 
 	// Keep isNoteExpandedRef in sync for keyboard listener
 	useEffect(() => {
@@ -96,38 +109,6 @@ export const BookmarkPickerSheet: React.FC<BookmarkPickerSheetProps> = ({ visibl
 	const [isCreatingNew, setIsCreatingNew] = useState(false);
 	const [newColName, setNewColName] = useState('');
 	const [newColColor, setNewColColor] = useState(COLLECTION_COLORS[0]);
-
-	// Track current verse identity to synchronously initialize state during render (eliminates stale state flash)
-	const currentVerseKey = visible && verse ? `${verse.bookName}_${verse.chapterNumber}_${verse.verseNumber}` : null;
-	const [prevVerseKey, setPrevVerseKey] = useState<string | null>(null);
-
-	if (currentVerseKey !== prevVerseKey) {
-		setPrevVerseKey(currentVerseKey);
-		if (visible && verse) {
-			const cols = getCollections();
-			setCollections(cols);
-
-			const existing = getBookmarkByVerse(verse.bookName, verse.chapterNumber, verse.verseNumber);
-			if (existing) {
-				setIsEditing(true);
-				setSelectedCollectionIds(existing.collectionIds || []);
-				setNote(existing.note || '');
-				setIsNoteExpanded(!!existing.note);
-			} else {
-				setIsEditing(false);
-				// Pre-select first collection if one exists
-				setSelectedCollectionIds(cols.length > 0 ? [cols[0].id] : []);
-				setNote('');
-				setIsNoteExpanded(false);
-			}
-
-			setIsCreatingNew(false);
-			setNewColName('');
-			setNewColColor(COLLECTION_COLORS[0]);
-		}
-	}
-
-	if (!visible || !verse) return null;
 
 	const toggleCollection = (id: string) => {
 		setSelectedCollectionIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
@@ -218,7 +199,7 @@ export const BookmarkPickerSheet: React.FC<BookmarkPickerSheetProps> = ({ visibl
 
 	return (
 		<Modal
-			visible={visible}
+			visible={true}
 			transparent
 			statusBarTranslucent
 			animationType='slide'
@@ -725,5 +706,18 @@ export const BookmarkPickerSheet: React.FC<BookmarkPickerSheetProps> = ({ visibl
 				</View>
 			</View>
 		</Modal>
+	);
+};
+
+export const BookmarkPickerSheet: React.FC<BookmarkPickerSheetProps> = ({ visible, verse, onDone, onCancel }) => {
+	if (!visible || !verse) return null;
+
+	return (
+		<BookmarkPickerContent
+			key={`${verse.bookName}_${verse.chapterNumber}_${verse.verseNumber}`}
+			verse={verse}
+			onDone={onDone}
+			onCancel={onCancel}
+		/>
 	);
 };

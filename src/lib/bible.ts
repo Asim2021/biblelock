@@ -36,19 +36,37 @@ const BIBLE_MAP: Record<'KJV' | 'WEB', BibleData> = {
   WEB: webData as unknown as BibleData,
 };
 
-export function getBible(translation: 'KJV' | 'WEB' = 'WEB'): BibleData {
-  return BIBLE_MAP[translation] || BIBLE_MAP.WEB;
+export interface BookMetadata {
+  index: number;
+  id: string;
+  name: string;
+  shortName: string;
+  chapterCount: number;
 }
 
-export function getBooks(translation: 'KJV' | 'WEB' = 'WEB') {
-  const bible = getBible(translation);
-  return bible.books.map((b, idx) => ({
+const BOOKS_CACHE: Record<'KJV' | 'WEB', BookMetadata[]> = {
+  KJV: (kjvData as unknown as BibleData).books.map((b, idx) => ({
     index: idx,
     id: b.id,
     name: b.name,
     shortName: b.shortName,
     chapterCount: b.chapterCount,
-  }));
+  })),
+  WEB: (webData as unknown as BibleData).books.map((b, idx) => ({
+    index: idx,
+    id: b.id,
+    name: b.name,
+    shortName: b.shortName,
+    chapterCount: b.chapterCount,
+  })),
+};
+
+export function getBible(translation: 'KJV' | 'WEB' = 'WEB'): BibleData {
+  return BIBLE_MAP[translation] || BIBLE_MAP.WEB;
+}
+
+export function getBooks(translation: 'KJV' | 'WEB' = 'WEB'): BookMetadata[] {
+  return BOOKS_CACHE[translation] || BOOKS_CACHE.WEB;
 }
 
 export function getChapter(
@@ -60,7 +78,11 @@ export function getChapter(
   const book = bible.books[bookIndex];
   if (!book) return null;
 
-  const ch = book.chapters.find((c) => c.chapter === chapterNumber) || book.chapters[0];
+  // Direct 0-indexed lookup for 1-indexed chapters before falling back to array search
+  const direct = book.chapters[chapterNumber - 1];
+  const ch = (direct && direct.chapter === chapterNumber)
+    ? direct
+    : (book.chapters.find((c) => c.chapter === chapterNumber) || book.chapters[0]);
   if (!ch) return null;
 
   return {
@@ -105,28 +127,35 @@ export interface DailyVerseItem {
   index: number;
 }
 
+function buildInspirationalCache(bible: BibleData): DailyVerseItem[] {
+  return INSPIRATIONAL_VERSES.map((pick, safeIdx) => {
+    const book = bible.books.find(
+      (b) => b.name.toLowerCase() === pick.book.toLowerCase() || b.id.toLowerCase() === pick.book.toLowerCase()
+    ) || bible.books[0];
+    const chapter = book.chapters.find((c) => c.chapter === pick.chapter) || book.chapters[0];
+    const verse = chapter?.verses.find((v) => v.verse === pick.verseNum) || chapter?.verses[0];
+    return {
+      bookName: book.name,
+      chapter: chapter?.chapter ?? 1,
+      verseNum: verse?.verse ?? 1,
+      text: verse?.text ?? 'In the beginning God created the heaven and the earth.',
+      index: safeIdx,
+    };
+  });
+}
+
+const RESOLVED_INSPIRATIONAL_CACHE: Record<'KJV' | 'WEB', DailyVerseItem[]> = {
+  KJV: buildInspirationalCache(kjvData as unknown as BibleData),
+  WEB: buildInspirationalCache(webData as unknown as BibleData),
+};
+
 export function resolveVerseItem(
   translation: 'KJV' | 'WEB',
   index: number
 ): DailyVerseItem {
-  const bible = getBible(translation);
   const safeIdx = ((index % INSPIRATIONAL_VERSES.length) + INSPIRATIONAL_VERSES.length) % INSPIRATIONAL_VERSES.length;
-  const pick = INSPIRATIONAL_VERSES[safeIdx];
-
-  const book = bible.books.find(
-    (b) => b.name.toLowerCase() === pick.book.toLowerCase() || b.id.toLowerCase() === pick.book.toLowerCase()
-  ) || bible.books[0];
-
-  const chapter = book.chapters.find((c) => c.chapter === pick.chapter) || book.chapters[0];
-  const verse = chapter?.verses.find((v) => v.verse === pick.verseNum) || chapter?.verses[0];
-
-  return {
-    bookName: book.name,
-    chapter: chapter?.chapter ?? 1,
-    verseNum: verse?.verse ?? 1,
-    text: verse?.text ?? 'In the beginning God created the heaven and the earth.',
-    index: safeIdx,
-  };
+  const list = RESOLVED_INSPIRATIONAL_CACHE[translation] || RESOLVED_INSPIRATIONAL_CACHE.WEB;
+  return list[safeIdx];
 }
 
 export function getDailyVerse(translation: 'KJV' | 'WEB' = 'WEB'): DailyVerseItem {

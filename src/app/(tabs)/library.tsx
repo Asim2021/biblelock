@@ -298,15 +298,23 @@ export default function LibraryScreen() {
       });
   }, [bookmarks, searchQuery]);
 
-  // Count verses per collection
-  const getCollectionVerseCount = (collectionId: string) => {
-    return getBookmarksForCollection(collectionId).length;
-  };
+  // Memoized verse counts per collection computed directly in memory from bookmarks state
+  const collectionVerseCountMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const b of bookmarks) {
+      if (b.collectionIds) {
+        for (const cid of b.collectionIds) {
+          map[cid] = (map[cid] || 0) + 1;
+        }
+      }
+    }
+    return map;
+  }, [bookmarks]);
 
-  // Verses for currently viewed collection
+  // Verses for currently viewed collection (computed directly from in-memory bookmarks)
   const collectionBookmarks = useMemo(() => {
     if (!viewingCollection) return [];
-    return getBookmarksForCollection(viewingCollection.id);
+    return bookmarks.filter((b) => (b.collectionIds || []).includes(viewingCollection.id));
   }, [viewingCollection, bookmarks]);
 
   const sortedCollectionBookmarks = useMemo(() => {
@@ -883,7 +891,7 @@ export default function LibraryScreen() {
 
             {/* List of Collections */}
             {filteredCollections.map((col) => {
-              const count = getCollectionVerseCount(col.id);
+              const count = collectionVerseCountMap[col.id] || 0;
               return (
                 <Pressable
                   key={col.id}
@@ -1857,29 +1865,31 @@ export default function LibraryScreen() {
       </Modal>
 
       {/* 9. Re-edit Bookmark Collections Picker Sheet */}
-      <BookmarkPickerSheet
-        visible={isPickerVisible}
-        verse={
-          pickerVerseData
-            ? {
-                bookIndex: pickerVerseData.bookIndex,
-                bookName: pickerVerseData.bookName,
-                chapterNumber: pickerVerseData.chapterNumber,
-                verseNumber: pickerVerseData.verseNumber,
-                verseText: pickerVerseData.verseText,
-              }
-            : null
-        }
-        onDone={() => {
-          setIsPickerVisible(false);
-          setPickerVerseData(null);
-          loadData();
-        }}
-        onCancel={() => {
-          setIsPickerVisible(false);
-          setPickerVerseData(null);
-        }}
-      />
+      {isPickerVisible && (
+        <BookmarkPickerSheet
+          visible={isPickerVisible}
+          verse={
+            pickerVerseData
+              ? {
+                  bookIndex: pickerVerseData.bookIndex,
+                  bookName: pickerVerseData.bookName,
+                  chapterNumber: pickerVerseData.chapterNumber,
+                  verseNumber: pickerVerseData.verseNumber,
+                  verseText: pickerVerseData.verseText,
+                }
+              : null
+          }
+          onDone={() => {
+            setIsPickerVisible(false);
+            setPickerVerseData(null);
+            loadData();
+          }}
+          onCancel={() => {
+            setIsPickerVisible(false);
+            setPickerVerseData(null);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }

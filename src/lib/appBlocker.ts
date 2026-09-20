@@ -21,6 +21,8 @@ export interface InstalledApp {
   icon?: string;
 }
 
+let _installedAppsCache: InstalledApp[] | null = null;
+
 export const AppBlocker = {
   /**
    * Request system permission (Screen Time on iOS, Accessibility on Android)
@@ -130,7 +132,11 @@ export const AppBlocker = {
   /**
    * Query installed launchable apps on the device (with curated presets fallback)
    */
-  getInstalledApps: async (): Promise<InstalledApp[]> => {
+  getInstalledApps: async (forceRefresh: boolean = false): Promise<InstalledApp[]> => {
+    if (!forceRefresh && _installedAppsCache && _installedAppsCache.length > 0) {
+      return _installedAppsCache;
+    }
+
     const defaultApps: InstalledApp[] = [
       { packageName: 'com.instagram.android', label: 'Instagram', isSystemApp: false },
       { packageName: 'com.zhiliaoapp.musically', label: 'TikTok', isSystemApp: false },
@@ -144,12 +150,18 @@ export const AppBlocker = {
     ];
 
     if (Platform.OS === 'android') {
-      const nativeList = await AndroidBlocker.getInstalledApps();
-      if (nativeList && nativeList.length > 0) {
-        return nativeList;
+      try {
+        const nativeList = await AndroidBlocker.getInstalledApps();
+        if (nativeList && nativeList.length > 0) {
+          _installedAppsCache = nativeList;
+          return nativeList;
+        }
+      } catch {
+        // Fallback to default presets
       }
     }
 
+    _installedAppsCache = defaultApps;
     return defaultApps;
   },
 };

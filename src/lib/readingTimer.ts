@@ -54,13 +54,15 @@ export function useReadingTimer(isScreenFocused: boolean = true): ReadingTimerSt
     }
   }, [isScreenFocused]);
 
-  // Subscribe to MMKV goal and progress changes across all mounted screens
+  // Subscribe to MMKV goal and progress changes across mounted screens
   useEffect(() => {
     const unsubGoal = subscribeToGoalChanges((newGoal) => {
       setGoalMinutesState(newGoal);
     });
+    // Only subscribe to continuous 1-second progress ticks if this screen is actively focused
+    // Background screens will resync immediately on focus via the isScreenFocused effect
     const unsubProgress = subscribeToProgressChanges((newSeconds, dateKey) => {
-      if (dateKey === getTodayDateKey()) {
+      if (isScreenFocused && dateKey === getTodayDateKey()) {
         setSecondsRead(newSeconds);
       }
     });
@@ -69,7 +71,7 @@ export function useReadingTimer(isScreenFocused: boolean = true): ReadingTimerSt
       unsubGoal();
       unsubProgress();
     };
-  }, []);
+  }, [isScreenFocused]);
 
   // Sync goal met transition: unshield if completed, re-shield if goal increased above progress
   useEffect(() => {

@@ -206,19 +206,32 @@
   - **Zero-Gap Keyboard Anchoring (`src/components/BookmarkPickerSheet.tsx`):** Aligned `navBarInset` to exact 48dp on Android so the sheet sits flush on top of the keyboard without leaving an awkward gap exposing background text.
   - **Navigation Panel Breathing Room (`src/components/BookmarkPickerSheet.tsx`):** Added dynamic `paddingBottom: 48 + 14` when keyboard is dismissed, providing 14dp of comfortable thumb space above the Android 3-button navigation panel (`||| O <`).
 
+- [x] `TASK-042`: Eliminate 1Hz Re-render Cascades, FlatList Stutter, and N+1 Collection Disk Parsing (`DEC-027`):
+  - **Scoped Progress Subscription (`src/lib/readingTimer.ts`):** Scoped high-frequency `subscribeToProgressChanges` to `isScreenFocused`, eliminating 1Hz re-render cascades in background tabs (`HomeScreen` and `StatsScreen`).
+  - **FlatList Virtualization & Verse Memoization (`src/app/(tabs)/reader.tsx`):** Extracted `VerseRow` as a `React.memo` component, memoized `renderItem` with `useCallback`, memoized `chaptersList` with `useMemo`, created O(1) `collectionNameMap`, and conditionally rendered `BookmarkPickerSheet` only when visible.
+  - **In-Memory Collection Counts in Library (`src/app/(tabs)/library.tsx`):** Replaced disk-accessing `getCollectionVerseCount` with in-memory `collectionVerseCountMap` derived from `bookmarks` state.
+  - **Keyed Instance Initialization (`src/components/BookmarkPickerSheet.tsx`):** Replaced 9 synchronous render-phase `setState` calls with keyed `BookmarkPickerContent`, preventing render aborts and ensuring instant paint.
+  - **Memoized Badges & Devotional Card (`src/app/(tabs)/stats.tsx`, `src/components/DailyDevotionalCard.tsx`):** Memoized `badges`, `blockedApps`, `weekDays`, and `resolveVerseItem`.
+
+- [x] `TASK-043`: Storage In-Memory Caching, Redundant I/O Elimination, and Static Bible Lookups (`DEC-028`):
+  - **MMKV Synchronous In-Memory Caching (`src/lib/mmkv.ts`):** Added in-memory caches for bookmarks, collections, blocked apps, scheduled times, last read position, and reading progress. All queries execute instantaneously in JavaScript memory without bridge round-trips or repeated JSON parsing.
+  - **Eliminated 30 Redundant Disk Reads in Impact Stats (`src/lib/mmkv.ts`, `src/types/onboarding.ts`):** Added `secondsRead` to `HabitDay` and summed directly from `history` in `getImpactStats()`, eliminating 30 duplicate MMKV reads on every Home and Stats tab visit.
+  - **Year History 365-Day Caching (`src/lib/mmkv.ts`):** Cached annual reading metrics, eliminating 365 synchronous disk queries on repeated visits to the Stats tab.
+  - **Static Bible Books & Inspirational Verses Cache (`src/lib/bible.ts`):** Pre-computed static `BOOKS_CACHE` (eliminating 66 object allocations per call), direct sequential index check `chapters[chapterNumber - 1]` in `getChapter()`, and pre-resolved `RESOLVED_INSPIRATIONAL_CACHE` for O(1) daily verse lookups.
+  - **Installed Apps Native Cache (`src/lib/appBlocker.ts`):** Cached installed applications in memory with optional `forceRefresh` flag, avoiding repetitive native package enumeration on Android.
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `code-review-graph update`: 30 files updated, 12 nodes, 352 edges cleanly indexed.
-- `DEC-021`, `DEC-022`, `DEC-023`, `DEC-024`, `DEC-025`, and `DEC-026` recorded in `docs/DECISIONS.md`.
+- `code-review-graph update`: 40 files updated, 159 nodes, 780 edges indexed cleanly.
+- `DEC-021` through `DEC-028` recorded in `docs/DECISIONS.md`.
 
 ## Session Handoff Notes
 
-- Zero default collections active; existing devices automatically purge legacy default IDs.
-- Free tier allows strictly 1 collection and up to 5 bookmarks; exceeding limits directs users to the Sanctuary paywall.
-- Bookmark bottom sheet adapts gracefully to keyboard appearance with full vertical scrollability and golden CTA styling.
-- Navigation bar inset offset accounted for on Android, preventing keyboard overlap on modal action buttons.
-- Stale state flash eliminated; bookmark modal synchronizes fresh collection data synchronously before paint.
-- Modal footer provides clean 14dp space above navigation bar when closed and anchors flush to the keyboard when open.
+- Reading progress and storage operations execute from zero-overhead in-memory caches backed synchronously by MMKV.
+- Impact stats and habit timeline computations are 100% single-pass with zero redundant disk reads.
+- Scripture reader chapters and daily devotional verses resolve in O(1) time with pre-built static lookup structures.
+
+
 
 

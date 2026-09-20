@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, RefreshControl, Pressable, Share } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -70,57 +70,60 @@ export default function StatsScreen() {
 	};
 
 	// Badges calculation
-	const blockedApps = getBlockedApps();
-	const badges: BadgeItem[] = [
-		{
-			id: 'genesis',
-			title: 'Genesis',
-			subtitle: 'First Step',
-			icon: '🌱',
-			unlocked: impact.sessions >= 1 || timer.streak >= 1,
-			requirement: 'Complete your first Scripture reading session',
-		},
-		{
-			id: 'david_courage',
-			title: "David's Courage",
-			subtitle: '3-Day Habit',
-			icon: '⚔️',
-			unlocked: timer.streak >= 3,
-			requirement: 'Maintain your reading streak for 3 consecutive days',
-		},
-		{
-			id: 'solomon_wisdom',
-			title: "Solomon's Wisdom",
-			subtitle: '7-Day Streak',
-			icon: '👑',
-			unlocked: timer.streak >= 7,
-			requirement: "Complete 7 consecutive days in God's Word",
-		},
-		{
-			id: 'armor_of_god',
-			title: 'Armor of God',
-			subtitle: 'Apps Guarded',
-			icon: '🛡️',
-			unlocked: blockedApps.length >= 3,
-			requirement: 'Shield at least 3 distracting apps from temptation',
-		},
-		{
-			id: 'living_water',
-			title: 'Living Water',
-			subtitle: '30m in Word',
-			icon: '🌊',
-			unlocked: impact.minutesRead >= 30,
-			requirement: 'Read Scripture for over 30 cumulative minutes',
-		},
-		{
-			id: 'morning_light',
-			title: 'Morning Light',
-			subtitle: 'Devotion',
-			icon: '🕊️',
-			unlocked: impact.sessions >= 3,
-			requirement: 'Complete 3 Bible reading sessions with consistency',
-		},
-	];
+	const blockedApps = useMemo(() => getBlockedApps(), []);
+	const badges: BadgeItem[] = useMemo(
+		() => [
+			{
+				id: 'genesis',
+				title: 'Genesis',
+				subtitle: 'First Step',
+				icon: '🌱',
+				unlocked: impact.sessions >= 1 || timer.streak >= 1,
+				requirement: 'Complete your first Scripture reading session',
+			},
+			{
+				id: 'david_courage',
+				title: "David's Courage",
+				subtitle: '3-Day Habit',
+				icon: '⚔️',
+				unlocked: timer.streak >= 3,
+				requirement: 'Maintain your reading streak for 3 consecutive days',
+			},
+			{
+				id: 'solomon_wisdom',
+				title: "Solomon's Wisdom",
+				subtitle: '7-Day Streak',
+				icon: '👑',
+				unlocked: timer.streak >= 7,
+				requirement: "Complete 7 consecutive days in God's Word",
+			},
+			{
+				id: 'armor_of_god',
+				title: 'Armor of God',
+				subtitle: 'Apps Guarded',
+				icon: '🛡️',
+				unlocked: blockedApps.length >= 3,
+				requirement: 'Shield at least 3 distracting apps from temptation',
+			},
+			{
+				id: 'living_water',
+				title: 'Living Water',
+				subtitle: '30m in Word',
+				icon: '🌊',
+				unlocked: impact.minutesRead >= 30,
+				requirement: 'Read Scripture for over 30 cumulative minutes',
+			},
+			{
+				id: 'morning_light',
+				title: 'Morning Light',
+				subtitle: 'Devotion',
+				icon: '🕊️',
+				unlocked: impact.sessions >= 3,
+				requirement: 'Complete 3 Bible reading sessions with consistency',
+			},
+		],
+		[impact.sessions, impact.minutesRead, timer.streak, blockedApps.length]
+	);
 
 	// Milestone calculation
 	const getNextMilestone = (current: number) => {
@@ -139,15 +142,18 @@ export default function StatsScreen() {
 
 	// 7-day week schedule
 	const todayDayOfWeek = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
-	const weekDays = [
-		{ label: 'S', dayIndex: 0 },
-		{ label: 'M', dayIndex: 1 },
-		{ label: 'Tu', dayIndex: 2 },
-		{ label: 'W', dayIndex: 3 },
-		{ label: 'Th', dayIndex: 4 },
-		{ label: 'F', dayIndex: 5 },
-		{ label: 'S', dayIndex: 6 },
-	];
+	const weekDays = useMemo(
+		() => [
+			{ label: 'S', dayIndex: 0 },
+			{ label: 'M', dayIndex: 1 },
+			{ label: 'Tu', dayIndex: 2 },
+			{ label: 'W', dayIndex: 3 },
+			{ label: 'Th', dayIndex: 4 },
+			{ label: 'F', dayIndex: 5 },
+			{ label: 'S', dayIndex: 6 },
+		],
+		[]
+	);
 
 	const handleShareApp = async () => {
 		try {

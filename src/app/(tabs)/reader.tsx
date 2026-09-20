@@ -31,6 +31,174 @@ import {
 import { useTheme } from '../../lib/themeContext';
 import { useFeatureGate } from '../../lib/useFeatureGate';
 
+interface VerseRowProps {
+  item: Verse;
+  colIds?: string[];
+  isTargeted: boolean;
+  showTooltip: boolean;
+  colNames: string;
+  colors: any;
+  onPressBookmark: (item: Verse) => void;
+  onLongPressVerse: (item: Verse) => void;
+  onPressTooltip: (item: Verse) => void;
+}
+
+const VerseRow = React.memo<VerseRowProps>(({
+  item,
+  colIds,
+  isTargeted,
+  showTooltip,
+  colNames,
+  colors,
+  onPressBookmark,
+  onLongPressVerse,
+  onPressTooltip,
+}) => {
+  const isBookmarked = colIds && colIds.length > 0;
+  const colCount = colIds ? colIds.length : 0;
+
+  return (
+    <View
+      style={{
+        marginBottom: 14,
+        borderRadius: 8,
+        backgroundColor: isTargeted
+          ? colors.accentBg
+          : isBookmarked
+          ? colors.surface
+          : 'transparent',
+        borderLeftWidth: isTargeted ? 3 : 0,
+        borderLeftColor: colors.accent,
+        padding: 8,
+      }}
+    >
+      <Pressable
+        onLongPress={() => onLongPressVerse(item)}
+        style={{
+          flexDirection: 'row',
+          alignItems: 'baseline',
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 12,
+            fontFamily: 'Inter_700Bold',
+            color: colors.accent,
+            marginRight: 12,
+            width: 24,
+            textAlign: 'right',
+          }}
+        >
+          {item.verse}
+        </Text>
+        <Text
+          style={{
+            flex: 1,
+            fontFamily: 'EBGaramond_400Regular',
+            fontSize: 18,
+            lineHeight: 30,
+            color: colors.textPrimary,
+          }}
+        >
+          {item.text}
+        </Text>
+        <Pressable
+          onPress={() => onPressBookmark(item)}
+          hitSlop={8}
+          style={{
+            marginLeft: 8,
+            padding: 4,
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}
+        >
+          <BookmarkIcon
+            size={15}
+            color={isBookmarked ? colors.accent : colors.textMuted}
+            fill={isBookmarked ? colors.accent : 'transparent'}
+          />
+          {colCount > 1 && (
+            <View
+              style={{
+                backgroundColor: colors.accent,
+                borderRadius: 6,
+                minWidth: 14,
+                height: 14,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: 3,
+                paddingHorizontal: 2,
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 9,
+                  fontWeight: '700',
+                  color: colors.accentText || '#000000',
+                }}
+              >
+                {colCount}
+              </Text>
+            </View>
+          )}
+        </Pressable>
+      </Pressable>
+
+      {/* Tooltip Pill for Bookmarked Verse */}
+      {showTooltip && (
+        <Pressable
+          onPress={() => onPressTooltip(item)}
+          hitSlop={8}
+          style={{
+            marginTop: 6,
+            marginLeft: 36,
+            marginRight: 16,
+            paddingVertical: 4,
+            paddingHorizontal: 10,
+            borderRadius: 8,
+            backgroundColor: colors.surfaceElevated || colors.surfaceSubtle,
+            borderWidth: 1,
+            borderColor: colors.border,
+            flexDirection: 'row',
+            alignItems: 'center',
+            alignSelf: 'flex-start',
+            maxWidth: '85%',
+          }}
+        >
+          <BookmarkIcon
+            size={11}
+            color={colors.accent}
+            fill={colors.accent}
+            style={{ marginRight: 6 }}
+          />
+          <Text
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={{
+              flexShrink: 1,
+              fontSize: 12,
+              color: colors.textSecondary,
+              fontFamily: 'Inter_500Medium',
+            }}
+          >
+            {colNames}
+          </Text>
+          <Text
+            style={{
+              fontSize: 12,
+              color: colors.accent,
+              fontFamily: 'Inter_700Bold',
+              marginLeft: 8,
+            }}
+          >
+            [Edit]
+          </Text>
+        </Pressable>
+      )}
+    </View>
+  );
+});
+
 export default function ReaderScreen() {
   const { colors, isDark } = useTheme();
   const { requirePremium } = useFeatureGate();
@@ -206,18 +374,76 @@ export default function ReaderScreen() {
     };
   }, [pickerVerse, bookIndex, currentBook.name, chapterNumber]);
 
-  const handlePressBookmark = (verseItem: Verse) => {
+  // Memoize chapters array so horizontal chapter picker doesn't allocate on every render
+  const chaptersList = useMemo(() => {
+    const count = currentBook?.chapterCount || 1;
+    return Array.from({ length: count }, (_, i) => i + 1);
+  }, [currentBook?.chapterCount]);
+
+  // Memoize collection name lookup map for O(1) resolution during verse rendering
+  const collectionNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const c of allCollections) {
+      map[c.id] = c.name;
+    }
+    return map;
+  }, [allCollections]);
+
+  const handlePressBookmark = useCallback((verseItem: Verse) => {
     // Open bottom sheet picker directly so user can view/change collections, edit note, or remove
     setPickerVerse(verseItem);
     setIsPickerVisible(true);
     setTooltipVerseNumber(null);
-  };
+  }, []);
 
-  const handleLongPressVerse = (verseItem: Verse) => {
+  const handleLongPressVerse = useCallback((verseItem: Verse) => {
     setPickerVerse(verseItem);
     setIsPickerVisible(true);
     setTooltipVerseNumber(null);
-  };
+  }, []);
+
+  const handlePressTooltip = useCallback((verseItem: Verse) => {
+    setTooltipVerseNumber(null);
+    setPickerVerse(verseItem);
+    setIsPickerVisible(true);
+  }, []);
+
+  const renderItem = useCallback(
+    ({ item }: { item: Verse }) => {
+      const colIds = verseCollectionMap[item.verse];
+      const isTargeted = targetVerse === item.verse;
+      const showTooltip = tooltipVerseNumber === item.verse;
+      const colNames =
+        (colIds || [])
+          .map((id) => collectionNameMap[id])
+          .filter(Boolean)
+          .join(', ') || 'Saved';
+
+      return (
+        <VerseRow
+          item={item}
+          colIds={colIds}
+          isTargeted={isTargeted}
+          showTooltip={showTooltip}
+          colNames={colNames}
+          colors={colors}
+          onPressBookmark={handlePressBookmark}
+          onLongPressVerse={handleLongPressVerse}
+          onPressTooltip={handlePressTooltip}
+        />
+      );
+    },
+    [
+      verseCollectionMap,
+      targetVerse,
+      tooltipVerseNumber,
+      collectionNameMap,
+      colors,
+      handlePressBookmark,
+      handleLongPressVerse,
+      handlePressTooltip,
+    ]
+  );
 
   // Switch translation
   const handleToggleTranslation = (newTr: 'WEB' | 'KJV') => {
@@ -426,35 +652,33 @@ export default function ReaderScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ paddingHorizontal: 16 }}
         >
-          {Array.from({ length: currentBook.chapterCount }, (_, i) => i + 1).map(
-            (ch) => (
-              <Pressable
-                key={ch}
-                onPress={() => handleSelectChapter(ch)}
+          {chaptersList.map((ch) => (
+            <Pressable
+              key={ch}
+              onPress={() => handleSelectChapter(ch)}
+              style={{
+                width: 36,
+                height: 36,
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 18,
+                marginRight: 8,
+                backgroundColor: chapterNumber === ch ? colors.accent : colors.surfaceSubtle,
+                borderWidth: chapterNumber === ch ? 0 : 1,
+                borderColor: colors.borderSubtle,
+              }}
+            >
+              <Text
                 style={{
-                  width: 36,
-                  height: 36,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: 18,
-                  marginRight: 8,
-                  backgroundColor: chapterNumber === ch ? colors.accent : colors.surfaceSubtle,
-                  borderWidth: chapterNumber === ch ? 0 : 1,
-                  borderColor: colors.borderSubtle,
+                  fontSize: 12,
+                  fontFamily: 'Inter_600SemiBold',
+                  color: chapterNumber === ch ? '#141413' : colors.textSecondary,
                 }}
               >
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontFamily: 'Inter_600SemiBold',
-                    color: chapterNumber === ch ? '#141413' : colors.textSecondary,
-                  }}
-                >
-                  {ch}
-                </Text>
-              </Pressable>
-            )
-          )}
+                {ch}
+              </Text>
+            </Pressable>
+          ))}
         </ScrollView>
       </View>
 
@@ -516,164 +740,7 @@ export default function ReaderScreen() {
             </Text>
           </View>
         }
-        renderItem={({ item }: { item: Verse }) => {
-          const colIds = verseCollectionMap[item.verse];
-          const isBookmarked = colIds && colIds.length > 0;
-          const colCount = colIds ? colIds.length : 0;
-          const isTargeted = targetVerse === item.verse;
-          const showTooltip = tooltipVerseNumber === item.verse;
-
-          const colNames =
-            (colIds || [])
-              .map((id) => allCollections.find((c) => c.id === id)?.name)
-              .filter(Boolean)
-              .join(', ') || 'Saved';
-
-          return (
-            <View
-              style={{
-                marginBottom: 14,
-                borderRadius: 8,
-                backgroundColor: isTargeted
-                  ? colors.accentBg
-                  : isBookmarked
-                  ? colors.surface
-                  : 'transparent',
-                borderLeftWidth: isTargeted ? 3 : 0,
-                borderLeftColor: colors.accent,
-                padding: 8,
-              }}
-            >
-              <Pressable
-                onLongPress={() => handleLongPressVerse(item)}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'baseline',
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontFamily: 'Inter_700Bold',
-                    color: colors.accent,
-                    marginRight: 12,
-                    width: 24,
-                    textAlign: 'right',
-                  }}
-                >
-                  {item.verse}
-                </Text>
-                <Text
-                  style={{
-                    flex: 1,
-                    fontFamily: 'EBGaramond_400Regular',
-                    fontSize: 18,
-                    lineHeight: 30,
-                    color: colors.textPrimary,
-                  }}
-                >
-                  {item.text}
-                </Text>
-                <Pressable
-                  onPress={() => handlePressBookmark(item)}
-                  hitSlop={8}
-                  style={{
-                    marginLeft: 8,
-                    padding: 4,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}
-                >
-                  <BookmarkIcon
-                    size={15}
-                    color={isBookmarked ? colors.accent : colors.textMuted}
-                    fill={isBookmarked ? colors.accent : 'transparent'}
-                  />
-                  {colCount > 1 && (
-                    <View
-                      style={{
-                        backgroundColor: colors.accent,
-                        borderRadius: 6,
-                        minWidth: 14,
-                        height: 14,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginLeft: 3,
-                        paddingHorizontal: 2,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 9,
-                          fontWeight: '700',
-                          color: colors.accentText || '#000000',
-                        }}
-                      >
-                        {colCount}
-                      </Text>
-                    </View>
-                  )}
-                </Pressable>
-              </Pressable>
-
-              {/* Tooltip Pill for Bookmarked Verse */}
-              {showTooltip && (
-                <Pressable
-                  onPress={() => {
-                    setTooltipVerseNumber(null);
-                    setPickerVerse(item);
-                    setIsPickerVisible(true);
-                  }}
-                  hitSlop={8}
-                  style={{
-                    marginTop: 6,
-                    marginLeft: 36,
-                    marginRight: 16,
-                    paddingVertical: 4,
-                    paddingHorizontal: 10,
-                    borderRadius: 8,
-                    backgroundColor: colors.surfaceElevated || colors.surfaceSubtle,
-                    borderWidth: 1,
-                    borderColor: colors.border,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    alignSelf: 'flex-start',
-                    maxWidth: '85%',
-                  }}
-                >
-                  <BookmarkIcon
-                    size={11}
-                    color={colors.accent}
-                    fill={colors.accent}
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text
-                    numberOfLines={1}
-                    ellipsizeMode="tail"
-                    style={{
-                      flexShrink: 1,
-                      fontSize: 12,
-                      color: colors.textSecondary,
-                      fontFamily: 'Inter_500Medium',
-                    }}
-                  >
-                    {colNames}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      color: colors.accent,
-                      fontFamily: 'Inter_700Bold',
-                      marginLeft: 8,
-                    }}
-                  >
-                    [Edit]
-                  </Text>
-                </Pressable>
-              )}
-            </View>
-          );
-        }}
+        renderItem={renderItem}
         ListFooterComponent={
           <View
             style={{
@@ -839,24 +906,26 @@ export default function ReaderScreen() {
       )}
 
       {/* Bookmark Picker Bottom Sheet */}
-      <BookmarkPickerSheet
-        visible={isPickerVisible}
-        verse={pickerVerseObject}
-        onDone={() => {
-          const v = pickerVerse;
-          setIsPickerVisible(false);
-          setPickerVerse(null);
-          refreshBookmarks();
-          if (v) {
-            setToastMessage(`Saved ${currentBook.name} ${chapterNumber}:${v.verse}`);
-            setTimeout(() => setToastMessage(null), 2500);
-          }
-        }}
-        onCancel={() => {
-          setIsPickerVisible(false);
-          setPickerVerse(null);
-        }}
-      />
+      {isPickerVisible && (
+        <BookmarkPickerSheet
+          visible={isPickerVisible}
+          verse={pickerVerseObject}
+          onDone={() => {
+            const v = pickerVerse;
+            setIsPickerVisible(false);
+            setPickerVerse(null);
+            refreshBookmarks();
+            if (v) {
+              setToastMessage(`Saved ${currentBook.name} ${chapterNumber}:${v.verse}`);
+              setTimeout(() => setToastMessage(null), 2500);
+            }
+          }}
+          onCancel={() => {
+            setIsPickerVisible(false);
+            setPickerVerse(null);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }

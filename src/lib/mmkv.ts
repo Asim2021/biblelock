@@ -87,7 +87,16 @@ export const storage: StorageInterface = {
       inst.delete(k);
     }
   },
-  clearAll: () => getInstance().clearAll?.(),
+  clearAll: () => {
+    _bookmarksCache = null;
+    _collectionsCache = null;
+    _blockedAppsCache = null;
+    _scheduledTimesCache = null;
+    _lastReadPositionCache = null;
+    _progressCache.clear();
+    _yearHistoryCache = null;
+    getInstance().clearAll?.();
+  },
 };
 
 // Storage Keys
@@ -123,6 +132,15 @@ export const DEFAULT_BLOCKED_APPS = [
   'com.reddit.frontpage',
 ];
 
+// In-Memory Synchronous Caches to eliminate repetitive JSON parse and disk read latency
+const _progressCache = new Map<string, number>();
+let _yearHistoryCache: { dateKey: string; goalSeconds: number; data: YearMonthData[] } | null = null;
+let _blockedAppsCache: string[] | null = null;
+let _scheduledTimesCache: string[] | null = null;
+let _lastReadPositionCache: LastReadPosition | null = null;
+let _bookmarksCache: Bookmark[] | null = null;
+let _collectionsCache: VerseCollection[] | null = null;
+
 // Typed Storage Helpers
 
 export function getTodayDateKey(): string {
@@ -152,15 +170,23 @@ export function subscribeToProgressChanges(fn: (seconds: number, dateKey: string
 
 export function setDailyGoalMinutes(minutes: number): void {
   const sanitized = Math.max(1, minutes);
+  _yearHistoryCache = null;
   storage.set(STORAGE_KEYS.DAILY_GOAL_MINUTES, sanitized);
   goalListeners.forEach((fn) => fn(sanitized));
 }
 
 export function getReadingProgress(dateKey: string = getTodayDateKey()): number {
-  return storage.getNumber(`${STORAGE_KEYS.READING_PROGRESS_PREFIX}${dateKey}`) ?? 0;
+  if (_progressCache.has(dateKey)) {
+    return _progressCache.get(dateKey)!;
+  }
+  const val = storage.getNumber(`${STORAGE_KEYS.READING_PROGRESS_PREFIX}${dateKey}`) ?? 0;
+  _progressCache.set(dateKey, val);
+  return val;
 }
 
 export function setReadingProgress(seconds: number, dateKey: string = getTodayDateKey()): void {
+  _progressCache.set(dateKey, seconds);
+  _yearHistoryCache = null;
   storage.set(`${STORAGE_KEYS.READING_PROGRESS_PREFIX}${dateKey}`, seconds);
   progressListeners.forEach((fn) => fn(seconds, dateKey));
 }
@@ -209,17 +235,26 @@ export function setDailyVerseNotificationCount(count: number): void {
 }
 
 export function getBlockedApps(): string[] {
+  if (_blockedAppsCache !== null) {
+    return _blockedAppsCache;
+  }
   const raw = storage.getString(STORAGE_KEYS.BLOCKED_APPS);
-  if (!raw) return DEFAULT_BLOCKED_APPS;
+  if (!raw) {
+    _blockedAppsCache = DEFAULT_BLOCKED_APPS;
+    return _blockedAppsCache;
+  }
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_BLOCKED_APPS;
+    _blockedAppsCache = Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_BLOCKED_APPS;
+    return _blockedAppsCache;
   } catch {
-    return DEFAULT_BLOCKED_APPS;
+    _blockedAppsCache = DEFAULT_BLOCKED_APPS;
+    return _blockedAppsCache;
   }
 }
 
 export function setBlockedApps(apps: string[]): void {
+  _blockedAppsCache = apps;
   storage.set(STORAGE_KEYS.BLOCKED_APPS, JSON.stringify(apps));
 }
 
@@ -333,16 +368,25 @@ export function setUserName(name: string): void {
 }
 
 export function getScheduledReadingTimes(): string[] {
+  if (_scheduledTimesCache !== null) {
+    return _scheduledTimesCache;
+  }
   const raw = storage.getString(STORAGE_KEYS.SCHEDULED_READING_TIMES);
-  if (!raw) return ['7:00 AM'];
+  if (!raw) {
+    _scheduledTimesCache = ['7:00 AM'];
+    return _scheduledTimesCache;
+  }
   try {
-    return JSON.parse(raw);
+    _scheduledTimesCache = JSON.parse(raw);
+    return _scheduledTimesCache || ['7:00 AM'];
   } catch {
-    return ['7:00 AM'];
+    _scheduledTimesCache = ['7:00 AM'];
+    return _scheduledTimesCache;
   }
 }
 
 export function setScheduledReadingTimes(times: string[]): void {
+  _scheduledTimesCache = times;
   storage.set(STORAGE_KEYS.SCHEDULED_READING_TIMES, JSON.stringify(times));
 }
 
@@ -427,6 +471,7 @@ export function getReadingHistory30Days(): HabitDay[] {
       completed,
       isToday: i === 0,
       minutesRead: Math.floor(progressSec / 60),
+      secondsRead: progressSec,
     });
   }
 
@@ -434,11 +479,21 @@ export function getReadingHistory30Days(): HabitDay[] {
 }
 
 export function getReadingHistoryYear(): YearMonthData[] {
+  const todayKey = getTodayDateKey();
+  const goalSeconds = getDailyGoalMinutes() * 60;
+
+  if (
+    _yearHistoryCache &&
+    _yearHistoryCache.dateKey === todayKey &&
+    _yearHistoryCache.goalSeconds === goalSeconds
+  ) {
+    return _yearHistoryCache.data;
+  }
+
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const now = new Date();
   const currentYear = now.getFullYear();
   const currentMonth = now.getMonth();
-  const goalSeconds = getDailyGoalMinutes() * 60;
 
   const monthsData: YearMonthData[] = [];
 
@@ -476,6 +531,12 @@ export function getReadingHistoryYear(): YearMonthData[] {
     });
   }
 
+  _yearHistoryCache = {
+    dateKey: todayKey,
+    goalSeconds,
+    data: monthsData,
+  };
+
   return monthsData;
 }
 
@@ -496,7 +557,7 @@ export function getImpactStats(): ImpactStats {
   const history = getReadingHistory30Days();
   let totalSeconds = 0;
   for (const day of history) {
-    totalSeconds += getReadingProgress(day.date);
+    totalSeconds += day.secondsRead ?? (day.minutesRead ? day.minutesRead * 60 : 0);
   }
 
   const minutesRead = Math.floor(totalSeconds / 60);
@@ -521,24 +582,31 @@ export interface LastReadPosition {
 }
 
 export function getLastReadPosition(): LastReadPosition {
+  if (_lastReadPositionCache !== null) {
+    return _lastReadPositionCache;
+  }
   const json = storage.getString(STORAGE_KEYS.LAST_READ_POSITION);
   if (json) {
     try {
-      return JSON.parse(json);
+      _lastReadPositionCache = JSON.parse(json);
+      return _lastReadPositionCache!;
     } catch {
       // ignore parse failure
     }
   }
-  return {
+  const fallback: LastReadPosition = {
     bookIndex: 0,
     bookName: 'Genesis',
     chapterNumber: 1,
     verseNumber: 1,
     updatedAt: Date.now(),
   };
+  _lastReadPositionCache = fallback;
+  return fallback;
 }
 
 export function setLastReadPosition(pos: LastReadPosition): void {
+  _lastReadPositionCache = pos;
   storage.set(STORAGE_KEYS.LAST_READ_POSITION, JSON.stringify(pos));
 }
 
@@ -583,31 +651,45 @@ export function getBookmarkId(bookName: string, chapter: number, verse: number):
 }
 
 export function getCollections(): VerseCollection[] {
+  if (_collectionsCache !== null) {
+    return _collectionsCache;
+  }
   const json = storage.getString(STORAGE_KEYS.COLLECTIONS);
-  if (!json) return [];
+  if (!json) {
+    _collectionsCache = [];
+    return _collectionsCache;
+  }
   try {
     const list = JSON.parse(json);
-    if (!Array.isArray(list)) return [];
+    if (!Array.isArray(list)) {
+      _collectionsCache = [];
+      return _collectionsCache;
+    }
     // Migration: purge legacy default collections so user starts with clean slate
     const filtered = list.filter((c) => c.id !== 'prayers' && c.id !== 'peace' && c.id !== 'strength');
     if (filtered.length !== list.length) {
       storage.set(STORAGE_KEYS.COLLECTIONS, JSON.stringify(filtered));
     }
-    return filtered;
+    _collectionsCache = filtered;
+    return _collectionsCache;
   } catch {
-    return [];
+    _collectionsCache = [];
+    return _collectionsCache;
   }
 }
 
 export function saveCollection(collection: VerseCollection): void {
   const list = getCollections();
   const filtered = list.filter((c) => c.id !== collection.id);
-  storage.set(STORAGE_KEYS.COLLECTIONS, JSON.stringify([...filtered, collection]));
+  const updated = [...filtered, collection];
+  _collectionsCache = updated;
+  storage.set(STORAGE_KEYS.COLLECTIONS, JSON.stringify(updated));
 }
 
 export function deleteCollection(id: string): void {
   const list = getCollections();
   const filtered = list.filter((c) => c.id !== id);
+  _collectionsCache = filtered;
   storage.set(STORAGE_KEYS.COLLECTIONS, JSON.stringify(filtered));
 
   // Cascade to bookmarks: remove this collectionId from all bookmarks
@@ -624,15 +706,25 @@ export function deleteCollection(id: string): void {
       updatedBookmarks.push(bm);
     }
   }
+  _bookmarksCache = updatedBookmarks;
   storage.set(STORAGE_KEYS.BOOKMARKS, JSON.stringify(updatedBookmarks));
 }
 
 export function getBookmarks(): Bookmark[] {
+  if (_bookmarksCache !== null) {
+    return _bookmarksCache;
+  }
   const json = storage.getString(STORAGE_KEYS.BOOKMARKS);
-  if (!json) return [];
+  if (!json) {
+    _bookmarksCache = [];
+    return _bookmarksCache;
+  }
   try {
     const list = JSON.parse(json);
-    if (!Array.isArray(list)) return [];
+    if (!Array.isArray(list)) {
+      _bookmarksCache = [];
+      return _bookmarksCache;
+    }
     let needsRewrite = false;
     const migrated = list.map((item: any) => {
       let cids = Array.isArray(item.collectionIds) ? item.collectionIds : (item.collectionId ? [item.collectionId] : []);
@@ -649,21 +741,26 @@ export function getBookmarks(): Bookmark[] {
     if (needsRewrite) {
       storage.set(STORAGE_KEYS.BOOKMARKS, JSON.stringify(migrated));
     }
-    return migrated;
+    _bookmarksCache = migrated;
+    return _bookmarksCache;
   } catch {
-    return [];
+    _bookmarksCache = [];
+    return _bookmarksCache;
   }
 }
 
 export function saveBookmark(bookmark: Bookmark): void {
   const list = getBookmarks();
   const filtered = list.filter((b) => b.id !== bookmark.id);
-  storage.set(STORAGE_KEYS.BOOKMARKS, JSON.stringify([bookmark, ...filtered]));
+  const updated = [bookmark, ...filtered];
+  _bookmarksCache = updated;
+  storage.set(STORAGE_KEYS.BOOKMARKS, JSON.stringify(updated));
 }
 
 export function deleteBookmark(id: string): void {
   const list = getBookmarks();
   const filtered = list.filter((b) => b.id !== id);
+  _bookmarksCache = filtered;
   storage.set(STORAGE_KEYS.BOOKMARKS, JSON.stringify(filtered));
 }
 

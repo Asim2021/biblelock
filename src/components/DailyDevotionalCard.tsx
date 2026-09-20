@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Sparkles, Share2, ExternalLink, RotateCcw } from 'lucide-react-native';
@@ -20,7 +20,7 @@ export function DailyDevotionalCard({
   const [verseIndex, setVerseIndex] = useState<number>(() => getDailyVerse(translation).index);
   const [isRotating, setIsRotating] = useState(false);
 
-  const verse = resolveVerseItem(translation, verseIndex);
+  const verse = useMemo(() => resolveVerseItem(translation, verseIndex), [translation, verseIndex]);
 
   const handleRefresh = () => {
     setIsRotating(true);
