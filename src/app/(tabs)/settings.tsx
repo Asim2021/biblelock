@@ -35,6 +35,8 @@ import {
   RotateCcw,
   Minus,
   Sparkles,
+  BarChart2,
+  ChevronRight,
 } from 'lucide-react-native';
 import { usePurchases } from '../../lib/purchases';
 import { useFeatureGate } from '../../lib/useFeatureGate';
@@ -440,6 +442,59 @@ export default function SettingsScreen() {
               />
             )}
           </View>
+        </Card>
+
+        {/* My Stats Navigation Card */}
+        <Card
+          variant="dark"
+          style={{
+            padding: 16,
+            marginBottom: 20,
+            borderColor: colors.border,
+            backgroundColor: colors.surface,
+          }}
+        >
+          <Pressable
+            onPress={() => router.push('/stats-detail' as any)}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View
+                style={{
+                  width: 42,
+                  height: 42,
+                  borderRadius: 12,
+                  backgroundColor: 'rgba(245, 184, 0, 0.12)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <BarChart2 size={22} color={colors.accent} />
+              </View>
+              <View>
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontFamily: 'Inter_700Bold',
+                    color: colors.textPrimary,
+                  }}
+                >
+                  My Stats & Badges
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'Inter_400Regular',
+                    color: colors.textSecondary,
+                    marginTop: 2,
+                  }}
+                >
+                  Streaks, milestones & lifetime impact
+                </Text>
+              </View>
+            </View>
+            <ChevronRight size={18} color={colors.textSecondary} />
+          </Pressable>
         </Card>
 
         {/* System Permission Guard Status */}

@@ -2,15 +2,15 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, RefreshControl, Pressable, Share } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { RotateCw, Flame, Zap, Clock, Award, MoreHorizontal, Share2, BookOpen, Lock } from 'lucide-react-native';
-import { useReadingTimer } from '../../lib/readingTimer';
-import { useFeatureGate } from '../../lib/useFeatureGate';
-import { getUserName, getImpactStats, getBlockedApps, getReadingHistory30Days, getReadingHistoryYear } from '../../lib/mmkv';
-import { BadgesGrid } from '../../components/BadgesGrid';
-import { BadgeShareModal } from '../../components/BadgeShareModal';
-import { DailyDevotionalCard } from '../../components/DailyDevotionalCard';
-import { BadgeItem, ImpactStats, HabitDay, YearMonthData } from '../../types/onboarding';
-import { useTheme } from '../../lib/themeContext';
+import { ArrowLeft, RotateCw, Flame, Zap, Clock, Award, MoreHorizontal, Share2, BookOpen, Lock } from 'lucide-react-native';
+import { useReadingTimer } from '../lib/readingTimer';
+import { useFeatureGate } from '../lib/useFeatureGate';
+import { getUserName, getImpactStats, getBlockedApps, getReadingHistory30Days, getReadingHistoryYear } from '../lib/mmkv';
+import { BadgesGrid } from '../components/BadgesGrid';
+import { BadgeShareModal } from '../components/BadgeShareModal';
+import { DailyDevotionalCard } from '../components/DailyDevotionalCard';
+import { BadgeItem, ImpactStats, HabitDay, YearMonthData } from '../types/onboarding';
+import { useTheme } from '../lib/themeContext';
 
 export default function StatsScreen() {
 	const router = useRouter();
