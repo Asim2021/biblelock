@@ -14,6 +14,9 @@ import {
   Inter_600SemiBold,
   Inter_700Bold,
 } from '@expo-google-fonts/inter';
+import {
+  PlayfairDisplay_700Bold,
+} from '@expo-google-fonts/playfair-display';
 
 import '../../global.css';
 import * as Notifications from 'expo-notifications';
@@ -61,30 +64,23 @@ function RootNavigation() {
       handleNotificationData(data);
     });
 
-    Notifications.getLastNotificationResponseAsync()
-      .then((response) => {
-        if (response) {
-          const data = response.notification.request.content.data;
-          handleNotificationData(data);
-        }
-      })
-      .catch(() => {});
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) {
+        handleNotificationData(response.notification.request.content.data);
+      }
+    });
 
-    return () => {
-      sub.remove();
-    };
+    return () => sub.remove();
   }, [router]);
 
+  // Route protection
   useEffect(() => {
-    const firstSegment = (segments as string[])[0];
-    const inOnboarding = firstSegment === 'onboarding';
-    const onboardingDone = isOnboardingCompleted();
+    const inTabsGroup = segments[0] === '(tabs)';
+    const inOnboarding = segments[0] === 'onboarding';
 
-    if (!onboardingDone) {
-      if (!inOnboarding && firstSegment !== 'paywall') {
-        router.replace('/onboarding' as any);
-      }
-    } else if (inOnboarding) {
+    if (!isOnboardingCompleted() && inTabsGroup) {
+      router.replace('/onboarding' as any);
+    } else if (isOnboardingCompleted() && inOnboarding) {
       router.replace('/(tabs)' as any);
     }
   }, [segments]);
@@ -93,6 +89,7 @@ function RootNavigation() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="onboarding/index" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="stats-detail" options={{ headerShown: false }} />
       <Stack.Screen
         name="paywall"
         options={{
@@ -124,6 +121,7 @@ export default function RootLayout() {
     Inter_500Medium,
     Inter_600SemiBold,
     Inter_700Bold,
+    PlayfairDisplay_700Bold,
   });
 
   useEffect(() => {

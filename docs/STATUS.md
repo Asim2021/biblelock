@@ -220,17 +220,34 @@
   - **Static Bible Books & Inspirational Verses Cache (`src/lib/bible.ts`):** Pre-computed static `BOOKS_CACHE` (eliminating 66 object allocations per call), direct sequential index check `chapters[chapterNumber - 1]` in `getChapter()`, and pre-resolved `RESOLVED_INSPIRATIONAL_CACHE` for O(1) daily verse lookups.
   - **Installed Apps Native Cache (`src/lib/appBlocker.ts`):** Cached installed applications in memory with optional `forceRefresh` flag, avoiding repetitive native package enumeration on Android.
 
+- [x] `TASK-044`: Bible Scroll Reels-Style Visual Scripture Feed & Navigation Restructure (`DEC-029`):
+  - **Bundled Sacred Imagery Assets (`assets/scroll-backgrounds/`):** Bundled 10 high-resolution biblical backgrounds (sunrise cross, ancient scroll, Gethsemane olive garden, Sinai mountain rays, chapel stained glass, desert path, wheat field, starry Bethlehem, calm sea, misty forest path) + barrel export `index.ts`.
+  - **Mood Guidance Dataset (`src/data/moodVerses.ts`):** Curated 144 mood-to-verse entries across 13 moods (`all`, `sad`, `anxious`, `angry`, `lonely`, `fearful`, `grateful`, `lost`, `heartbroken`, `exhausted`, `grieving`, `strength`, `peace`), verified with 0 errors against `web.json` and `kjv.json`.
+  - **Data Layer & Scripture Utilities (`src/lib/mmkv.ts`, `src/lib/bible.ts`):** Added `ScrollPosition`, `ScrollFont`, and cached getters/setters in MMKV. Implemented `getVerseAtPosition()`, `getNextPosition()`, `getRandomVerseFull()`, and `resolveMoodVerse()`.
+  - **Visual Verse Card (`src/components/ScrollVerseCard.tsx`):** Implemented memoized full-screen verse display with 3-layer dark gradient stack, adaptive typography (15px–32px), citation badge, and non-collapsing Android view capture anchor.
+  - **Sanctuary Feature Gating & Marketing Preview (`src/components/ScrollPaywallGate.tsx`):** Built dedicated marketing paywall preview for free users featuring benefit highlights and radiant gold CTA linking to `/paywall`.
+  - **Image Share & Background Cache Utilities (`src/lib/shareVerseImage.ts`, `src/lib/scrollImageCache.ts`):** Added `react-native-view-shot` image capture and native sharing, plus hybrid background resolver with optional Unsplash API support and MMKV caching.
+  - **Bible Scroll Main Feed (`src/app/(tabs)/scroll.tsx`):** Built full-screen vertical swipe feed with paging FlatList, horizontal mood chip bar, sequential/random toggle, floating action column (Save, Note, Share, Font), font picker modal, and reading timer integration.
+  - **Navigation Restructure (`(tabs)/_layout.tsx`, `_layout.tsx`, `settings.tsx`, `stats-detail.tsx`):** Replaced Stats tab with Scroll tab in tab bar; relocated Stats screen to `src/app/stats-detail.tsx` with back navigation; added "My Stats & Badges" navigation card in Settings; loaded `PlayfairDisplay_700Bold` in root layout.
+
+- [x] `TASK-045`: Tier-Ranked Mood Scripture Dataset Expansion (`DEC-030`):
+  - **Expanded Curated Verses (`src/data/moodVerses.ts`):** Tripled mood dataset from 12 to 28 verses per mood across all 12 moods (336 total verses).
+  - **3-Tier Spiritual & Therapeutic Ranking:** Grouped verses into Tier 1 (Core Anchor Comfort/Peace), Tier 2 (Deeper Affirmation & Grounding), and Tier 3 (Wisdom, Endurance & Perspective).
+  - **Automated Verification:** Verified all 336 references across both KJV and WEB with 0 missing books, chapters, or verses.
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `code-review-graph update`: 40 files updated, 159 nodes, 780 edges indexed cleanly.
-- `DEC-021` through `DEC-028` recorded in `docs/DECISIONS.md`.
+- `code-review-graph update`: 68 files updated, 1 nodes, 0 edges indexed cleanly.
+- `validate_expanded_verses.js`: 336 verses checked across both KJV and WEB with 0 errors.
+- `DEC-021` through `DEC-030` recorded in `docs/DECISIONS.md`.
 
 ## Session Handoff Notes
 
-- Reading progress and storage operations execute from zero-overhead in-memory caches backed synchronously by MMKV.
-- Impact stats and habit timeline computations are 100% single-pass with zero redundant disk reads.
-- Scripture reader chapters and daily devotional verses resolve in O(1) time with pre-built static lookup structures.
+- Bible Scroll is live on Tab 4 with full-screen vertical paging, mood guidance (336 tier-ranked verses), adaptive typography, and reading timer integration.
+- Free disciples are greeted with a high-converting Sanctuary marketing gate; premium disciples experience the full visual Scripture feed.
+- Stats functionality is fully preserved and accessible via "My Stats & Badges" card in Settings with native back navigation.
+
 
 
 

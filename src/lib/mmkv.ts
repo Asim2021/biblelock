@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { OnboardingData, HabitDay, ImpactStats, YearMonthData } from '../types/onboarding';
+import { MoodKey } from '../data/moodVerses';
 
 // ponytail: fallback storage in memory for web/testing/server environments
 class MemoryStorage {
@@ -93,6 +94,10 @@ export const storage: StorageInterface = {
     _blockedAppsCache = null;
     _scheduledTimesCache = null;
     _lastReadPositionCache = null;
+    _scrollPositionCache = null;
+    _scrollModeCache = null;
+    _scrollFontCache = null;
+    _scrollMoodCache = null;
     _progressCache.clear();
     _yearHistoryCache = null;
     getInstance().clearAll?.();
@@ -121,6 +126,10 @@ export const STORAGE_KEYS = {
   THEME_MODE: 'theme_mode',
   DAILY_VERSE_NOTIFICATIONS_ENABLED: 'daily_verse_notifications_enabled',
   DAILY_VERSE_NOTIFICATION_COUNT: 'daily_verse_notification_count',
+  SCROLL_POSITION: 'scroll_position',
+  SCROLL_MODE: 'scroll_mode',
+  SCROLL_FONT: 'scroll_font',
+  SCROLL_MOOD: 'scroll_mood',
 } as const;
 
 // Default Presets
@@ -140,6 +149,10 @@ let _scheduledTimesCache: string[] | null = null;
 let _lastReadPositionCache: LastReadPosition | null = null;
 let _bookmarksCache: Bookmark[] | null = null;
 let _collectionsCache: VerseCollection[] | null = null;
+let _scrollPositionCache: ScrollPosition | null = null;
+let _scrollModeCache: 'sequential' | 'random' | null = null;
+let _scrollFontCache: ScrollFont | null = null;
+let _scrollMoodCache: MoodKey | null = null;
 
 // Typed Storage Helpers
 
@@ -869,4 +882,79 @@ export function getThemeMode(): ThemeMode {
 export function setThemeMode(theme: ThemeMode): void {
   storage.set(STORAGE_KEYS.THEME_MODE, theme);
 }
+
+// Scroll Settings & State
+export interface ScrollPosition {
+  bookIndex: number;
+  chapterIndex: number;
+  verseIndex: number;
+}
+
+export type ScrollFont = 'garamond' | 'inter' | 'playfair';
+
+export function getScrollPosition(): ScrollPosition {
+  if (_scrollPositionCache !== null) return _scrollPositionCache;
+  const json = storage.getString(STORAGE_KEYS.SCROLL_POSITION);
+  if (json) {
+    try {
+      const pos = JSON.parse(json);
+      if (
+        typeof pos.bookIndex === 'number' &&
+        typeof pos.chapterIndex === 'number' &&
+        typeof pos.verseIndex === 'number'
+      ) {
+        _scrollPositionCache = pos;
+        return pos;
+      }
+    } catch {}
+  }
+  _scrollPositionCache = { bookIndex: 0, chapterIndex: 0, verseIndex: 0 };
+  return _scrollPositionCache;
+}
+
+export function setScrollPosition(pos: ScrollPosition): void {
+  _scrollPositionCache = pos;
+  storage.set(STORAGE_KEYS.SCROLL_POSITION, JSON.stringify(pos));
+}
+
+export function getScrollMode(): 'sequential' | 'random' {
+  if (_scrollModeCache !== null) return _scrollModeCache;
+  const mode = storage.getString(STORAGE_KEYS.SCROLL_MODE) as 'sequential' | 'random';
+  _scrollModeCache = mode === 'random' ? 'random' : 'sequential';
+  return _scrollModeCache;
+}
+
+export function setScrollMode(mode: 'sequential' | 'random'): void {
+  _scrollModeCache = mode;
+  storage.set(STORAGE_KEYS.SCROLL_MODE, mode);
+}
+
+export function getScrollFont(): ScrollFont {
+  if (_scrollFontCache !== null) return _scrollFontCache;
+  const font = storage.getString(STORAGE_KEYS.SCROLL_FONT) as ScrollFont;
+  if (font === 'inter' || font === 'playfair' || font === 'garamond') {
+    _scrollFontCache = font;
+    return font;
+  }
+  _scrollFontCache = 'garamond';
+  return _scrollFontCache;
+}
+
+export function setScrollFont(font: ScrollFont): void {
+  _scrollFontCache = font;
+  storage.set(STORAGE_KEYS.SCROLL_FONT, font);
+}
+
+export function getScrollMood(): MoodKey {
+  if (_scrollMoodCache !== null) return _scrollMoodCache;
+  const mood = storage.getString(STORAGE_KEYS.SCROLL_MOOD) as MoodKey;
+  _scrollMoodCache = mood || 'all';
+  return _scrollMoodCache;
+}
+
+export function setScrollMood(mood: MoodKey): void {
+  _scrollMoodCache = mood;
+  storage.set(STORAGE_KEYS.SCROLL_MOOD, mood);
+}
+
 

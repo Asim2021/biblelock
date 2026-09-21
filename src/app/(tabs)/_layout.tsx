@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, BookOpen, Bookmark, BarChart2, Settings } from 'lucide-react-native';
+import { Home, BookOpen, Bookmark, ScrollText, Settings } from 'lucide-react-native';
 import { useTheme } from '../../lib/themeContext';
 
 export default function TabLayout() {
@@ -58,11 +58,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="stats"
+        name="scroll"
         options={{
-          title: 'Stats',
+          title: 'Scroll',
           tabBarIcon: ({ color, focused }) => (
-            <BarChart2 size={22} color={color} strokeWidth={focused ? 2.5 : 1.8} />
+            <ScrollText size={22} color={color} strokeWidth={focused ? 2.5 : 1.8} />
           ),
         }}
       />
