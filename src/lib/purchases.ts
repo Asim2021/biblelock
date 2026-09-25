@@ -13,10 +13,17 @@ const LEGACY_DEV_KEY = 'dev_premium_override';
 
 export type DevOverrideMode = 'free' | 'pro' | null;
 
+let isConfigured = false;
+
+export function isRevenueCatConfigured(): boolean {
+  return isConfigured;
+}
+
 const overrideListeners = new Set<(override: DevOverrideMode) => void>();
 
 export function getDevOverride(): DevOverrideMode {
-  if (typeof __DEV__ !== 'undefined' && !__DEV__) return null;
+  // Lock down dev override only in production release builds when real RevenueCat is configured
+  if (typeof __DEV__ !== 'undefined' && !__DEV__ && isConfigured) return null;
   const val = storage.getString(DEV_OVERRIDE_KEY);
   if (val === 'free' || val === 'pro') return val;
   const legacy = storage.getBoolean(LEGACY_DEV_KEY);
@@ -26,7 +33,8 @@ export function getDevOverride(): DevOverrideMode {
 }
 
 export function setDevOverride(mode: DevOverrideMode): void {
-  if (typeof __DEV__ !== 'undefined' && !__DEV__) return;
+  // Lock down dev override only in production release builds when real RevenueCat is configured
+  if (typeof __DEV__ !== 'undefined' && !__DEV__ && isConfigured) return;
   if (mode === null) {
     storage.delete(DEV_OVERRIDE_KEY);
     storage.delete(LEGACY_DEV_KEY);
@@ -46,9 +54,6 @@ export interface PurchasesState {
   restorePurchases: () => Promise<boolean>;
   toggleDevPremium: () => void;
 }
-
-let isConfigured = false;
-
 export function initRevenueCat() {
   if (isConfigured || Platform.OS === 'web') return;
 
@@ -66,6 +71,13 @@ export function initRevenueCat() {
   if (apiKey.startsWith('sk_')) {
     console.warn(
       '[Purchases] Configuration skipped: Secret API key (sk_...) detected in client env. RevenueCat SDK requires the Public SDK key (goog_... for Android, appl_... for iOS, or test_... for Test Store). Please update EXPO_PUBLIC_REVENUECAT_*_KEY in .env.'
+    );
+    return;
+  }
+
+  if (Platform.OS === 'android' && apiKey.startsWith('test_')) {
+    console.warn(
+      '[Purchases] Configuration skipped: Android native requires a Public Google Play key (goog_...). Test Store keys (test_...) cannot authenticate with Google Play on Android devices. Update EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY in .env to your goog_... key from RevenueCat Dashboard. Falling back to offline mock mode.'
     );
     return;
   }

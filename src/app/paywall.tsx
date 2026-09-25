@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { usePurchases } from '../lib/purchases';
+import { usePurchases, isRevenueCatConfigured } from '../lib/purchases';
 import { useTheme } from '../lib/themeContext';
 import { getStreak, getUserName } from '../lib/mmkv';
 import { Card } from '../components/Card';
@@ -97,7 +97,7 @@ export default function PaywallScreen() {
 		if (targetPackage) {
 			success = await purchasePackage(targetPackage);
 		} else {
-			if (typeof __DEV__ !== 'undefined' && __DEV__) {
+			if (__DEV__ || !isRevenueCatConfigured()) {
 				success = await purchasePackage({ identifier: selectedPlan } as any);
 			} else {
 				Alert.alert(

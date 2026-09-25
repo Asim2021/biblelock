@@ -1,5 +1,19 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.37] - 2026-09-25
+
+### UI & Visual Fixes
+- **Bible Scroll Marketing Gate Background Seamless Gradient (`src/components/ScrollPaywallGate.tsx`, `TASK-046`):**
+  - Eliminated the abrupt horizontal black cutoff line caused by two flat `<View>` overlay boxes (`flex: 1` + `height: 40%` with 95% opacity).
+  - Implemented full-bleed `react-native-svg` linear gradient with 4 calibrated opacity stops (0.55 to 0.94) providing continuous, smooth darkening without hard borders.
+  - Removed buggy Android `blurRadius` on `<Image>` that degraded imagery into a muddy smudge; background art now renders crisp, high-resolution sacred visuals with text drop shadows and translucent card backing.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- `code-review-graph update`: 59 files updated, 4 nodes, 96 edges indexed cleanly.
+
+---
+
 ## [1.0.36] - 2026-09-21
 
 ### Features & Architectural Restructure

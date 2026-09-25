@@ -235,18 +235,22 @@
   - **3-Tier Spiritual & Therapeutic Ranking:** Grouped verses into Tier 1 (Core Anchor Comfort/Peace), Tier 2 (Deeper Affirmation & Grounding), and Tier 3 (Wisdom, Endurance & Perspective).
   - **Automated Verification:** Verified all 336 references across both KJV and WEB with 0 missing books, chapters, or verses.
 
+- [x] `TASK-046`: Fix Bible Scroll Marketing Gate Background Cutoff & Smooth Gradient (`src/components/ScrollPaywallGate.tsx`):
+  - **Eliminated Dual-Box Visual Cutoff:** Removed the hard 60/40 flat `<View>` split that rendered a solid 95% black block over the bottom 40% of the screen.
+  - **Smooth Full-Bleed SVG LinearGradient:** Implemented `react-native-svg` linear gradient with 4 calibrated color stops (0.55 -> 0.68 -> 0.82 -> 0.94) providing continuous, seamless darkening without harsh lines or truncated imagery.
+  - **Crisp Sacred Asset Rendering:** Removed buggy React Native Android `blurRadius` that degraded imagery into a muddy smudge; added text drop shadows and subtle translucent card surface for high contrast and readability.
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `code-review-graph update`: 68 files updated, 1 nodes, 0 edges indexed cleanly.
+- `code-review-graph update`: 59 files updated, 4 nodes, 96 edges indexed cleanly.
 - `validate_expanded_verses.js`: 336 verses checked across both KJV and WEB with 0 errors.
 - `DEC-021` through `DEC-030` recorded in `docs/DECISIONS.md`.
 
 ## Session Handoff Notes
 
-- Bible Scroll is live on Tab 4 with full-screen vertical paging, mood guidance (336 tier-ranked verses), adaptive typography, and reading timer integration.
-- Free disciples are greeted with a high-converting Sanctuary marketing gate; premium disciples experience the full visual Scripture feed.
-- Stats functionality is fully preserved and accessible via "My Stats & Badges" card in Settings with native back navigation.
+- Bible Scroll marketing gate (`src/components/ScrollPaywallGate.tsx`) renders the full sacred background art continuously from top to bottom with zero visual cutoff.
+- Free disciples are greeted with a polished Sanctuary preview; all text, badge, and gold CTA elements maintain optimal contrast and legibility.
 
 
 

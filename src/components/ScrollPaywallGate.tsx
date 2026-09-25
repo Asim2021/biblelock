@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Pressable, ScrollView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Image, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Sparkles, Heart, Compass, Type, Share2, BookmarkCheck, ArrowRight } from 'lucide-react-native';
+import { Sparkles, Heart, Type, Share2, BookmarkCheck, ArrowRight } from 'lucide-react-native';
+import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { useTheme } from '../lib/themeContext';
 import { SCROLL_BACKGROUNDS } from '../../assets/scroll-backgrounds';
 
@@ -41,19 +42,30 @@ export function ScrollPaywallGate() {
 
   return (
     <View style={[styles.container, { backgroundColor: '#0d120f' }]}>
-      {/* Background preview image */}
+      {/* Background preview image - full screen cover */}
       <Image
-        source={SCROLL_BACKGROUNDS[7]} // Starry night Bethlehem
-        style={StyleSheet.absoluteFill}
+        source={SCROLL_BACKGROUNDS[7] || SCROLL_BACKGROUNDS[0]} // Starry night Bethlehem
+        style={[StyleSheet.absoluteFill, styles.bgImage]}
         resizeMode="cover"
-        blurRadius={Platform.OS === 'android' ? 6 : 12}
       />
 
-      {/* Dark gradient overlay layers */}
-      <View style={[StyleSheet.absoluteFill, styles.overlay]}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(13, 18, 15, 0.75)' }} />
-        <View style={{ height: '40%', backgroundColor: 'rgba(13, 18, 15, 0.95)' }} />
-      </View>
+      {/* Smooth full-bleed dark gradient overlay */}
+      <Svg
+        pointerEvents="none"
+        style={StyleSheet.absoluteFill}
+        width="100%"
+        height="100%"
+      >
+        <Defs>
+          <LinearGradient id="scrollGateOverlay" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0%" stopColor="#0d120f" stopOpacity="0.55" />
+            <Stop offset="30%" stopColor="#0d120f" stopOpacity="0.68" />
+            <Stop offset="70%" stopColor="#0d120f" stopOpacity="0.82" />
+            <Stop offset="100%" stopColor="#0d120f" stopOpacity="0.94" />
+          </LinearGradient>
+        </Defs>
+        <Rect width="100%" height="100%" fill="url(#scrollGateOverlay)" />
+      </Svg>
 
       <ScrollView
         contentContainerStyle={[
@@ -120,9 +132,11 @@ export function ScrollPaywallGate() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    overflow: 'hidden',
   },
-  overlay: {
-    justifyContent: 'space-between',
+  bgImage: {
+    width: '100%',
+    height: '100%',
   },
   scrollContent: {
     paddingHorizontal: 24,
@@ -154,21 +168,27 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     textAlign: 'center',
     marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
   },
   subtitle: {
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
-    color: 'rgba(255, 255, 255, 0.75)',
+    color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 28,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
   },
   featureList: {
     width: '100%',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: 'rgba(13, 18, 15, 0.65)',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     padding: 16,
     gap: 16,
     marginBottom: 28,
@@ -198,7 +218,7 @@ const styles = StyleSheet.create({
   featureDesc: {
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    color: 'rgba(255, 255, 255, 0.65)',
+    color: 'rgba(255, 255, 255, 0.75)',
     lineHeight: 18,
   },
   ctaButton: {
@@ -224,7 +244,7 @@ const styles = StyleSheet.create({
   footerNote: {
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: 'rgba(255, 255, 255, 0.45)',
+    color: 'rgba(255, 255, 255, 0.55)',
     marginTop: 14,
     textAlign: 'center',
   },
