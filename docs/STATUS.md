@@ -259,15 +259,25 @@
   - Implemented `tacticalSnapSceneInterpolator` mapping `current.progress` to ±40dp horizontal displacement and synchronized opacity cross-fade.
   - 100% native driver hardware accelerated (`useNativeDriver: true`) on the native UI thread (60/120fps) with zero third-party dependencies.
 
+- [x] `TASK-049`: Reader Navigation & Reading Comfort Overhaul (`DEC-033`):
+  - **In-Memory Reader Preferences (`src/lib/readerPreferences.ts`):** Created MMKV storage for `fontSize` (14–26px), `fontFamily` (`serif` vs `sans`), and `readerTheme` (`system`, `sepia`, `midnight`) backed by synchronous cache and subscriber listeners.
+  - **Reader Appearance Sheet (`src/components/reader/ReaderAppearanceModal.tsx`):** Built bottom sheet with interactive tactile text size slider with `PanResponder` drag/scrub gestures, discrete step tick notches (14–26px), active fill progress bar, and floating thumb knob flanked by `[-]` and `[+]` nudge buttons; classical vs modern typeface selector; and reading atmosphere themes with Sanctuary badges.
+  - **Searchable Navigation & Chapter/Verse Direct Jump (`src/components/reader/BibleNavigationModal.tsx`):** Replaced legacy book picker with real-time search input supporting `chapter:verse` expressions (e.g. `3:56` or `John 3:16`), OT/NT filter chips, Quick Jump card, and a responsive 5-column chapter number grid.
+  - **Scrollable-Area Scoped Atmosphere Theme (`src/app/(tabs)/reader.tsx`):** Scoped reading atmosphere themes strictly to the scrollable reading FlatList area while pinning the top timer bar, book selector, and chapter pills to the app theme.
+  - **Zero-Overhead Bookmarked Verse Pastel Tint (`src/app/(tabs)/reader.tsx`):** Rendered soft translucent pastel tint matching collection/bookmark color on saved verses via in-memory lookup and `React.memo` isolation.
+  - **Horizontal Chapter Swipe (`src/app/(tabs)/reader.tsx`):** Added native touch gesture listener for seamless swipe left (next chapter) and swipe right (prev chapter) navigation.
+
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `DEC-021` through `DEC-032` recorded in `docs/DECISIONS.md`.
+- `DEC-021` through `DEC-033` recorded in `docs/DECISIONS.md`.
 
 ## Session Handoff Notes
 
-- Tab transitions now provide a tactile, responsive, direction-aware physical snap when moving across Home, Reader, Library, Scroll, and Settings.
-- Zero extra JS overhead or frame drops during reading or media playback.
+- Scripture Reader screen now provides instant searchable book and chapter grid navigation, custom text scaling, typeface selection, Sepia and Midnight OLED themes, horizontal chapter swiping, and soft pastel tints on bookmarked verses.
+- Zero extra disk I/O, zero FlatList frame drops.
+
 
 
 

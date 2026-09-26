@@ -5,7 +5,7 @@ import {
   FlatList,
   Pressable,
   ScrollView,
-  Modal,
+  GestureResponderEvent,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -18,15 +18,22 @@ import {
   getCollections,
   VerseCollection,
 } from '../../lib/mmkv';
+import {
+  getReaderPreferences,
+  subscribeReaderPreferences,
+  ReaderPreferences,
+} from '../../lib/readerPreferences';
 import { BookmarkPickerSheet } from '../../components/BookmarkPickerSheet';
+import { ReaderAppearanceModal } from '../../components/reader/ReaderAppearanceModal';
+import { BibleNavigationModal } from '../../components/reader/BibleNavigationModal';
 import { Button } from '../../components/Button';
 import {
   Clock,
   Unlock,
   Sparkles,
   ChevronDown,
-  Check,
   Bookmark as BookmarkIcon,
+  Type,
 } from 'lucide-react-native';
 import { useTheme } from '../../lib/themeContext';
 import { useFeatureGate } from '../../lib/useFeatureGate';
@@ -34,10 +41,13 @@ import { useFeatureGate } from '../../lib/useFeatureGate';
 interface VerseRowProps {
   item: Verse;
   colIds?: string[];
+  highlightColor?: string;
   isTargeted: boolean;
   showTooltip: boolean;
   colNames: string;
   colors: any;
+  fontSize: number;
+  fontFamily: 'serif' | 'sans';
   onPressBookmark: (item: Verse) => void;
   onLongPressVerse: (item: Verse) => void;
   onPressTooltip: (item: Verse) => void;
@@ -46,10 +56,13 @@ interface VerseRowProps {
 const VerseRow = React.memo<VerseRowProps>(({
   item,
   colIds,
+  highlightColor,
   isTargeted,
   showTooltip,
   colNames,
   colors,
+  fontSize,
+  fontFamily,
   onPressBookmark,
   onLongPressVerse,
   onPressTooltip,
@@ -57,18 +70,31 @@ const VerseRow = React.memo<VerseRowProps>(({
   const isBookmarked = colIds && colIds.length > 0;
   const colCount = colIds ? colIds.length : 0;
 
+  // Background tint: priority to targeted verse, then custom highlight/bookmark color, then surface
+  const rowBackgroundColor = isTargeted
+    ? colors.accentBg
+    : highlightColor
+    ? `${highlightColor}22` // ~13% soft pastel tint
+    : isBookmarked
+    ? colors.surface
+    : 'transparent';
+
+  const rowBorderLeftColor = isTargeted
+    ? colors.accent
+    : highlightColor
+    ? highlightColor
+    : 'transparent';
+
+  const rowBorderLeftWidth = isTargeted || highlightColor ? 3 : 0;
+
   return (
     <View
       style={{
         marginBottom: 14,
         borderRadius: 8,
-        backgroundColor: isTargeted
-          ? colors.accentBg
-          : isBookmarked
-          ? colors.surface
-          : 'transparent',
-        borderLeftWidth: isTargeted ? 3 : 0,
-        borderLeftColor: colors.accent,
+        backgroundColor: rowBackgroundColor,
+        borderLeftWidth: rowBorderLeftWidth,
+        borderLeftColor: rowBorderLeftColor,
         padding: 8,
       }}
     >
@@ -81,9 +107,9 @@ const VerseRow = React.memo<VerseRowProps>(({
       >
         <Text
           style={{
-            fontSize: 12,
+            fontSize: Math.max(11, fontSize - 6),
             fontFamily: 'Inter_700Bold',
-            color: colors.accent,
+            color: highlightColor || colors.accent,
             marginRight: 12,
             width: 24,
             textAlign: 'right',
@@ -94,9 +120,9 @@ const VerseRow = React.memo<VerseRowProps>(({
         <Text
           style={{
             flex: 1,
-            fontFamily: 'EBGaramond_400Regular',
-            fontSize: 18,
-            lineHeight: 30,
+            fontFamily: fontFamily === 'serif' ? 'EBGaramond_400Regular' : 'Inter_400Regular',
+            fontSize: fontSize,
+            lineHeight: Math.round(fontSize * 1.65),
             color: colors.textPrimary,
           }}
         >
@@ -114,13 +140,13 @@ const VerseRow = React.memo<VerseRowProps>(({
         >
           <BookmarkIcon
             size={15}
-            color={isBookmarked ? colors.accent : colors.textMuted}
-            fill={isBookmarked ? colors.accent : 'transparent'}
+            color={highlightColor || (isBookmarked ? colors.accent : colors.textMuted)}
+            fill={isBookmarked ? (highlightColor || colors.accent) : 'transparent'}
           />
           {colCount > 1 && (
             <View
               style={{
-                backgroundColor: colors.accent,
+                backgroundColor: highlightColor || colors.accent,
                 borderRadius: 6,
                 minWidth: 14,
                 height: 14,
@@ -167,8 +193,8 @@ const VerseRow = React.memo<VerseRowProps>(({
         >
           <BookmarkIcon
             size={11}
-            color={colors.accent}
-            fill={colors.accent}
+            color={highlightColor || colors.accent}
+            fill={highlightColor || colors.accent}
             style={{ marginRight: 6 }}
           />
           <Text
@@ -219,8 +245,49 @@ export default function ReaderScreen() {
   }>();
 
   const [translation, setTranslationState] = useBibleTranslation();
-
   const allBooks = useMemo(() => getBooks(translation), [translation]);
+
+  // Reader typography & theme preferences
+  const [preferences, setPreferences] = useState<ReaderPreferences>(getReaderPreferences);
+
+  useEffect(() => {
+    return subscribeReaderPreferences((next) => {
+      setPreferences(next);
+    });
+  }, []);
+
+  // Compute active palette based on reading atmosphere theme
+  const activeColors = useMemo(() => {
+    if (preferences.readerTheme === 'sepia') {
+      return {
+        ...colors,
+        background: '#F4EBD9',
+        surface: '#EFE3CD',
+        surfaceSubtle: '#E6D9C0',
+        surfaceElevated: '#FAF3E7',
+        textPrimary: '#382E25',
+        textSecondary: '#6B5947',
+        textMuted: '#96816D',
+        border: '#DFD0B8',
+        borderSubtle: '#E8DCB7',
+      };
+    }
+    if (preferences.readerTheme === 'midnight') {
+      return {
+        ...colors,
+        background: '#000000',
+        surface: '#0A0A0A',
+        surfaceSubtle: '#141416',
+        surfaceElevated: '#18181B',
+        textPrimary: '#E5E7EB',
+        textSecondary: '#A1A1AA',
+        textMuted: '#71717A',
+        border: '#27272A',
+        borderSubtle: '#1F1F23',
+      };
+    }
+    return colors;
+  }, [preferences.readerTheme, colors]);
 
   // Initialize position from query params if passed, or stored MMKV last read position
   const [bookIndex, setBookIndex] = useState(() => {
@@ -254,16 +321,39 @@ export default function ReaderScreen() {
   });
 
   const [verseCollectionMap, setVerseCollectionMap] = useState<Record<number, string[]>>({});
+  const [verseColorMap, setVerseColorMap] = useState<Record<number, string>>({});
   const [allCollections, setAllCollections] = useState<VerseCollection[]>([]);
   const [pickerVerse, setPickerVerse] = useState<Verse | null>(null);
   const [isPickerVisible, setIsPickerVisible] = useState(false);
+  const [showAppearanceModal, setShowAppearanceModal] = useState(false);
+  const [showNavModal, setShowNavModal] = useState(false);
   const [tooltipVerseNumber, setTooltipVerseNumber] = useState<number | null>(null);
-  const tooltipTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const [showBookModal, setShowBookModal] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
+
+  // Horizontal swipe tracking for seamless chapter-to-chapter switching
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+
+  const handleTouchStart = (e: GestureResponderEvent) => {
+    touchStartX.current = e.nativeEvent.pageX;
+    touchStartY.current = e.nativeEvent.pageY;
+  };
+
+  const handleTouchEnd = (e: GestureResponderEvent) => {
+    const dx = e.nativeEvent.pageX - touchStartX.current;
+    const dy = e.nativeEvent.pageY - touchStartY.current;
+    // Require a clean horizontal flick (>65px) with low vertical drift (<45px)
+    if (Math.abs(dx) > 65 && Math.abs(dy) < 45) {
+      if (dx < 0) {
+        handleNextChapter();
+      } else {
+        handlePrevChapter();
+      }
+    }
+  };
 
   // Accurate viewability tracking for last read position (topmost visible verse)
   const lastVisibleVerseRef = useRef<number>(1);
@@ -284,12 +374,17 @@ export default function ReaderScreen() {
   const refreshBookmarks = useCallback(() => {
     const list = getBookmarks();
     const map: Record<number, string[]> = {};
+    const colorMap: Record<number, string> = {};
     for (const b of list) {
       if (b.bookName === currentBook.name && b.chapterNumber === chapterNumber) {
         map[b.verseNumber] = b.collectionIds || [];
+        if (b.color) {
+          colorMap[b.verseNumber] = b.color;
+        }
       }
     }
     setVerseCollectionMap(map);
+    setVerseColorMap(colorMap);
     setAllCollections(getCollections());
   }, [currentBook.name, chapterNumber]);
 
@@ -390,7 +485,6 @@ export default function ReaderScreen() {
   }, [allCollections]);
 
   const handlePressBookmark = useCallback((verseItem: Verse) => {
-    // Open bottom sheet picker directly so user can view/change collections, edit note, or remove
     setPickerVerse(verseItem);
     setIsPickerVisible(true);
     setTooltipVerseNumber(null);
@@ -411,6 +505,7 @@ export default function ReaderScreen() {
   const renderItem = useCallback(
     ({ item }: { item: Verse }) => {
       const colIds = verseCollectionMap[item.verse];
+      const highlightColor = verseColorMap[item.verse];
       const isTargeted = targetVerse === item.verse;
       const showTooltip = tooltipVerseNumber === item.verse;
       const colNames =
@@ -423,10 +518,13 @@ export default function ReaderScreen() {
         <VerseRow
           item={item}
           colIds={colIds}
+          highlightColor={highlightColor}
           isTargeted={isTargeted}
           showTooltip={showTooltip}
           colNames={colNames}
-          colors={colors}
+          colors={activeColors}
+          fontSize={preferences.fontSize}
+          fontFamily={preferences.fontFamily}
           onPressBookmark={handlePressBookmark}
           onLongPressVerse={handleLongPressVerse}
           onPressTooltip={handlePressTooltip}
@@ -435,10 +533,13 @@ export default function ReaderScreen() {
     },
     [
       verseCollectionMap,
+      verseColorMap,
       targetVerse,
       tooltipVerseNumber,
       collectionNameMap,
-      colors,
+      activeColors,
+      preferences.fontSize,
+      preferences.fontFamily,
       handlePressBookmark,
       handleLongPressVerse,
       handlePressTooltip,
@@ -484,7 +585,7 @@ export default function ReaderScreen() {
       style={{ flex: 1, backgroundColor: colors.background }}
       edges={['top', 'left', 'right']}
     >
-      {/* Top Active Reading Timer Bar */}
+      {/* Top Active Reading Timer Bar (Pinned App Theme) */}
       <View
         style={{
           paddingHorizontal: 20,
@@ -547,38 +648,41 @@ export default function ReaderScreen() {
         </View>
       </View>
 
-
-      {/* Book & Translation Selection Bar */}
+      {/* Book, Chapter, Appearance & Translation Selection Bar (Pinned App Theme) */}
       <View
         style={{
-          paddingHorizontal: 20,
+          paddingHorizontal: 16,
           paddingVertical: 10,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
           borderBottomWidth: 1,
           borderBottomColor: colors.border,
+          backgroundColor: colors.surface,
         }}
       >
+        {/* Book & Chapter Navigation Trigger */}
         <Pressable
-          onPress={() => setShowBookModal(true)}
+          onPress={() => setShowNavModal(true)}
           style={{
             flexDirection: 'row',
             alignItems: 'center',
-            backgroundColor: colors.surface,
-            paddingHorizontal: 14,
+            backgroundColor: colors.surfaceSubtle,
+            paddingHorizontal: 12,
             paddingVertical: 8,
             borderRadius: 10,
             borderWidth: 1,
-            borderColor: colors.border,
+            borderColor: colors.borderSubtle,
           }}
+          accessibilityRole="button"
+          accessibilityLabel="Open book and chapter navigation"
         >
           <Text
             style={{
               fontSize: 14,
               fontFamily: 'Inter_700Bold',
               color: colors.textPrimary,
-              marginRight: 8,
+              marginRight: 6,
             }}
           >
             {currentBook.name} {chapterNumber}
@@ -586,64 +690,86 @@ export default function ReaderScreen() {
           <ChevronDown size={14} color={colors.textSecondary} />
         </Pressable>
 
-        {/* Translation Toggle Pill */}
-        <View
-          style={{
-            flexDirection: 'row',
-            backgroundColor: colors.surfaceSubtle,
-            borderRadius: 8,
-            padding: 3,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}
-        >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {/* Appearance "Aa" Button */}
           <Pressable
-            onPress={() => handleToggleTranslation('WEB')}
+            onPress={() => setShowAppearanceModal(true)}
             style={{
-              paddingHorizontal: 12,
-              paddingVertical: 4,
-              borderRadius: 6,
-              backgroundColor: translation === 'WEB' ? colors.accent : 'transparent',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingHorizontal: 10,
+              paddingVertical: 7,
+              borderRadius: 8,
+              backgroundColor: colors.surfaceSubtle,
+              borderWidth: 1,
+              borderColor: colors.borderSubtle,
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Reading appearance settings"
+          >
+            <Type size={16} color={colors.accent} />
+          </Pressable>
+
+          {/* Translation Toggle Pill */}
+          <View
+            style={{
+              flexDirection: 'row',
+              backgroundColor: colors.surfaceSubtle,
+              borderRadius: 8,
+              padding: 3,
+              borderWidth: 1,
+              borderColor: colors.borderSubtle,
             }}
           >
-            <Text
+            <Pressable
+              onPress={() => handleToggleTranslation('WEB')}
               style={{
-                fontSize: 12,
-                fontFamily: 'Inter_600SemiBold',
-                color: translation === 'WEB' ? '#141413' : colors.textSecondary,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 6,
+                backgroundColor: translation === 'WEB' ? colors.accent : 'transparent',
               }}
             >
-              WEB
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => handleToggleTranslation('KJV')}
-            style={{
-              paddingHorizontal: 12,
-              paddingVertical: 4,
-              borderRadius: 6,
-              backgroundColor: translation === 'KJV' ? colors.accent : 'transparent',
-            }}
-          >
-            <Text
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: 'Inter_600SemiBold',
+                  color: translation === 'WEB' ? '#141413' : colors.textSecondary,
+                }}
+              >
+                WEB
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => handleToggleTranslation('KJV')}
               style={{
-                fontSize: 12,
-                fontFamily: 'Inter_600SemiBold',
-                color: translation === 'KJV' ? '#141413' : colors.textSecondary,
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 6,
+                backgroundColor: translation === 'KJV' ? colors.accent : 'transparent',
               }}
             >
-              KJV
-            </Text>
-          </Pressable>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: 'Inter_600SemiBold',
+                  color: translation === 'KJV' ? '#141413' : colors.textSecondary,
+                }}
+              >
+                KJV
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
 
-      {/* Horizontal Chapter Picker */}
+      {/* Horizontal Chapter Quick Picker Bar (Pinned App Theme) */}
       <View
         style={{
           paddingVertical: 8,
           borderBottomWidth: 1,
-          borderBottomColor: colors.border,
+          borderBottomColor: colors.borderSubtle,
           backgroundColor: colors.surface,
         }}
       >
@@ -705,22 +831,31 @@ export default function ReaderScreen() {
         </View>
       )}
 
-      {/* Scripture Verses List */}
+      {/* Scrollable Scripture Reading Area (Responsive to Reading Atmosphere) */}
       <FlatList
         ref={flatListRef}
+        style={{ flex: 1, backgroundColor: activeColors.background }}
         data={currentChapterData?.verses || []}
-        extraData={verseCollectionMap}
+        extraData={`${verseCollectionMap}_${verseColorMap}_${preferences.fontSize}_${preferences.fontFamily}_${preferences.readerTheme}`}
         keyExtractor={(item) => String(item.verse)}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 }}
+        contentContainerStyle={{
+          paddingHorizontal: 20,
+          paddingTop: 16,
+          paddingBottom: 40,
+          backgroundColor: activeColors.background,
+        }}
+
         ListHeaderComponent={
           <View className="mb-6 items-center">
             <Text
               style={{
-                fontFamily: 'EBGaramond_700Bold',
-                fontSize: 28,
-                color: colors.textPrimary,
+                fontFamily: preferences.fontFamily === 'serif' ? 'EBGaramond_700Bold' : 'Inter_700Bold',
+                fontSize: Math.round(preferences.fontSize * 1.55),
+                color: activeColors.textPrimary,
                 textAlign: 'center',
                 marginBottom: 4,
               }}
@@ -731,7 +866,7 @@ export default function ReaderScreen() {
               style={{
                 fontSize: 12,
                 fontFamily: 'Inter_600SemiBold',
-                color: colors.accent,
+                color: activeColors.accent,
                 textTransform: 'uppercase',
                 letterSpacing: 2,
               }}
@@ -747,7 +882,7 @@ export default function ReaderScreen() {
               marginTop: 32,
               paddingTop: 24,
               borderTopWidth: 1,
-              borderTopColor: colors.border,
+              borderTopColor: activeColors.border,
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'center',
@@ -770,95 +905,32 @@ export default function ReaderScreen() {
         }
       />
 
-      {/* Book Selection Modal */}
-      <Modal
-        visible={showBookModal}
-        animationType="slide"
-        transparent={false}
-        statusBarTranslucent
-        onRequestClose={() => setShowBookModal(false)}
-      >
-        <View style={{ flex: 1, backgroundColor: colors.background }}>
-          <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-            <View
-              style={{
-                padding: 16,
-                borderBottomWidth: 1,
-                borderBottomColor: colors.border,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Text style={{ fontSize: 18, fontFamily: 'EBGaramond_700Bold', color: colors.textPrimary }}>
-                Select Book of the Bible
-              </Text>
-              <Pressable
-                onPress={() => setShowBookModal(false)}
-                style={{ padding: 8 }}
-              >
-                <Text style={{ fontSize: 15, color: colors.accent, fontFamily: 'Inter_600SemiBold' }}>Done</Text>
-              </Pressable>
-            </View>
+      {/* Bible Navigation Modal (Searchable Books + Chapter Grid) */}
+      <BibleNavigationModal
+        visible={showNavModal}
+        currentBookIndex={bookIndex}
+        currentChapter={chapterNumber}
+        books={allBooks}
+        onSelectChapter={(bIdx, ch, targetVerseNum) => {
+          setBookIndex(bIdx);
+          setChapterNumber(ch);
+          if (typeof targetVerseNum === 'number' && targetVerseNum > 0) {
+            setTargetVerse(targetVerseNum);
+          } else {
+            setTargetVerse(null);
+            flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+          }
+          setShowNavModal(false);
+        }}
+        onClose={() => setShowNavModal(false)}
+      />
 
-            <FlatList
-              data={allBooks}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item, index }) => {
-                const isSelected = bookIndex === index;
-                const isOldTestament = index < 39;
-                const showSectionHeader = index === 0 || index === 39;
-
-                return (
-                  <View>
-                    {showSectionHeader && (
-                      <View style={{ backgroundColor: colors.surfaceSubtle, paddingHorizontal: 20, paddingVertical: 10 }}>
-                        <Text style={{ fontSize: 11, fontFamily: 'Inter_700Bold', textTransform: 'uppercase', letterSpacing: 1, color: colors.accent }}>
-                          {isOldTestament ? 'Old Testament (39 Books)' : 'New Testament (27 Books)'}
-                        </Text>
-                      </View>
-                    )}
-                    <Pressable
-                      onPress={() => {
-                        setBookIndex(index);
-                        setChapterNumber(1);
-                        setShowBookModal(false);
-                        flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
-                      }}
-                      style={{
-                        paddingHorizontal: 20,
-                        paddingVertical: 14,
-                        borderBottomWidth: 1,
-                        borderBottomColor: colors.borderSubtle,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        backgroundColor: isSelected ? colors.accentBg : 'transparent',
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 16,
-                          fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_400Regular',
-                          color: isSelected ? colors.accent : colors.textPrimary,
-                        }}
-                      >
-                        {item.name}
-                      </Text>
-                      <View className="flex-row items-center">
-                        <Text style={{ fontSize: 12, color: colors.textSecondary, marginRight: 8 }}>
-                          {item.chapterCount} {item.chapterCount === 1 ? 'ch' : 'chs'}
-                        </Text>
-                        {isSelected && <Check size={16} color={colors.accent} />}
-                      </View>
-                    </Pressable>
-                  </View>
-                );
-              }}
-            />
-          </SafeAreaView>
-        </View>
-      </Modal>
+      {/* Reader Appearance & Typography Modal */}
+      <ReaderAppearanceModal
+        visible={showAppearanceModal}
+        preferences={preferences}
+        onClose={() => setShowAppearanceModal(false)}
+      />
 
       {/* Non-shifting Bottom Floating Toast */}
       {toastMessage && (
@@ -869,9 +941,9 @@ export default function ReaderScreen() {
             bottom: Math.max(insets.bottom + 16, 24),
             left: 20,
             right: 20,
-            backgroundColor: colors.surfaceElevated || colors.surface,
+            backgroundColor: activeColors.surfaceElevated || activeColors.surface,
             borderWidth: 1,
-            borderColor: colors.accent,
+            borderColor: activeColors.accent,
             borderRadius: 12,
             paddingHorizontal: 16,
             paddingVertical: 12,
@@ -888,15 +960,15 @@ export default function ReaderScreen() {
         >
           <BookmarkIcon
             size={15}
-            color={colors.accent}
-            fill={colors.accent}
+            color={activeColors.accent}
+            fill={activeColors.accent}
             style={{ marginRight: 8 }}
           />
           <Text
             style={{
               fontSize: 13,
               fontFamily: 'Inter_600SemiBold',
-              color: colors.textPrimary,
+              color: activeColors.textPrimary,
               textAlign: 'center',
             }}
           >
