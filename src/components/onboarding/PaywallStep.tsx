@@ -2,8 +2,9 @@ import React from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
-import { Sparkles, ShieldCheck, Flame, Clock, Bookmark, Zap } from 'lucide-react-native';
+import { Sparkles, ShieldCheck, Flame, Clock, Bookmark, Zap, Check } from 'lucide-react-native';
 import { SCROLL_BACKGROUNDS } from '../../../assets/scroll-backgrounds';
+import { usePurchases } from '../../lib/purchases';
 
 interface PaywallStepProps {
 	onBack: () => void;
@@ -21,6 +22,7 @@ const PRO_FEATURES = [
 
 export const PaywallStep: React.FC<PaywallStepProps> = ({ onBack, onNext }) => {
 	const router = useRouter();
+	const { isPremium } = usePurchases();
 
 	const handleTryPro = () => {
 		// Open paywall modal without advancing step underneath
@@ -46,18 +48,27 @@ export const PaywallStep: React.FC<PaywallStepProps> = ({ onBack, onNext }) => {
 				<Text className='text-xs font-sans-bold text-[#f5b800] mb-3'>4 of 5</Text>
 
 				<View className='items-center'>
-					<View className='w-14 h-14 rounded-full bg-[#f5b800]/15 border border-[#f5b800]/30 items-center justify-center mb-2'>
-						<Sparkles size={28} color='#f5b800' strokeWidth={2} />
+					<View
+						className={`w-14 h-14 rounded-full ${
+							isPremium ? 'bg-[#5db872]/20 border border-[#5db872]/40' : 'bg-[#f5b800]/15 border border-[#f5b800]/30'
+						} items-center justify-center mb-2`}
+					>
+						{isPremium ? (
+							<Check size={28} color='#5db872' strokeWidth={2.5} />
+						) : (
+							<Sparkles size={28} color='#f5b800' strokeWidth={2} />
+						)}
 					</View>
 					<Text
 						className='text-[32px] font-serif-bold text-[#faf9f5] text-center mb-2 tracking-tight leading-[40px]'
 						style={{ fontFamily: 'EBGaramond_700Bold' }}
 					>
-						Deepen your walk with Jesus
+						{isPremium ? 'Welcome to the Sanctuary' : 'Deepen your walk with Jesus'}
 					</Text>
 					<Text className='text-base font-sans text-[#78a898] text-center px-4 leading-relaxed'>
-						Enter the Sanctuary with unlimited app shields, full Bible Scroll sacred feed, and grace
-						days to protect your daily devotion to Christ.
+						{isPremium
+							? 'Your 7-day free trial is active. All premium shields, Bible Scroll reels, and streak protection are enabled.'
+							: 'Enter the Sanctuary with unlimited app shields, full Bible Scroll sacred feed, and grace days to protect your daily devotion to Christ.'}
 					</Text>
 				</View>
 
@@ -142,21 +153,32 @@ export const PaywallStep: React.FC<PaywallStepProps> = ({ onBack, onNext }) => {
 
 				{/* CTAs */}
 				<View className='space-y-3 mt-4'>
-					<Pressable
-						onPress={handleTryPro}
-						className='w-full py-4.5 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg mb-3'
-					>
-						<Text className='text-lg font-sans-bold text-[#141413]'>Begin 7 Days in the Sanctuary (Free)</Text>
-					</Pressable>
+					{isPremium ? (
+						<Pressable
+							onPress={onNext}
+							className='w-full py-4.5 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg mb-3'
+						>
+							<Text className='text-lg font-sans-bold text-[#141413]'>Continue to Final Step (5 of 5) →</Text>
+						</Pressable>
+					) : (
+						<>
+							<Pressable
+								onPress={handleTryPro}
+								className='w-full py-4.5 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg mb-3'
+							>
+								<Text className='text-lg font-sans-bold text-[#141413]'>Begin 7 Days in the Sanctuary (Free)</Text>
+							</Pressable>
 
-					<Pressable
-						onPress={onNext}
-						className='w-full py-4.5 rounded-2xl bg-[#163f33] border border-[#2b6955] items-center justify-center active:opacity-80'
-					>
-						<Text className='text-base font-sans-semibold text-[#8eb8a8]'>
-							Continue on the Free Covenant Plan
-						</Text>
-					</Pressable>
+							<Pressable
+								onPress={onNext}
+								className='w-full py-4.5 rounded-2xl bg-[#163f33] border border-[#2b6955] items-center justify-center active:opacity-80'
+							>
+								<Text className='text-base font-sans-semibold text-[#8eb8a8]'>
+									Continue on the Free Covenant Plan
+								</Text>
+							</Pressable>
+						</>
+					)}
 				</View>
 			</ScrollView>
 

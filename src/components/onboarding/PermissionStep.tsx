@@ -168,20 +168,20 @@ export const PermissionStep: React.FC<PermissionStepProps> = ({ onBack, onComple
 			</ScrollView>
 
 			{/* Bottom Nav */}
-			<View className='flex-row space-x-3 pt-2'>
+			<View className='flex-row items-center space-x-3 pt-2'>
 				<Pressable
 					onPress={onBack}
-					className='flex-1 py-4.5 mr-2 rounded-2xl bg-[#163f33] border border-[#2b6955] items-center justify-center active:opacity-80'
+					className='w-28 py-4 mr-2.5 rounded-2xl bg-[#163f33] border border-[#2b6955] items-center justify-center active:opacity-80'
 				>
-					<Text className='text-lg font-sans-bold text-[#78a898]'>Back</Text>
+					<Text className='text-base font-sans-bold text-[#78a898]'>Back</Text>
 				</Pressable>
 
 				<Pressable
 					onPress={handleFinish}
-					className='flex-1 py-4.5 ml-2 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg'
+					className='flex-1 py-4 ml-1 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg'
 				>
-					<Text className='text-lg font-sans-bold text-[#141413]'>
-						{hasPermission ? 'Begin My Walk with Jesus ✨' : 'Continue Anyway'}
+					<Text className='text-base font-sans-bold text-[#141413] text-center'>
+						{hasPermission ? 'Begin Walk with Jesus ✨' : 'Continue Anyway'}
 					</Text>
 				</Pressable>
 			</View>
