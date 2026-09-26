@@ -12,6 +12,7 @@ import {
   getTodayDateKey,
 } from './mmkv';
 import { AppBlocker } from './appBlocker';
+import { usePurchases } from './purchases';
 
 export interface ReadingTimerState {
   secondsRead: number;
@@ -38,6 +39,7 @@ export function useReadingTimer(isScreenFocused: boolean = true): ReadingTimerSt
   const [secondsRead, setSecondsRead] = useState(() => getReadingProgress());
   const [goalMinutes, setGoalMinutesState] = useState(() => getDailyGoalMinutes());
   const [streak, setStreak] = useState(() => getStreak().currentStreak);
+  const { isPremium } = usePurchases();
 
   const goalSeconds = goalMinutes * 60;
   const isGoalMet = secondsRead >= goalSeconds;
@@ -77,7 +79,7 @@ export function useReadingTimer(isScreenFocused: boolean = true): ReadingTimerSt
   useEffect(() => {
     if (isGoalMet && !prevGoalMetRef.current) {
       // Transitioned to completed goal!
-      const { currentStreak } = updateStreakOnGoalMet();
+      const { currentStreak } = updateStreakOnGoalMet(isPremium);
       setStreak(currentStreak);
       AppBlocker.unshieldApps();
     } else if (!isGoalMet && prevGoalMetRef.current) {

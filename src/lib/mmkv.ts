@@ -126,6 +126,7 @@ export const STORAGE_KEYS = {
   THEME_MODE: 'theme_mode',
   DAILY_VERSE_NOTIFICATIONS_ENABLED: 'daily_verse_notifications_enabled',
   DAILY_VERSE_NOTIFICATION_COUNT: 'daily_verse_notification_count',
+  LAST_GRACE_DAY_USED_MONTH: 'last_grace_day_used_month',
   SCROLL_POSITION: 'scroll_position',
   SCROLL_MODE: 'scroll_mode',
   SCROLL_FONT: 'scroll_font',
@@ -285,7 +286,15 @@ export function getStreak(): { currentStreak: number; lastReadDate: string | nul
   return { currentStreak, lastReadDate };
 }
 
-export function updateStreakOnGoalMet(): { currentStreak: number } {
+export function getGraceDayStatus(): { hasGraceDayAvailable: boolean; lastUsedMonth: string | null } {
+  const lastUsedMonth = storage.getString(STORAGE_KEYS.LAST_GRACE_DAY_USED_MONTH) ?? null;
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const hasGraceDayAvailable = lastUsedMonth !== currentMonthKey;
+  return { hasGraceDayAvailable, lastUsedMonth };
+}
+
+export function updateStreakOnGoalMet(isPremiumUser: boolean = false): { currentStreak: number; graceDayUsed?: boolean } {
   const today = getTodayDateKey();
   const { currentStreak, lastReadDate } = getStreak();
 
@@ -295,6 +304,8 @@ export function updateStreakOnGoalMet(): { currentStreak: number } {
   }
 
   let newStreak = 1;
+  let graceDayUsed = false;
+
   if (lastReadDate) {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
@@ -302,12 +313,28 @@ export function updateStreakOnGoalMet(): { currentStreak: number } {
 
     if (lastReadDate === yKey) {
       newStreak = currentStreak + 1;
+    } else if (isPremiumUser) {
+      // Check if user missed exactly 1 day (i.e. lastReadDate was 2 days ago)
+      const twoDaysAgo = new Date();
+      twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+      const twoDaysAgoKey = `${twoDaysAgo.getFullYear()}-${String(twoDaysAgo.getMonth() + 1).padStart(2, '0')}-${String(twoDaysAgo.getDate()).padStart(2, '0')}`;
+
+      if (lastReadDate === twoDaysAgoKey) {
+        const { hasGraceDayAvailable } = getGraceDayStatus();
+        if (hasGraceDayAvailable) {
+          const now = new Date();
+          const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          storage.set(STORAGE_KEYS.LAST_GRACE_DAY_USED_MONTH, currentMonthKey);
+          newStreak = currentStreak + 1;
+          graceDayUsed = true;
+        }
+      }
     }
   }
 
   storage.set(STORAGE_KEYS.CURRENT_STREAK, newStreak);
   storage.set(STORAGE_KEYS.LAST_READ_DATE, today);
-  return { currentStreak: newStreak };
+  return { currentStreak: newStreak, graceDayUsed };
 }
 
 export function getLastScreenTimeNotificationDate(): string | null {

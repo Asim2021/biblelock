@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Sparkles, Lock, Shield, Flame, BookOpen, Bookmark } from 'lucide-react-native';
+import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
+import { Sparkles, ShieldCheck, Flame, Clock, Bookmark, Zap } from 'lucide-react-native';
+import { SCROLL_BACKGROUNDS } from '../../../assets/scroll-backgrounds';
 
 interface PaywallStepProps {
 	onBack: () => void;
@@ -9,12 +11,12 @@ interface PaywallStepProps {
 }
 
 const PRO_FEATURES = [
-	{ Icon: Lock, text: 'Unlimited App Shielding (Silence every distraction)' },
-	{ Icon: BookOpen, text: 'Beloved Translations (ESV, NIV, NLT & KJV)' },
-	{ Icon: Flame, text: 'Streak Grace Protection (Rest days when life happens)' },
-	{ Icon: Shield, text: 'Sacred Seasons (Lent & Advent devotionals)' },
-	{ Icon: Sparkles, text: 'Spiritual Growth Analytics & Reflection History' },
-	{ Icon: Bookmark, text: 'Unlimited Bookmarks & Verse Collections' },
+	{ Icon: ShieldCheck, text: 'Unlimited App Shielding (Silence every distraction)' },
+	{ Icon: Sparkles, text: 'Bible Scroll Visual Feed (336 sacred mood verses & cards)' },
+	{ Icon: Flame, text: 'Streak Grace Protection (1 grace day / month for rest)' },
+	{ Icon: Clock, text: 'Custom Reading Goals (Extended 30m+ & custom goals)' },
+	{ Icon: Bookmark, text: 'Unlimited Bookmarks, Collections & Verse Notes' },
+	{ Icon: Zap, text: 'Liturgical Reminders & up to 24 Daily Verse Alerts' },
 ];
 
 export const PaywallStep: React.FC<PaywallStepProps> = ({ onBack, onNext }) => {
@@ -54,9 +56,73 @@ export const PaywallStep: React.FC<PaywallStepProps> = ({ onBack, onNext }) => {
 						Deepen your walk with Jesus
 					</Text>
 					<Text className='text-base font-sans text-[#78a898] text-center px-4 leading-relaxed'>
-						Enter the Sanctuary with unlimited app shields, every major Bible translation, and grace
+						Enter the Sanctuary with unlimited app shields, full Bible Scroll sacred feed, and grace
 						days to protect your daily devotion to Christ.
 					</Text>
+				</View>
+
+				{/* Mini Bible Scroll Visual Teaser */}
+				<View
+					style={{
+						borderRadius: 18,
+						overflow: 'hidden',
+						borderWidth: 1.5,
+						borderColor: 'rgba(245, 184, 0, 0.4)',
+						marginTop: 14,
+						marginBottom: 6,
+						height: 115,
+						backgroundColor: '#0d120f',
+					}}
+				>
+					<Image
+						source={SCROLL_BACKGROUNDS[7] || SCROLL_BACKGROUNDS[0]}
+						style={StyleSheet.absoluteFill}
+						resizeMode='cover'
+					/>
+					<Svg
+						pointerEvents='none'
+						style={StyleSheet.absoluteFill}
+						width='100%'
+						height='100%'
+					>
+						<Defs>
+							<LinearGradient id='onboardingScrollTeaser' x1='0' y1='0' x2='0' y2='1'>
+								<Stop offset='0%' stopColor='#0d120f' stopOpacity='0.45' />
+								<Stop offset='100%' stopColor='#0d120f' stopOpacity='0.85' />
+							</LinearGradient>
+						</Defs>
+						<Rect width='100%' height='100%' fill='url(#onboardingScrollTeaser)' />
+					</Svg>
+					<View className='flex-1 justify-between p-3.5'>
+						<View className='flex-row items-center justify-between'>
+							<View
+								style={{
+									backgroundColor: 'rgba(245, 184, 0, 0.2)',
+									borderColor: 'rgba(245, 184, 0, 0.4)',
+									borderWidth: 1,
+								}}
+								className='flex-row items-center px-2 py-0.5 rounded-full'
+							>
+								<Sparkles size={10} color='#f5b800' />
+								<Text className='text-[10px] font-sans-bold text-[#f5b800] uppercase tracking-wider ml-1'>
+									Signature • Bible Scroll
+								</Text>
+							</View>
+							<Text className='text-[10px] font-sans-semibold text-white/70'>
+								🕊️ Mood Guided
+							</Text>
+						</View>
+						<Text
+							style={{ fontFamily: 'EBGaramond_700Bold' }}
+							className='text-sm text-white italic leading-tight'
+							numberOfLines={2}
+						>
+							“Come to me, all who labor and are heavy laden, and I will give you rest.”
+						</Text>
+						<Text className='text-[10px] font-sans-medium text-[#f5b800]'>
+							Swipe through 336 sacred mood verses & artworks
+						</Text>
+					</View>
 				</View>
 
 				{/* Feature List Card */}

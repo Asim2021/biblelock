@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator, Image } from 'react-native';
+import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator, Image, Linking, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { usePurchases, isRevenueCatConfigured } from '../lib/purchases';
 import { useTheme } from '../lib/themeContext';
 import { getStreak, getUserName } from '../lib/mmkv';
 import { Card } from '../components/Card';
-import { X, Check, ShieldCheck, Flame, Clock, Zap, BookOpen, BarChart3, Bookmark } from 'lucide-react-native';
+import { SCROLL_BACKGROUNDS } from '../../assets/scroll-backgrounds';
+import { X, Check, ShieldCheck, Flame, Clock, Zap, BarChart3, Bookmark, Sparkles, Heart, Share2, Type } from 'lucide-react-native';
 
 const FEATURES = [
 	{
@@ -16,34 +18,40 @@ const FEATURES = [
 		pro: 'Unlimited custom apps',
 	},
 	{
-		icon: BookOpen,
-		title: 'Modern Translations',
-		free: 'KJV + WEB',
-		pro: 'ESV, NIV, NLT access',
+		icon: Sparkles,
+		title: 'Bible Scroll Visual Feed',
+		free: 'Preview mode',
+		pro: '336 sacred mood verses & art',
 	},
 	{
 		icon: Flame,
-		title: 'Streak Protection',
+		title: 'Streak Grace Protection',
 		free: '—',
-		pro: '1 grace day / month',
+		pro: '1 Grace Day / month',
 	},
 	{
 		icon: Clock,
-		title: 'Lent & Advent Modes',
-		free: '—',
-		pro: 'Dedicated spiritual seasons',
-	},
-	{
-		icon: BarChart3,
-		title: 'Full Reading Analytics',
-		free: 'Today & this week',
-		pro: 'Monthly & lifetime history',
+		title: 'Reading Goals & Custom Time',
+		free: '5m, 10m, 15m',
+		pro: '30m & custom (1–120m)',
 	},
 	{
 		icon: Bookmark,
-		title: 'Unlimited Bookmarks',
-		free: 'Max 3 bookmarks',
-		pro: 'Unlimited + collections',
+		title: 'Study Library Collections',
+		free: '1 collection • 5 bookmarks',
+		pro: 'Unlimited collections & notes',
+	},
+	{
+		icon: Zap,
+		title: 'Daily Reminders & Verse Alerts',
+		free: '1 reminder • 6 verses/day',
+		pro: 'Multi-hour alerts • 24 verses/day',
+	},
+	{
+		icon: BarChart3,
+		title: 'Spiritual Growth Analytics',
+		free: '7-Day Week view',
+		pro: '30-Day Heatmap & Year telemetry',
 	},
 ];
 
@@ -124,7 +132,15 @@ export default function PaywallScreen() {
 				{ text: 'OK', onPress: () => router.back() },
 			]);
 		} else {
-			Alert.alert('Restore', 'No active subscription found for this Apple/Google account.');
+			Alert.alert('Restore', 'No active subscription found for this Apple or Google Play account.');
+		}
+	};
+
+	const openLink = async (url: string) => {
+		try {
+			await Linking.openURL(url);
+		} catch (e) {
+			Alert.alert('Unable to Open Link', `Please visit: ${url}`);
 		}
 	};
 
@@ -195,6 +211,193 @@ export default function PaywallScreen() {
 					</Text>
 				</View>
 
+				{/* Bible Scroll Signature Feature Spotlight */}
+				<View
+					style={{
+						borderRadius: 20,
+						overflow: 'hidden',
+						borderWidth: 1.5,
+						borderColor: colors.accent,
+						marginBottom: 16,
+						backgroundColor: '#0d120f',
+						shadowColor: colors.accent,
+						shadowOffset: { width: 0, height: 4 },
+						shadowOpacity: isDark ? 0.35 : 0.15,
+						shadowRadius: 12,
+						elevation: 6,
+					}}
+				>
+					{/* Sacred Background Art */}
+					<Image
+						source={SCROLL_BACKGROUNDS[7] || SCROLL_BACKGROUNDS[0]}
+						style={StyleSheet.absoluteFill}
+						resizeMode='cover'
+					/>
+
+					{/* Dark Multi-Stop Gradient Overlay for guaranteed contrast */}
+					<Svg
+						pointerEvents='none'
+						style={StyleSheet.absoluteFill}
+						width='100%'
+						height='100%'
+					>
+						<Defs>
+							<LinearGradient id='paywallScrollMockup' x1='0' y1='0' x2='0' y2='1'>
+								<Stop offset='0%' stopColor='#0d120f' stopOpacity='0.55' />
+								<Stop offset='40%' stopColor='#0d120f' stopOpacity='0.70' />
+								<Stop offset='75%' stopColor='#0d120f' stopOpacity='0.85' />
+								<Stop offset='100%' stopColor='#0d120f' stopOpacity='0.96' />
+							</LinearGradient>
+						</Defs>
+						<Rect width='100%' height='100%' fill='url(#paywallScrollMockup)' />
+					</Svg>
+
+					<View style={{ padding: 16 }}>
+						{/* Top Tag Row */}
+						<View className='flex-row items-center justify-between mb-3'>
+							<View
+								style={{
+									backgroundColor: 'rgba(245, 184, 0, 0.18)',
+									borderColor: colors.accent,
+									borderWidth: 1,
+								}}
+								className='flex-row items-center px-2.5 py-1 rounded-full'
+							>
+								<Sparkles size={11} color={colors.accent} />
+								<Text
+									style={{ color: colors.accent }}
+									className='text-[10px] font-sans-bold uppercase tracking-wider ml-1.5'
+								>
+									Sanctuary Exclusive • Bible Scroll
+								</Text>
+							</View>
+
+							<View
+								style={{ backgroundColor: 'rgba(255, 255, 255, 0.12)' }}
+								className='px-2 py-0.5 rounded-full'
+							>
+								<Text className='text-[10px] font-sans-medium text-white/90'>
+									Vertical Reels
+								</Text>
+							</View>
+						</View>
+
+						{/* Mood Filter Simulation */}
+						<View className='flex-row items-center space-x-1.5 mb-3'>
+							<View
+								style={{
+									backgroundColor: 'rgba(245, 184, 0, 0.25)',
+									borderColor: colors.accent,
+									borderWidth: 1,
+								}}
+								className='px-2.5 py-1 rounded-full mr-1.5'
+							>
+								<Text style={{ color: colors.accent }} className='text-[11px] font-sans-bold'>
+									🕊️ Peace
+								</Text>
+							</View>
+							<View
+								style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)', borderColor: 'rgba(255, 255, 255, 0.15)', borderWidth: 1 }}
+								className='px-2.5 py-1 rounded-full mr-1.5'
+							>
+								<Text className='text-[11px] font-sans-medium text-white/80'>
+									🛡️ Strength
+								</Text>
+							</View>
+							<View
+								style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)', borderColor: 'rgba(255, 255, 255, 0.15)', borderWidth: 1 }}
+								className='px-2.5 py-1 rounded-full'
+							>
+								<Text className='text-[11px] font-sans-medium text-white/80'>
+									✨ Comfort
+								</Text>
+							</View>
+						</View>
+
+						{/* Scripture Card Simulation & Floating Actions */}
+						<View className='flex-row items-center justify-between mb-3'>
+							<View className='flex-1 pr-3'>
+								<Text
+									style={{
+										fontFamily: 'EBGaramond_700Bold',
+										textShadowColor: 'rgba(0, 0, 0, 0.9)',
+										textShadowOffset: { width: 0, height: 2 },
+										textShadowRadius: 4,
+									}}
+									className='text-base text-white leading-snug italic'
+								>
+									“Come to me, all who labor and are heavy laden, and I will give you rest.”
+								</Text>
+								<Text
+									style={{ color: colors.accent }}
+									className='text-xs font-sans-bold mt-1.5'
+								>
+									Matthew 11:28 • KJV
+								</Text>
+							</View>
+
+							{/* Mock Floating Action Stack */}
+							<View className='items-center space-y-2'>
+								<View
+									style={{
+										backgroundColor: 'rgba(20, 20, 20, 0.65)',
+										borderColor: 'rgba(255, 255, 255, 0.18)',
+										borderWidth: 1,
+									}}
+									className='w-7 h-7 rounded-full items-center justify-center mb-1.5'
+								>
+									<Heart size={13} color={colors.accent} fill={colors.accent} />
+								</View>
+								<View
+									style={{
+										backgroundColor: 'rgba(20, 20, 20, 0.65)',
+										borderColor: 'rgba(255, 255, 255, 0.18)',
+										borderWidth: 1,
+									}}
+									className='w-7 h-7 rounded-full items-center justify-center mb-1.5'
+								>
+									<Type size={13} color='#ffffff' />
+								</View>
+								<View
+									style={{
+										backgroundColor: 'rgba(20, 20, 20, 0.65)',
+										borderColor: 'rgba(255, 255, 255, 0.18)',
+										borderWidth: 1,
+									}}
+									className='w-7 h-7 rounded-full items-center justify-center'
+								>
+									<Share2 size={13} color='#ffffff' />
+								</View>
+							</View>
+						</View>
+
+						{/* Bottom Benefit Callout */}
+						<View
+							style={{ borderTopColor: 'rgba(255, 255, 255, 0.12)', borderTopWidth: 1 }}
+							className='pt-2.5 flex-row items-center justify-between'
+						>
+							<View className='flex-row items-center flex-1 mr-2'>
+								<Sparkles size={12} color={colors.accent} />
+								<Text className='text-[11px] font-sans-medium text-white/80 ml-1.5'>
+									336 Curated Mood Verses & Sacred Art
+								</Text>
+							</View>
+							<View
+								style={{
+									backgroundColor: 'rgba(16, 185, 129, 0.2)',
+									borderColor: 'rgba(16, 185, 129, 0.4)',
+									borderWidth: 1,
+								}}
+								className='px-2 py-0.5 rounded'
+							>
+								<Text className='text-[10px] font-sans-bold text-emerald-300 uppercase'>
+									Counts to Goal
+								</Text>
+							</View>
+						</View>
+					</View>
+				</View>
+
 				{/* Comparison Feature Table */}
 				<Card
 					style={{
@@ -254,8 +457,8 @@ export default function PaywallScreen() {
 				</Card>
 
 				{/* Pricing Plan Selector */}
-				<View className='mb-4'>
-					{/* Annual Card (Best Value) */}
+				<View className='mb-3'>
+					{/* Annual Card (Hero with 7-Day Free Trial) */}
 					<Pressable
 						onPress={() => setSelectedPlan('annual')}
 						style={{
@@ -269,16 +472,31 @@ export default function PaywallScreen() {
 						className='flex-row items-center justify-between'
 					>
 						<View className='flex-1 mr-3'>
-							<View className='flex-row items-center'>
+							<View className='flex-row items-center flex-wrap gap-1.5'>
 								<Text style={{ color: colors.textPrimary }} className='text-base font-sans-bold'>
 									Annual Sanctuary
 								</Text>
 								<View
 									style={{ backgroundColor: colors.accent }}
-									className='ml-2.5 px-2 py-0.5 rounded-full'
+									className='px-2 py-0.5 rounded-full'
 								>
 									<Text
 										style={{ color: colors.accentText }}
+										className='text-[10px] font-sans-bold uppercase'
+									>
+										7-Day Free Trial
+									</Text>
+								</View>
+								<View
+									style={{
+										backgroundColor: colors.surfaceElevated,
+										borderColor: colors.borderSubtle,
+										borderWidth: 1,
+									}}
+									className='px-2 py-0.5 rounded-full'
+								>
+									<Text
+										style={{ color: colors.accent }}
 										className='text-[10px] font-sans-bold uppercase'
 									>
 										Save 50%
@@ -286,7 +504,7 @@ export default function PaywallScreen() {
 								</View>
 							</View>
 							<Text style={{ color: colors.textSecondary }} className='text-xs mt-1'>
-								$2.49/mo · {annualPrice} billed yearly
+								$2.49/mo · {annualPrice} billed yearly after 7-day trial
 							</Text>
 						</View>
 						<View
@@ -390,6 +608,59 @@ export default function PaywallScreen() {
 					</Pressable>
 				</View>
 
+				{/* 3-Step Trial Timeline (when Annual plan is selected) */}
+				{selectedPlan === 'annual' && (
+					<View
+						style={{
+							backgroundColor: colors.surface,
+							borderColor: colors.borderSubtle,
+							borderWidth: 1,
+							borderRadius: 14,
+							padding: 14,
+							marginBottom: 16,
+						}}
+					>
+						<View className='flex-row items-center mb-2.5'>
+							<Sparkles size={13} color={colors.accent} />
+							<Text style={{ color: colors.accent }} className='text-xs font-sans-bold uppercase tracking-wider ml-1.5'>
+								How Your 7-Day Free Trial Works
+							</Text>
+						</View>
+
+						<View className='space-y-2'>
+							<View className='flex-row items-start'>
+								<View style={{ backgroundColor: colors.accent }} className='w-4.5 h-4.5 rounded-full items-center justify-center mr-2.5 mt-0.5'>
+									<Text style={{ color: colors.accentText }} className='text-[10px] font-sans-bold'>1</Text>
+								</View>
+								<View className='flex-1'>
+									<Text style={{ color: colors.textPrimary }} className='text-xs font-sans-bold'>Today: Instant Access ($0.00)</Text>
+									<Text style={{ color: colors.textSecondary }} className='text-[11px] font-sans'>Full access to all Sanctuary spiritual disciplines.</Text>
+								</View>
+							</View>
+
+							<View className='flex-row items-start'>
+								<View style={{ backgroundColor: colors.surfaceElevated, borderColor: colors.borderSubtle, borderWidth: 1 }} className='w-4.5 h-4.5 rounded-full items-center justify-center mr-2.5 mt-0.5'>
+									<Text style={{ color: colors.textSecondary }} className='text-[10px] font-sans-bold'>5</Text>
+								</View>
+								<View className='flex-1'>
+									<Text style={{ color: colors.textPrimary }} className='text-xs font-sans-bold'>Day 5: Friendly Reminder</Text>
+									<Text style={{ color: colors.textSecondary }} className='text-[11px] font-sans'>We notify you 2 days before the trial period concludes.</Text>
+								</View>
+							</View>
+
+							<View className='flex-row items-start'>
+								<View style={{ backgroundColor: colors.surfaceElevated, borderColor: colors.borderSubtle, borderWidth: 1 }} className='w-4.5 h-4.5 rounded-full items-center justify-center mr-2.5 mt-0.5'>
+									<Text style={{ color: colors.textSecondary }} className='text-[10px] font-sans-bold'>7</Text>
+								</View>
+								<View className='flex-1'>
+									<Text style={{ color: colors.textPrimary }} className='text-xs font-sans-bold'>Day 7: Subscription Begins</Text>
+									<Text style={{ color: colors.textSecondary }} className='text-[11px] font-sans'>Renews at {annualPrice}/year ($2.49/mo). Cancel anytime before.</Text>
+								</View>
+							</View>
+						</View>
+					</View>
+				)}
+
 				{/* Primary CTA Button */}
 				<Pressable
 					onPress={handleSubscribe}
@@ -397,7 +668,7 @@ export default function PaywallScreen() {
 					style={{
 						backgroundColor: colors.accent,
 						width: '100%',
-						paddingVertical: 16,
+						paddingVertical: 15,
 						borderRadius: 14,
 						alignItems: 'center',
 						justifyContent: 'center',
@@ -408,20 +679,35 @@ export default function PaywallScreen() {
 					{isProcessing ? (
 						<ActivityIndicator size='small' color={colors.accentText} />
 					) : (
-						<Text
-							style={{
-								color: colors.accentText,
-								fontSize: 16,
-								fontWeight: '700',
-								fontFamily: 'Inter_700Bold',
-							}}
-						>
-							{selectedPlan === 'annual'
-								? 'Unlock Sanctuary'
-								: selectedPlan === 'lifetime'
-									? `Unlock Forever — ${lifetimePrice}`
-									: `Start for ${monthlyPrice}/mo`}
-						</Text>
+						<View className='items-center'>
+							<Text
+								style={{
+									color: colors.accentText,
+									fontSize: 16,
+									fontWeight: '700',
+									fontFamily: 'Inter_700Bold',
+								}}
+							>
+								{selectedPlan === 'annual'
+									? 'Start 7-Day Free Trial'
+									: selectedPlan === 'lifetime'
+										? `Unlock Forever — ${lifetimePrice}`
+										: `Start for ${monthlyPrice}/mo`}
+							</Text>
+							{selectedPlan === 'annual' && (
+								<Text
+									style={{
+										color: colors.accentText,
+										fontSize: 11,
+										opacity: 0.9,
+										marginTop: 2,
+										fontFamily: 'Inter_500Medium',
+									}}
+								>
+									$0.00 today · Then {annualPrice}/year · Cancel anytime
+								</Text>
+							)}
+						</View>
 					)}
 				</Pressable>
 
@@ -434,16 +720,30 @@ export default function PaywallScreen() {
 							: 'Less than a cup of coffee to guard your focus'}
 				</Text>
 
-				{/* Restore Purchases */}
-				<Pressable onPress={handleRestore} className='py-2 items-center'>
-					<Text style={{ color: colors.textSecondary }} className='text-xs font-sans-medium'>
-						Restore Purchases
-					</Text>
-				</Pressable>
+				{/* Store Compliance & Legal Links */}
+				<View className='flex-row items-center justify-center space-x-3 mt-2 mb-2'>
+					<Pressable onPress={() => openLink('https://bibleunlock.app/terms')} hitSlop={8}>
+						<Text style={{ color: colors.textSecondary }} className='text-xs font-sans-medium underline'>
+							Terms of Service
+						</Text>
+					</Pressable>
+					<Text style={{ color: colors.textMuted }}>•</Text>
+					<Pressable onPress={() => openLink('https://bibleunlock.app/privacy')} hitSlop={8}>
+						<Text style={{ color: colors.textSecondary }} className='text-xs font-sans-medium underline'>
+							Privacy Policy
+						</Text>
+					</Pressable>
+					<Text style={{ color: colors.textMuted }}>•</Text>
+					<Pressable onPress={handleRestore} hitSlop={8}>
+						<Text style={{ color: colors.textSecondary }} className='text-xs font-sans-medium underline'>
+							Restore
+						</Text>
+					</Pressable>
+				</View>
 
-				<Text style={{ color: colors.textMuted }} className='text-[11px] text-center mt-2 leading-relaxed px-2'>
-					Subscription automatically renews unless auto-renew is turned off at least 24 hours before the end
-					of the current period.
+				{/* Apple & Google auto-renewal disclosure */}
+				<Text style={{ color: colors.textMuted }} className='text-[10px] text-center mt-1 leading-relaxed px-2'>
+					Annual plan includes a 7-day free trial, then renews at {annualPrice}/year. Subscriptions automatically renew unless cancelled in store account settings at least 24 hours before the end of the trial or current period. Payment is charged to your Apple ID or Google Play account.
 				</Text>
 			</ScrollView>
 		</SafeAreaView>

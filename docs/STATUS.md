@@ -240,17 +240,28 @@
   - **Smooth Full-Bleed SVG LinearGradient:** Implemented `react-native-svg` linear gradient with 4 calibrated color stops (0.55 -> 0.68 -> 0.82 -> 0.94) providing continuous, seamless darkening without harsh lines or truncated imagery.
   - **Crisp Sacred Asset Rendering:** Removed buggy React Native Android `blurRadius` that degraded imagery into a muddy smudge; added text drop shadows and subtle translucent card surface for high contrast and readability.
 
+- [x] `TASK-047`: Sacred Hero Onboarding, Production Paywall Overhaul, 7-Day Free Trial, Grace Days Engine, and Store Compliance (`DEC-031`):
+  - **Sacred Hero Welcome Screen (`src/components/onboarding/CarouselStep.tsx`):** Replaced the 3-slide passive text carousel with a single full-bleed Sacred Hero Welcome Screen featuring `sunrise-cross.webp`, elevated amber brand badge, and 3 authentic value pillars (Shield, Nourish, Devotional Habit). Strictly enforced zero fake numbers / fabricated metrics.
+  - **Streamlined 6-Screen Funnel (`src/app/onboarding/index.tsx`):** Connected the 1 Sacred Hero Welcome Screen directly into the 5 guided setup steps (1/5 Survey → 2/5 Plan → 3/5 Apps → 4/5 Paywall → 5/5 Permissions) with a single continuous progress track, eliminating 2 friction clicks.
+  - **Functional Streak Grace Day Protection (`src/lib/mmkv.ts`, `src/lib/readingTimer.ts`):** Implemented functional 1 Grace Day / month protection for Sanctuary members when exactly 1 reading day is missed. Tracks `last_grace_day_used_month` in MMKV and exports `getGraceDayStatus()`.
+  - **Production Paywall Overhaul (`src/app/paywall.tsx`):**
+    - Configured hero Annual plan card ($29.99/yr, $2.49/mo, Save 50%) with "7-Day Free Trial" badge.
+    - Added 3-step free trial assurance timeline (Day 1 Today → Day 5 Reminder → Day 7 Billing Begins).
+    - Dynamic CTA button adapting to `"Start 7-Day Free Trial"`, `"Unlock Monthly Sanctuary — $4.99/mo"`, or `"Unlock Lifetime Sanctuary — $79.99"`.
+    - Bible Scroll Signature Phone Mockup Card: Added dedicated feature spotlight card with Bethlehem starry night artwork (`SCROLL_BACKGROUNDS[7]`), 4-stop SVG dark gradient overlay, floating mood pills (`🕊️ Peace`, `🛡️ Strength`, `✨ Comfort`), Matthew 11:28 Scripture quote, floating action buttons (Save, Type, Share Art), and "Counts to Goal" badge.
+    - Expanded 7-feature comparison matrix including Bible Scroll visual feed and Streak Grace Protection.
+    - Store Compliance: Added direct links to Terms of Service, Privacy Policy, and Restore Purchases, alongside required Apple and Google Play auto-renewal disclosure statements.
+  - **Onboarding Paywall Step Alignment (`src/components/onboarding/PaywallStep.tsx`):** Added mini Bible Scroll visual teaser card and aligned 6 feature bullet points with updated Sanctuary disciplines.
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `code-review-graph update`: 59 files updated, 4 nodes, 96 edges indexed cleanly.
-- `validate_expanded_verses.js`: 336 verses checked across both KJV and WEB with 0 errors.
-- `DEC-021` through `DEC-030` recorded in `docs/DECISIONS.md`.
+- `DEC-021` through `DEC-031` recorded in `docs/DECISIONS.md`.
 
 ## Session Handoff Notes
 
-- Bible Scroll marketing gate (`src/components/ScrollPaywallGate.tsx`) renders the full sacred background art continuously from top to bottom with zero visual cutoff.
-- Free disciples are greeted with a polished Sanctuary preview; all text, badge, and gold CTA elements maintain optimal contrast and legibility.
+- Onboarding now delivers an inspiring, reverent first impression with the Sunrise Cross sacred hero screen.
+- Paywall screen is 100% store-ready with clear 7-day trial terms, legal links, and high-converting dynamic action buttons.
 
 
 

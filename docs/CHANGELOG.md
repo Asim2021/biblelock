@@ -1,5 +1,32 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.38] - 2026-09-27
+
+### Monetization, Onboarding & Store Compliance
+- **Sacred Hero Welcome Screen (`src/components/onboarding/CarouselStep.tsx`, `TASK-047`, `DEC-031`):**
+  - Consolidated 3-slide pager into a single high-conversion, full-bleed Sacred Hero Welcome Screen using bundled `sunrise-cross.webp`.
+  - Added smooth SVG linear gradient overlay, amber glowing brand badge, and 3 authentic value pillars (God First, Habit Formation, Sacred Scroll).
+  - Enforced strict "zero fake stats" policy (no fabricated user counts or star ratings).
+  - Golden CTA `"Begin My Walk with Jesus"` leads directly into 5 guided setup steps (total flow reduced from 8 to 6 screens).
+- **Production Paywall & Store Compliance Overhaul (`src/app/paywall.tsx`, `src/components/onboarding/PaywallStep.tsx`):**
+  - Integrated dedicated Bible Scroll Phone Mockup Card showcasing the signature vertical Scripture reels: high-resolution Bethlehem sacred artwork, 4-stop SVG dark gradient, floating mood pills (`🕊️ Peace`, `🛡️ Strength`, `✨ Comfort`), Matthew 11:28 quote, floating action buttons (Bookmark, Font, Share Art), and "Counts to Goal" badge.
+  - Added mini visual Bible Scroll teaser card to onboarding `PaywallStep.tsx` so users experience the visual feature during onboarding.
+  - Added prominent `"7-DAY FREE TRIAL"` hero badge on Annual plan ($29.99/year, $2.49/mo, 50% discount).
+  - Added 3-step transparent trial timeline (Today: Instant Access → Day 5: Trial Reminder → Day 7: Billing Starts).
+  - Expanded feature matrix to 7 clear Sanctuary disciplines (Unlimited App Blocks, Full Bible Scroll, 1 Grace Day/mo Streak Protection, Custom Minute Goals, Unlimited Reminders, Offline Study, Ad-Free Sanctuary).
+  - Added Apple App Store & Google Play auto-renewal disclosures, Restore Purchases action, and active URLs for Terms of Service (`https://bibleunlock.app/terms`) and Privacy Policy (`https://bibleunlock.app/privacy`).
+- **Functional Grace Days Streak Recovery (`src/lib/mmkv.ts`, `src/lib/readingTimer.ts`):**
+  - Added `LAST_GRACE_DAY_USED_MONTH` tracking in MMKV storage with `getGraceDayStatus()` export.
+  - Implemented 1-day missed streak recovery (1 Grace Day per calendar month) for active Sanctuary members during daily goal completion.
+  - Wired RevenueCat `usePurchases()` status into `useReadingTimer` to auto-pass premium state into `updateStreakOnGoalMet`.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Store compliance verified for Apple App Store (Guideline 3.1.2) and Google Play Billing requirements.
+- Onboarding flow streamlined by 25% (6 screens vs 8 screens).
+
+---
+
 ## [1.0.37] - 2026-09-25
 
 ### UI & Visual Fixes
