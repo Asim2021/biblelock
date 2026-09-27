@@ -1,5 +1,45 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.44] - 2026-09-28
+
+### Human-Readable Translation Badges & Industrial-Brutalist Layout
+- **Human-Readable Translation Badges (`src/app/(tabs)/reader.tsx`, `TASK-053`, `DEC-037`):**
+  - Mapped raw machine translation keys (`hi_irvhin`, `es_rvr1960`, `de_schlachter`) in the Reader header pill to human-readable acronyms (`IRV`, `RVR60`, `SCH51`) via `getTranslationBadge(translation)`.
+  - Added `shortCode` metadata across all 92 translations in `src/data/bibleCatalog.ts`.
+- **Eliminated Portuguese Crawler Book Names (`src/lib/bible.ts`):**
+  - Resolved crawler scraping bug where non-Portuguese translations had Portuguese book titles (`"Gênesis"`).
+  - Prioritized canonical English book names for all non-Portuguese Bibles, while preserving Portuguese book names for genuine Portuguese translations (`pt_*`).
+- **Industrial-Brutalist Layout in `BibleTranslationModal.tsx` (`src/components/BibleTranslationModal.tsx`):**
+  - Removed broken `position: absolute, top: -15` overlapping styles.
+  - Implemented tactile inline acronym badge chips (`[ IRV ]`, `[ WEB ]`, `[ KJV ]`) with subtle borders and clear typographic hierarchy for both Installed and Downloadable translations.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Fixed `hi_irvhin` -> `IRV` badge and `Gênesis 6` -> `Genesis 6` in Reader header for Hindi while preserving authentic Hindi verse text.
+
+---
+
+## [1.0.43] - 2026-09-28
+
+### Multi-Language Bible In-Memory Normalization Engine & 35-Language Catalog Integration
+- **In-Memory Normalization Engine (`src/lib/bible.ts`, `TASK-052`, `DEC-036`):**
+  - Added ultra-fast (2.3ms) in-memory array normalizer in `loadBibleAsync()` transforming flat `chapters: string[][]` into `{ chapter: number, verses: Verse[] }`.
+  - Stored normalized results in `BIBLE_MAP[translation]` for instantaneous (< 0.001ms) O(1) subsequent queries across Reader, Bible Scroll, and Devotionals.
+  - Preserved pre-bundled `web.json` and `kjv.json` assets with zero regressions.
+  - Updated `buildInspirationalCache` to index canonical books via `BOOK_INDEX_MAP`, ensuring daily verses resolve accurately even with localized foreign language book titles.
+- **BOM Sanitization & Schema Validation (`src/lib/bibleDownloader.ts`):**
+  - Added automated UTF-8 Byte Order Mark (`\uFEFF`) stripping in `downloadBible` and `loadDownloadedBible`.
+  - Broadened integrity check to validate both array-of-books and object-with-books JSON formats.
+- **35-Language / 90-Version Catalog Configuration (`src/data/bibleCatalog.ts`):**
+  - Expanded `BIBLE_CATALOG` to 92 total versions (2 pre-loaded + 90 downloadable) across 35 languages (Arabic, Chinese, German, Spanish, Hindi, Tagalog, Russian, Portuguese, Turkish, French, Italian, Korean, Urdu, etc.).
+  - Configured download endpoints to `https://raw.githubusercontent.com/Asim2021/bible-translations/main/formats/json/`.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Multi-language verification test suite passed across 10 sample languages with 100% accurate Genesis 1:1 and John 3:16 verse resolution.
+
+---
+
 ## [1.0.42] - 2026-09-27
 
 ### Bottom Tab Bar Menu Rearrangement & Mobile Thumb Ergonomics

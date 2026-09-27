@@ -27,6 +27,7 @@ import { BookmarkPickerSheet } from '../../components/BookmarkPickerSheet';
 import { ReaderAppearanceModal } from '../../components/reader/ReaderAppearanceModal';
 import { BibleNavigationModal } from '../../components/reader/BibleNavigationModal';
 import { BibleTranslationModal } from '../../components/BibleTranslationModal';
+import { getTranslationBadge } from '../../data/bibleCatalog';
 import { Button } from '../../components/Button';
 import {
   Clock,
@@ -728,7 +729,7 @@ export default function ReaderScreen() {
               borderColor: colors.borderSubtle,
             }}
             accessibilityRole="button"
-            accessibilityLabel="Select Bible Translation"
+            accessibilityLabel={`Select Bible Translation, currently ${getTranslationBadge(translation)}`}
           >
             <Globe size={14} color={colors.accent} style={{ marginRight: 6 }} />
             <Text
@@ -739,7 +740,7 @@ export default function ReaderScreen() {
                 marginRight: 4,
               }}
             >
-              {translation}
+              {getTranslationBadge(translation)}
             </Text>
             <ChevronDown size={12} color={colors.textSecondary} />
           </Pressable>

@@ -78,7 +78,64 @@ export async function loadBibleAsync(translation: string): Promise<BibleData> {
   }
 
   const downloaded = await loadDownloadedBible(translation);
-  if (downloaded && Array.isArray(downloaded.books) && downloaded.books.length > 0) {
+  if (!downloaded) {
+    return BIBLE_MAP.WEB;
+  }
+
+  const canonicalWebBooks = (webData as unknown as BibleData).books;
+
+  // Format 1: Direct Array of Books (formats/json/*.json)
+  if (Array.isArray(downloaded) && downloaded.length > 0) {
+    const normalizedBooks: Book[] = downloaded.map((b: any, idx: number) => {
+      const canonical = canonicalWebBooks[idx];
+      const chapters: Chapter[] = (b.chapters || []).map((ch: any, cIdx: number) => {
+        if (Array.isArray(ch)) {
+          return {
+            chapter: cIdx + 1,
+            verses: ch.map((text: any, vIdx: number) => ({
+              verse: vIdx + 1,
+              text: typeof text === 'string' ? text : String(text || ''),
+            })),
+          };
+        }
+        return ch;
+      });
+
+      const isPortuguese = translation.toLowerCase().startsWith('pt');
+      const bookName = isPortuguese ? (b.name || canonical?.name) : (canonical?.name || b.name);
+      const bookShortName = isPortuguese
+        ? (b.abbrev?.toUpperCase() || canonical?.shortName || b.name?.slice(0, 3))
+        : (canonical?.shortName || b.abbrev?.toUpperCase() || b.name?.slice(0, 3));
+
+      return {
+        id: b.abbrev || canonical?.id || `b_${idx}`,
+        name: bookName || `Book ${idx + 1}`,
+        shortName: bookShortName,
+        chapterCount: chapters.length,
+        chapters,
+      };
+    });
+
+    const bibleData: BibleData = {
+      translation,
+      title: translation,
+      books: normalizedBooks,
+    };
+
+    BIBLE_MAP[translation] = bibleData;
+    BOOKS_CACHE[translation] = normalizedBooks.map((b, idx) => ({
+      index: idx,
+      id: b.id || `b_${idx}`,
+      name: b.name,
+      shortName: b.shortName || b.name.slice(0, 3),
+      chapterCount: b.chapterCount || b.chapters.length,
+    }));
+
+    return bibleData;
+  }
+
+  // Format 2: Object with .books (legacy format)
+  if (Array.isArray(downloaded.books) && downloaded.books.length > 0) {
     const normalizedBooks: Book[] = downloaded.books.map((b: any, idx: number) => ({
       id: b.id || b.name.slice(0, 3).toLowerCase(),
       name: b.name,
@@ -99,7 +156,7 @@ export async function loadBibleAsync(translation: string): Promise<BibleData> {
       id: b.id || b.name.slice(0, 3).toLowerCase(),
       name: b.name,
       shortName: b.shortName || b.name.slice(0, 3),
-      chapterCount: b.chapterCount || (b.chapters ? b.chapters.length : 0),
+      chapterCount: b.chapterCount || b.chapters.length,
     }));
 
     return bibleData;
@@ -188,9 +245,12 @@ export interface DailyVerseItem {
 
 function buildInspirationalCache(bible: BibleData): DailyVerseItem[] {
   return INSPIRATIONAL_VERSES.map((pick, safeIdx) => {
-    const book = bible.books.find(
-      (b) => b.name.toLowerCase() === pick.book.toLowerCase() || (b.id && b.id.toLowerCase() === pick.book.toLowerCase())
-    ) || bible.books[0];
+    const canonicalIndex = BOOK_INDEX_MAP[pick.book];
+    const book = (canonicalIndex !== undefined && bible.books[canonicalIndex])
+      ? bible.books[canonicalIndex]
+      : bible.books.find(
+          (b) => b.name.toLowerCase() === pick.book.toLowerCase() || (b.id && b.id.toLowerCase() === pick.book.toLowerCase())
+        ) || bible.books[0];
     const chapter = book.chapters.find((c) => c.chapter === pick.chapter) || book.chapters[0];
     const verse = chapter?.verses.find((v) => v.verse === pick.verseNum) || chapter?.verses[0];
     return {

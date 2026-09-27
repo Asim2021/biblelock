@@ -77,7 +77,7 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  themeMode: 'dark',
+  themeMode: 'system',
   setThemeMode: () => {},
   colors: darkColors,
   isDark: true,

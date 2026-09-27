@@ -114,10 +114,15 @@ export async function downloadBible(
     }
 
     // Integrity check: verify the file is readable JSON and contains books
-    const fileContent = await FileSystem.readAsStringAsync(tempFilePath);
+    const rawContent = await FileSystem.readAsStringAsync(tempFilePath);
+    const fileContent = rawContent.replace(/^\uFEFF/, '');
     const parsed = JSON.parse(fileContent);
 
-    if (!parsed || !Array.isArray(parsed.books) || parsed.books.length === 0) {
+    const isValidFormat =
+      (Array.isArray(parsed) && parsed.length > 0 && Array.isArray(parsed[0].chapters)) ||
+      (parsed && Array.isArray(parsed.books) && parsed.books.length > 0);
+
+    if (!isValidFormat) {
       await FileSystem.deleteAsync(tempFilePath, { idempotent: true });
       return {
         success: false,
@@ -190,8 +195,8 @@ export async function loadDownloadedBible(code: string): Promise<any | null> {
     const info = await FileSystem.getInfoAsync(filePath);
     if (!info.exists) return null;
 
-    const content = await FileSystem.readAsStringAsync(filePath);
-    return JSON.parse(content);
+    const rawContent = await FileSystem.readAsStringAsync(filePath);
+    return JSON.parse(rawContent.replace(/^\uFEFF/, ''));
   } catch (err) {
     console.warn(`[BibleDownloader] Failed to load downloaded bible ${code}:`, err);
     return null;

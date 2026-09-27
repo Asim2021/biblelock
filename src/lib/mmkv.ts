@@ -934,7 +934,7 @@ export function formatRelativeTime(timestamp: number): string {
 export type ThemeMode = 'dark' | 'light' | 'system';
 
 export function getThemeMode(): ThemeMode {
-  return (storage.getString(STORAGE_KEYS.THEME_MODE) as ThemeMode) || 'dark';
+  return (storage.getString(STORAGE_KEYS.THEME_MODE) as ThemeMode) || 'system';
 }
 
 export function setThemeMode(theme: ThemeMode): void {
