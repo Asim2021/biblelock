@@ -5,7 +5,8 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { ArrowLeft, RotateCw, Flame, Zap, Clock, Award, MoreHorizontal, Share2, BookOpen, Lock } from 'lucide-react-native';
 import { useReadingTimer } from '../lib/readingTimer';
 import { useFeatureGate } from '../lib/useFeatureGate';
-import { getUserName, getImpactStats, getBlockedApps, getReadingHistory30Days, getReadingHistoryYear } from '../lib/mmkv';
+import { getUserName, getImpactStats, getBlockedApps, hasConfiguredBlockedApps, getIsShielded, getReadingHistory30Days, getReadingHistoryYear } from '../lib/mmkv';
+import { AppBlocker } from '../lib/appBlocker';
 import { BadgesGrid } from '../components/BadgesGrid';
 import { BadgeShareModal } from '../components/BadgeShareModal';
 import { DailyDevotionalCard } from '../components/DailyDevotionalCard';
@@ -27,6 +28,8 @@ export default function StatsScreen() {
 	const [historyPeriod, setHistoryPeriod] = useState<'week' | 'month' | 'year'>('week');
 	const [selectedDay, setSelectedDay] = useState<HabitDay | null>(null);
 	const [selectedMonth, setSelectedMonth] = useState<YearMonthData | null>(null);
+	const [shieldConfigured, setShieldConfigured] = useState(false);
+	const [blockedAppsCount, setBlockedAppsCount] = useState(0);
 
 	const timer = useReadingTimer(false);
 
@@ -39,13 +42,24 @@ export default function StatsScreen() {
 		setSelectedMonth(null);
 	};
 
-	const loadData = useCallback(() => {
+	const loadData = useCallback(async () => {
 		const storedName = getUserName();
 		setName(storedName);
 
 		setImpact(getImpactStats());
 		setHistory(getReadingHistory30Days());
 		setYearHistory(getReadingHistoryYear());
+
+		const hasConfigured = hasConfiguredBlockedApps();
+		const apps = hasConfigured ? getBlockedApps() : [];
+		setBlockedAppsCount(apps.length);
+
+		try {
+			const st = await AppBlocker.getStatus();
+			setShieldConfigured(hasConfigured && (st.isShielded || st.hasPermission));
+		} catch {
+			setShieldConfigured(hasConfigured && getIsShielded());
+		}
 	}, []);
 
 	useFocusEffect(
@@ -56,7 +70,7 @@ export default function StatsScreen() {
 
 	const onRefresh = async () => {
 		setRefreshing(true);
-		loadData();
+		await loadData();
 		setTimeout(() => setRefreshing(false), 300);
 	};
 
@@ -70,7 +84,6 @@ export default function StatsScreen() {
 	};
 
 	// Badges calculation
-	const blockedApps = useMemo(() => getBlockedApps(), []);
 	const badges: BadgeItem[] = useMemo(
 		() => [
 			{
@@ -102,7 +115,7 @@ export default function StatsScreen() {
 				title: 'Armor of God',
 				subtitle: 'Apps Guarded',
 				icon: '🛡️',
-				unlocked: blockedApps.length >= 3,
+				unlocked: shieldConfigured && blockedAppsCount >= 3,
 				requirement: 'Shield at least 3 distracting apps from temptation',
 			},
 			{
@@ -122,7 +135,7 @@ export default function StatsScreen() {
 				requirement: 'Complete 3 Bible reading sessions with consistency',
 			},
 		],
-		[impact.sessions, impact.minutesRead, timer.streak, blockedApps.length]
+		[impact.sessions, impact.minutesRead, timer.streak, shieldConfigured, blockedAppsCount]
 	);
 
 	// Milestone calculation
@@ -170,28 +183,28 @@ export default function StatsScreen() {
 
 	return (
 		<SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'left', 'right']}>
-			<ScrollView
-				style={{ flex: 1 }}
-				className='px-5'
-				contentContainerStyle={{ paddingBottom: 60 + insets.bottom }}
-				refreshControl={
-					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
-				}
+			{/* Floating Top Header Bar */}
+			<View
+				style={{
+					backgroundColor: colors.background,
+					borderBottomWidth: 1,
+					borderBottomColor: colors.borderSubtle,
+					zIndex: 10,
+				}}
+				className='flex-row items-center justify-between px-5 pt-2 pb-3'
 			>
-				{/* Top Header Bar */}
-				<View className='flex-row items-center justify-between pt-4 pb-3'>
-					<Text
-						style={{
-							fontSize: 24,
-							fontFamily: 'EBGaramond_700Bold',
-							color: colors.textPrimary,
-						}}
-					>
-						Stats
-					</Text>
-
+				<View className='flex-row items-center'>
 					<Pressable
-						onPress={onRefresh}
+						onPress={() => {
+							if (router.canGoBack()) {
+								router.back();
+							} else {
+								router.replace('/(tabs)/settings' as any);
+							}
+						}}
+						hitSlop={8}
+						accessibilityLabel='Go back'
+						accessibilityRole='button'
 						style={{
 							width: 40,
 							height: 40,
@@ -201,11 +214,50 @@ export default function StatsScreen() {
 							borderColor: colors.border,
 							alignItems: 'center',
 							justifyContent: 'center',
+							marginRight: 12,
 						}}
 					>
-						<RotateCw size={17} color={colors.textSecondary} />
+						<ArrowLeft size={18} color={colors.textPrimary} />
 					</Pressable>
+					<Text
+						style={{
+							fontSize: 22,
+							fontFamily: 'EBGaramond_700Bold',
+							color: colors.textPrimary,
+						}}
+					>
+						Stats
+					</Text>
 				</View>
+
+				<Pressable
+					onPress={onRefresh}
+					hitSlop={8}
+					accessibilityLabel='Refresh stats'
+					accessibilityRole='button'
+					style={{
+						width: 40,
+						height: 40,
+						borderRadius: 20,
+						backgroundColor: colors.surfaceSubtle,
+						borderWidth: 1,
+						borderColor: colors.border,
+						alignItems: 'center',
+						justifyContent: 'center',
+					}}
+				>
+					<RotateCw size={17} color={colors.textSecondary} />
+				</Pressable>
+			</View>
+
+			<ScrollView
+				style={{ flex: 1 }}
+				className='px-5'
+				contentContainerStyle={{ paddingTop: 8, paddingBottom: 60 + insets.bottom }}
+				refreshControl={
+					<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+				}
+			>
 
 				{/* User Profile Row */}
 				<View className='flex-row items-center my-3'>

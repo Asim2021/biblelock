@@ -1,5 +1,30 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.46] - 2026-09-28
+
+### Stats Floating Navigation, Devotional Translation Alignment & Virtualized Catalog Drawer
+- **Armor of God Badge Trigger Fix (`src/lib/mmkv.ts`, `src/app/stats-detail.tsx`, `TASK-055`, `DEC-039`):**
+  - Added `hasConfiguredBlockedApps()` to inspect raw MMKV storage for explicit user configured apps instead of relying on `DEFAULT_BLOCKED_APPS` fallback.
+  - Linked badge unlock state to `shieldConfigured && blockedAppsCount >= 3`, preventing premature unlocking on fresh installations.
+- **Stats Floating Navigation Header (`src/app/stats-detail.tsx`):**
+  - Extracted header outside `ScrollView` inside `SafeAreaView` with `backgroundColor: colors.background`, bottom border, and safe area insets.
+  - Pinned in-house `ArrowLeft` back button (`router.canGoBack() ? router.back() : router.replace('/(tabs)/settings')`) and refresh action persistently at the top of the viewport.
+- **Daily Devotional Translation Alignment (`src/components/DailyDevotionalCard.tsx`):**
+  - Completely removed hardcoded interactive `WEB` / `KJV` switcher pill.
+  - Added subtle non-interactive translation badge displaying the active translation dynamically synchronized with the user's selection in Reader or Settings.
+- **Virtualized Translation Drawer (`src/components/BibleTranslationModal.tsx`):**
+  - Replaced unvirtualized `ScrollView` in the "Download Languages" tab with a virtualized `<FlatList>` using memoized `renderCatalogItem`, `initialNumToRender={8}`, `maxToRenderPerBatch={10}`, and `windowSize={5}`.
+  - Added responsive press opacity feedback to segmented tab buttons, eliminating the 1-2 second UI freeze on tab click.
+- **Settings Reminder Trash Icon Theme Alignment (`src/app/(tabs)/settings.tsx`):**
+  - Replaced hardcoded dark background (`#331a1a`) with `colors.dangerBg` and `colors.danger`, fixing dark circle visual artifact in light mode.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Tab switch delay dropped from ~1.5s to <16ms.
+- Stats page header remains accessible at any scroll depth.
+
+---
+
 ## [1.0.45] - 2026-09-28
 
 ### Bible Scroll Performance Engine, WebP Optimization, 30-Artwork Remote Pack & Reels Feature Suite

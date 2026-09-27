@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, Modal, Pressable, ScrollView, TextInput, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, Modal, Pressable, ScrollView, TextInput, ActivityIndicator, Alert, FlatList } from 'react-native';
 import { X, Check, Download, Trash2, Search, Globe, BookOpen, Sparkles } from 'lucide-react-native';
 import { useTheme } from '../lib/themeContext';
 import { BibleCatalogItem, BIBLE_CATALOG, getTranslationBadge } from '../data/bibleCatalog';
@@ -130,6 +130,178 @@ export const BibleTranslationModal: React.FC<BibleTranslationModalProps> = ({ vi
 		);
 	};
 
+	const renderCatalogItem = useCallback(
+		({ item }: { item: BibleCatalogItem }) => {
+			const isInstalled = installedCodes.has(item.code);
+			const isDownloading = downloadingCode === item.code;
+			const progress = downloadProgress[item.code] || 0;
+
+			return (
+				<View
+					key={item.code}
+					style={{
+						padding: 16,
+						borderRadius: 18,
+						backgroundColor: colors.surface,
+						borderWidth: 1,
+						borderColor: colors.border,
+						marginBottom: 10,
+						flexDirection: 'row',
+						alignItems: 'center',
+						justifyContent: 'space-between',
+					}}
+				>
+					<View style={{ flex: 1, marginRight: 12 }}>
+						<View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
+							<View
+								style={{
+									paddingHorizontal: 6,
+									paddingVertical: 2,
+									borderRadius: 4,
+									backgroundColor: colors.surfaceSubtle,
+									borderWidth: 1,
+									borderColor: colors.borderSubtle,
+									marginRight: 6,
+								}}
+							>
+								<Text
+									style={{
+										fontSize: 11,
+										fontFamily: 'Inter_700Bold',
+										color: colors.accent,
+										letterSpacing: 0.5,
+									}}
+								>
+									{item.shortCode || getTranslationBadge(item.code)}
+								</Text>
+							</View>
+
+							<Text
+								style={{
+									fontSize: 15,
+									fontFamily: 'Inter_700Bold',
+									color: colors.textPrimary,
+									marginRight: 6,
+								}}
+							>
+								{item.name}
+							</Text>
+
+							<View
+								style={{
+									paddingHorizontal: 6,
+									paddingVertical: 2,
+									borderRadius: 4,
+									backgroundColor: colors.surfaceSubtle,
+								}}
+							>
+								<Text
+									style={{
+										fontSize: 10,
+										fontFamily: 'Inter_600SemiBold',
+										color: colors.accent,
+									}}
+								>
+									{item.language}
+								</Text>
+							</View>
+						</View>
+
+						<Text
+							style={{
+								fontSize: 12,
+								color: colors.textSecondary,
+								marginBottom: 2,
+							}}
+						>
+							{item.nativeName} • {item.sizeFormatted}
+						</Text>
+						<Text style={{ fontSize: 11, color: colors.textMuted }}>
+							{item.description}
+						</Text>
+					</View>
+
+					{/* Action Column */}
+					<View style={{ alignItems: 'flex-end', minWidth: 84 }}>
+						{isInstalled ? (
+							<View
+								style={{
+									paddingHorizontal: 10,
+									paddingVertical: 6,
+									borderRadius: 12,
+									backgroundColor: colors.surfaceSubtle,
+									flexDirection: 'row',
+									alignItems: 'center',
+								}}
+							>
+								<Check
+									size={13}
+									color={colors.success}
+									style={{ marginRight: 4 }}
+								/>
+								<Text
+									style={{
+										fontSize: 12,
+										fontFamily: 'Inter_600SemiBold',
+										color: colors.success,
+									}}
+								>
+									Ready
+								</Text>
+							</View>
+						) : isDownloading ? (
+							<View style={{ alignItems: 'center' }}>
+								<ActivityIndicator size='small' color={colors.accent} />
+								<Text
+									style={{
+										fontSize: 10,
+										color: colors.accent,
+										marginTop: 4,
+										fontFamily: 'Inter_700Bold',
+									}}
+								>
+									{Math.round(progress * 100)}%
+								</Text>
+							</View>
+						) : (
+							<Pressable
+								onPress={() => handleStartDownload(item)}
+								disabled={Boolean(downloadingCode)}
+								accessibilityRole='button'
+								accessibilityLabel={`Download ${item.name}`}
+								style={({ pressed }) => ({
+									paddingHorizontal: 12,
+									paddingVertical: 8,
+									borderRadius: 12,
+									backgroundColor: colors.accent,
+									flexDirection: 'row',
+									alignItems: 'center',
+									opacity: pressed ? 0.9 : 1,
+								})}
+							>
+								<Download
+									size={13}
+									color='#141413'
+									style={{ marginRight: 5 }}
+								/>
+								<Text
+									style={{
+										fontSize: 12,
+										fontFamily: 'Inter_700Bold',
+										color: '#141413',
+									}}
+								>
+									Get
+								</Text>
+							</Pressable>
+						)}
+					</View>
+				</View>
+			);
+		},
+		[colors, installedCodes, downloadingCode, downloadProgress, handleStartDownload]
+	);
+
 	return (
 		<Modal visible={visible} animationType='slide' transparent={true} onRequestClose={onClose}>
 			<View
@@ -223,7 +395,8 @@ export const BibleTranslationModal: React.FC<BibleTranslationModalProps> = ({ vi
 						>
 							<Pressable
 								onPress={() => setActiveTab('installed')}
-								style={{
+								hitSlop={6}
+								style={({ pressed }) => ({
 									flex: 1,
 									paddingVertical: 9,
 									borderRadius: 10,
@@ -231,7 +404,8 @@ export const BibleTranslationModal: React.FC<BibleTranslationModalProps> = ({ vi
 									alignItems: 'center',
 									borderWidth: activeTab === 'installed' ? 1 : 0,
 									borderColor: colors.border,
-								}}
+									opacity: pressed ? 0.75 : 1,
+								})}
 							>
 								<Text
 									style={{
@@ -246,7 +420,8 @@ export const BibleTranslationModal: React.FC<BibleTranslationModalProps> = ({ vi
 
 							<Pressable
 								onPress={() => setActiveTab('download')}
-								style={{
+								hitSlop={6}
+								style={({ pressed }) => ({
 									flex: 1,
 									paddingVertical: 9,
 									borderRadius: 10,
@@ -254,7 +429,8 @@ export const BibleTranslationModal: React.FC<BibleTranslationModalProps> = ({ vi
 									alignItems: 'center',
 									borderWidth: activeTab === 'download' ? 1 : 0,
 									borderColor: colors.border,
-								}}
+									opacity: pressed ? 0.75 : 1,
+								})}
 							>
 								<Text
 									style={{
@@ -540,12 +716,18 @@ export const BibleTranslationModal: React.FC<BibleTranslationModalProps> = ({ vi
 								</ScrollView>
 							</View>
 
-							{/* Available Translations List */}
-							<ScrollView
+							{/* Available Translations List (Virtualized FlatList for instant tab render) */}
+							<FlatList
+								data={filteredCatalog}
+								keyExtractor={(item) => item.code}
+								renderItem={renderCatalogItem}
 								contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
 								showsVerticalScrollIndicator={false}
-							>
-								{filteredCatalog.length === 0 ? (
+								initialNumToRender={8}
+								maxToRenderPerBatch={10}
+								windowSize={5}
+								removeClippedSubviews={true}
+								ListEmptyComponent={
 									<View style={{ paddingVertical: 40, alignItems: 'center' }}>
 										<Text style={{ fontSize: 14, color: colors.textSecondary, marginBottom: 4 }}>
 											No matching translations found
@@ -554,177 +736,8 @@ export const BibleTranslationModal: React.FC<BibleTranslationModalProps> = ({ vi
 											Try searching for a different language or country
 										</Text>
 									</View>
-								) : (
-									filteredCatalog.map((item) => {
-										const isInstalled = installedCodes.has(item.code);
-										const isDownloading = downloadingCode === item.code;
-										const progress = downloadProgress[item.code] || 0;
-
-										return (
-											<View
-												key={item.code}
-												style={{
-													padding: 16,
-													borderRadius: 18,
-													backgroundColor: colors.surface,
-													borderWidth: 1,
-													borderColor: colors.border,
-													marginBottom: 10,
-													flexDirection: 'row',
-													alignItems: 'center',
-													justifyContent: 'space-between',
-												}}
-											>
-												<View style={{ flex: 1, marginRight: 12 }}>
-													<View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
-														<View
-															style={{
-																paddingHorizontal: 6,
-																paddingVertical: 2,
-																borderRadius: 4,
-																backgroundColor: colors.surfaceSubtle,
-																borderWidth: 1,
-																borderColor: colors.borderSubtle,
-																marginRight: 6,
-															}}
-														>
-															<Text
-																style={{
-																	fontSize: 11,
-																	fontFamily: 'Inter_700Bold',
-																	color: colors.accent,
-																	letterSpacing: 0.5,
-																}}
-															>
-																{item.shortCode || getTranslationBadge(item.code)}
-															</Text>
-														</View>
-
-														<Text
-															style={{
-																fontSize: 15,
-																fontFamily: 'Inter_700Bold',
-																color: colors.textPrimary,
-																marginRight: 6,
-															}}
-														>
-															{item.name}
-														</Text>
-
-														<View
-															style={{
-																paddingHorizontal: 6,
-																paddingVertical: 2,
-																borderRadius: 4,
-																backgroundColor: colors.surfaceSubtle,
-															}}
-														>
-															<Text
-																style={{
-																	fontSize: 10,
-																	fontFamily: 'Inter_600SemiBold',
-																	color: colors.accent,
-																}}
-															>
-																{item.language}
-															</Text>
-														</View>
-													</View>
-
-													<Text
-														style={{
-															fontSize: 12,
-															color: colors.textSecondary,
-															marginBottom: 2,
-														}}
-													>
-														{item.nativeName} • {item.sizeFormatted}
-													</Text>
-													<Text style={{ fontSize: 11, color: colors.textMuted }}>
-														{item.description}
-													</Text>
-												</View>
-
-												{/* Action Column */}
-												<View style={{ alignItems: 'flex-end', minWidth: 84 }}>
-													{isInstalled ? (
-														<View
-															style={{
-																paddingHorizontal: 10,
-																paddingVertical: 6,
-																borderRadius: 12,
-																backgroundColor: colors.surfaceSubtle,
-																flexDirection: 'row',
-																alignItems: 'center',
-															}}
-														>
-															<Check
-																size={13}
-																color={colors.success}
-																style={{ marginRight: 4 }}
-															/>
-															<Text
-																style={{
-																	fontSize: 12,
-																	fontFamily: 'Inter_600SemiBold',
-																	color: colors.success,
-																}}
-															>
-																Ready
-															</Text>
-														</View>
-													) : isDownloading ? (
-														<View style={{ alignItems: 'center' }}>
-															<ActivityIndicator size='small' color={colors.accent} />
-															<Text
-																style={{
-																	fontSize: 10,
-																	color: colors.accent,
-																	marginTop: 4,
-																	fontFamily: 'Inter_700Bold',
-																}}
-															>
-																{Math.round(progress * 100)}%
-															</Text>
-														</View>
-													) : (
-														<Pressable
-															onPress={() => handleStartDownload(item)}
-															disabled={Boolean(downloadingCode)}
-															accessibilityRole='button'
-															accessibilityLabel={`Download ${item.name}`}
-															style={({ pressed }) => ({
-																paddingHorizontal: 12,
-																paddingVertical: 8,
-																borderRadius: 12,
-																backgroundColor: colors.accent,
-																flexDirection: 'row',
-																alignItems: 'center',
-																opacity: pressed ? 0.9 : 1,
-															})}
-														>
-															<Download
-																size={13}
-																color='#141413'
-																style={{ marginRight: 5 }}
-															/>
-															<Text
-																style={{
-																	fontSize: 12,
-																	fontFamily: 'Inter_700Bold',
-																	color: '#141413',
-																}}
-															>
-																Get
-															</Text>
-														</Pressable>
-													)}
-												</View>
-											</View>
-										);
-									})
-								)}
-							</ScrollView>
+								}
+							/>
 						</View>
 					)}
 				</View>

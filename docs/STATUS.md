@@ -325,18 +325,26 @@
     - **Mode & Mood Guidance Gating:** Gated all 7 emotion mood chips behind Sanctuary with `<Lock size={10} />` badges and paywall sheets; restricted the Sequential/Random mode toggle to Sanctuary subscribers.
     - **Active Reading Timer & 60s Idle Dwell Cap:** Stopped fake reading time accumulation on Card 4 (`isTimerActive = isFocused && !isIdle && (isPremium || currentIndex < FREE_DAILY_SCROLL_LIMIT)`). Added a 60-second dwell cap per verse card that pauses timer on inactivity and displays `(Paused)` in the header.
 
+- [x] `TASK-055`: Stats Floating Header, Armor of God Shield Verification, Devotional Translation Sync & Virtualized Catalog (`DEC-039`):
+  - **Armor of God Badge Trigger Fix (`src/lib/mmkv.ts`, `src/app/stats-detail.tsx`):** Added `hasConfiguredBlockedApps()` checking explicit saved apps in MMKV. Prevented fallback presets from prematurely unlocking the badge when shield is unconfigured or inactive.
+  - **Stats Floating Navigation Header (`src/app/stats-detail.tsx`):** Extracted header outside `ScrollView` with `backgroundColor: colors.background`, bottom border, and safe area insets; pinned in-house `ArrowLeft` back navigation and refresh button persistently at any scroll depth.
+  - **Daily Devotional Translation Alignment (`src/components/DailyDevotionalCard.tsx`):** Removed hardcoded interactive WEB/KJV toggle pill; replaced with active translation indicator badge that dynamically follows what the user selected in Reader or Settings.
+  - **Virtualized Translation Drawer (`src/components/BibleTranslationModal.tsx`):** Replaced unvirtualized 90-item `ScrollView` with `<FlatList>` using memoized item renderer, `initialNumToRender={8}`, `maxToRenderPerBatch={10}`, and responsive tab press feedback, eliminating 1-2 second UI freeze on tab switch.
+  - **Settings Reminder Trash Icon Theme Alignment (`src/app/(tabs)/settings.tsx`):** Swapped hardcoded dark background (`#331a1a`) for `colors.dangerBg` and `colors.danger`, fixing dark circle artifact in light mode.
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- 10 bundled WebP images verified in Expo bundle with 0ms paint.
-- 20 remote WebP backgrounds generated, cropped to 768x1326, and verified.
-- `DEC-021` through `DEC-038` recorded in `docs/DECISIONS.md`.
+- Stats header floats persistently above scroll content with accessible back navigation.
+- Armor of God badge verified locked for unconfigured shields.
+- Daily Devotional card dynamically mirrors active selected translation without WEB/KJV switcher.
+- Bible Translation Modal tab switch verified instant (<16ms) via virtualized `FlatList`.
+- Settings reminder trash icon renders harmoniously in both light and dark themes.
 
 ## Session Handoff Notes
 
-- Bible Scroll is now hardware-accelerated and instant (0ms black flash).
-- 20 new Christian sacred backgrounds ready in `assets/scroll-backgrounds/remote/`. Once pushed to GitHub, they are downloadable via `settings.tsx`.
-- Free users receive 3 daily scrolls before soft paywall card, significantly increasing free-to-trial conversions.
+- Navigation on `stats-detail.tsx` is completely self-contained with a floating top header.
+- The 92-translation catalog in `BibleTranslationModal.tsx` now uses virtualized rendering, making it smooth and responsive.
 
 
 

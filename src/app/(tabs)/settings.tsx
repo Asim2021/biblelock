@@ -1489,12 +1489,12 @@ export default function SettingsScreen() {
                           width: 36,
                           height: 36,
                           borderRadius: 18,
-                          backgroundColor: '#331a1a',
+                          backgroundColor: colors.dangerBg,
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}
                       >
-                        <Trash2 size={14} color="#f26666" />
+                        <Trash2 size={14} color={colors.danger} />
                       </Pressable>
                     </View>
                   ))}

@@ -16,7 +16,7 @@ export function DailyDevotionalCard({
 }: DailyDevotionalCardProps) {
   const router = useRouter();
   const { colors } = useTheme();
-  const [translation, setTranslation] = useBibleTranslation();
+  const [translation] = useBibleTranslation();
   const [verseIndex, setVerseIndex] = useState<number>(() => getDailyVerse(translation).index);
   const [isRotating, setIsRotating] = useState(false);
 
@@ -79,61 +79,27 @@ export function DailyDevotionalCard({
           </Text>
         </View>
 
-        {/* Translation Toggle Pill */}
+        {/* Active Translation Indicator */}
         <View
           style={{
-            flexDirection: 'row',
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+            borderRadius: 6,
             backgroundColor: colors.surfaceSubtle,
-            borderRadius: 8,
-            padding: 2,
             borderWidth: 1,
-            borderColor: colors.border,
+            borderColor: colors.borderSubtle,
           }}
         >
-          <Pressable
-            onPress={() => setTranslation('WEB')}
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel="Switch to WEB translation"
+          <Text
             style={{
-              paddingHorizontal: 8,
-              paddingVertical: 3,
-              borderRadius: 6,
-              backgroundColor: translation === 'WEB' ? colors.accent : 'transparent',
+              fontSize: 11,
+              fontFamily: 'Inter_700Bold',
+              color: colors.accent,
+              letterSpacing: 0.5,
             }}
           >
-            <Text
-              style={{
-                fontSize: 11,
-                fontFamily: 'Inter_700Bold',
-                color: translation === 'WEB' ? '#141413' : colors.textSecondary,
-              }}
-            >
-              WEB
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setTranslation('KJV')}
-            hitSlop={6}
-            accessibilityRole="button"
-            accessibilityLabel="Switch to KJV translation"
-            style={{
-              paddingHorizontal: 8,
-              paddingVertical: 3,
-              borderRadius: 6,
-              backgroundColor: translation === 'KJV' ? colors.accent : 'transparent',
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 11,
-                fontFamily: 'Inter_700Bold',
-                color: translation === 'KJV' ? '#141413' : colors.textSecondary,
-              }}
-            >
-              KJV
-            </Text>
-          </Pressable>
+            {translation}
+          </Text>
         </View>
       </View>
 

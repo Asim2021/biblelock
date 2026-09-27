@@ -298,6 +298,17 @@ export function getBlockedApps(): string[] {
   }
 }
 
+export function hasConfiguredBlockedApps(): boolean {
+  const raw = storage.getString(STORAGE_KEYS.BLOCKED_APPS);
+  if (!raw) return false;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0;
+  } catch {
+    return false;
+  }
+}
+
 export function setBlockedApps(apps: string[]): void {
   _blockedAppsCache = apps;
   storage.set(STORAGE_KEYS.BLOCKED_APPS, JSON.stringify(apps));
