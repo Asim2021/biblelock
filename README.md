@@ -103,7 +103,29 @@ npm run android
   - `auth.tsx`: Supabase OAuth & Guest session provider.
   - `bible.ts`: Offline Scripture parsing for WEB & KJV translations.
   - `readingTimer.ts`: Session tracking and daily goal progression.
+  - `scrollImageCache.ts`: Sacred artwork caching and remote artwork downloader.
   - `appBlocker.ts`: Cross-platform app blocking abstraction (Screen Time API on iOS, Accessibility Service on Android).
   - `purchases.ts`: RevenueCat integration for In-App Purchases.
 - **`modules/android-blocker/`**: Native Android Expo Module implementing the Accessibility Service redirect overlay.
+
+---
+
+## 🌐 Remote Content & Sacred Asset Architecture
+
+Bible Unlock leverages a dedicated public repository for on-demand downloads of Bible translations and high-resolution sacred artwork backgrounds to keep app bundle sizes minimal.
+
+- **GitHub Repository**: [`Asim2021/bible-translations`](https://github.com/Asim2021/bible-translations)
+- **Base Raw CDN URL**: `https://raw.githubusercontent.com/Asim2021/bible-translations/main/`
+
+### 1. Bible Translation JSONs (35 Languages, 92 Versions)
+- **Endpoint**: `https://raw.githubusercontent.com/Asim2021/bible-translations/main/formats/json/`
+- **Referenced in code**: [`src/data/bibleCatalog.ts`](src/data/bibleCatalog.ts) (`BIBLE_CATALOG_BASE_URL`)
+- **Structure**: Each translation is hosted as `<version_code>.json` and downloaded on-demand into local storage (`FileSystem.documentDirectory + 'bibles/'`).
+
+### 2. Sacred Scroll Background Artworks
+- **Endpoint**: `https://raw.githubusercontent.com/Asim2021/bible-translations/main/scroll-backgrounds/`
+- **Referenced in code**: [`src/lib/scrollImageCache.ts`](src/lib/scrollImageCache.ts) (`REMOTE_BACKGROUNDS_BASE_URL`)
+- **Structure**:
+  - **Bundled Offline Assets** (10 images): `assets/scroll-backgrounds/bg-01.webp` through `bg-10.webp` (768x1326 WebP).
+  - **Remote HD Sacred Artwork Pack** (20 images): `bg-11.webp` through `bg-30.webp`, downloaded into `FileSystem.documentDirectory + 'scroll-backgrounds/'` on user request from the Settings screen.
 

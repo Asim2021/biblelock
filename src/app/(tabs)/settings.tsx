@@ -38,8 +38,14 @@ import {
   BarChart2,
   ChevronRight,
   Globe,
+  Download,
 } from 'lucide-react-native';
 import { BibleTranslationModal } from '../../components/BibleTranslationModal';
+import {
+  getAvailableBackgroundCount,
+  isArtworkPackInstalled,
+  downloadSacredArtworkPack,
+} from '../../lib/scrollImageCache';
 import { usePurchases } from '../../lib/purchases';
 import { useFeatureGate } from '../../lib/useFeatureGate';
 import { AppBlocker, InstalledApp } from '../../lib/appBlocker';
@@ -106,6 +112,19 @@ export default function SettingsScreen() {
   );
   const [showTimePickerModal, setShowTimePickerModal] = useState(false);
   const [showTranslationModal, setShowTranslationModal] = useState(false);
+
+  const [artworkCount, setArtworkCount] = useState(() => getAvailableBackgroundCount());
+  const [isDownloadingArtwork, setIsDownloadingArtwork] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState({ downloaded: 0, total: 20 });
+
+  const handleDownloadArtwork = async () => {
+    setIsDownloadingArtwork(true);
+    const result = await downloadSacredArtworkPack((downloaded, total) => {
+      setDownloadProgress({ downloaded, total });
+    });
+    setIsDownloadingArtwork(false);
+    setArtworkCount(result.totalAvailable);
+  };
 
   const handleAddReminderTime = (time: string) => {
     if (scheduledTimes.includes(time)) {
@@ -1233,6 +1252,101 @@ export default function SettingsScreen() {
                 Manage All Bibles & Download Languages (50+) →
               </Text>
             </Pressable>
+          </Card>
+        </View>
+
+        {/* Bible Scroll Sacred Artwork Section */}
+        <View className="mb-6">
+          <View className="flex-row items-center justify-between mb-2.5 px-1">
+            <Text
+              style={{
+                fontSize: 11,
+                fontFamily: 'Inter_600SemiBold',
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                color: colors.textSecondary,
+              }}
+            >
+              Bible Scroll Artwork ({artworkCount}/30)
+            </Text>
+            {artworkCount >= 30 ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 6,
+                }}
+              >
+                <Check size={12} color="#10b981" style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 11, color: '#10b981', fontFamily: 'Inter_700Bold' }}>
+                  Full Pack Ready
+                </Text>
+              </View>
+            ) : null}
+          </View>
+
+          <Card variant="dark" style={{ padding: 14 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 10,
+                  backgroundColor: colors.accentBg,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: 12,
+                }}
+              >
+                <Sparkles size={20} color={colors.accent} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
+                  Sacred Artwork Expansion (20 HD)
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
+                  {artworkCount >= 30
+                    ? 'All 30 sacred backgrounds active in Bible Scroll.'
+                    : '10 bundled offline. Download 20 additional HD biblical backgrounds.'}
+                </Text>
+              </View>
+            </View>
+
+            {artworkCount < 30 && (
+              <Pressable
+                onPress={handleDownloadArtwork}
+                disabled={isDownloadingArtwork}
+                style={{
+                  width: '100%',
+                  paddingVertical: 12,
+                  borderRadius: 10,
+                  backgroundColor: colors.accent,
+                  alignItems: 'center',
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  opacity: isDownloadingArtwork ? 0.7 : 1,
+                }}
+              >
+                {isDownloadingArtwork ? (
+                  <>
+                    <ActivityIndicator size="small" color="#141413" style={{ marginRight: 8 }} />
+                    <Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: '#141413' }}>
+                      Downloading ({downloadProgress.downloaded}/{downloadProgress.total})...
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Download size={15} color="#141413" style={{ marginRight: 6 }} />
+                    <Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: '#141413' }}>
+                      Download 20 HD Backgrounds (Free)
+                    </Text>
+                  </>
+                )}
+              </Pressable>
+            )}
           </Card>
         </View>
 

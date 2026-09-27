@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
-import { View, Text, StyleSheet, Image, ImageSourcePropType } from 'react-native';
+import { View, Text, StyleSheet, Image, ImageSourcePropType, Pressable } from 'react-native';
+import { BookOpen } from 'lucide-react-native';
 import { ScrollVerseItem } from '../lib/bible';
 import { ScrollFont } from '../lib/mmkv';
 
@@ -11,6 +12,7 @@ interface ScrollVerseCardProps {
   cardWidth: number;
   topInset: number;
   bottomInset: number;
+  onReadInContext?: (verse: ScrollVerseItem) => void;
 }
 
 const FONT_MAP: Record<ScrollFont, string> = {
@@ -30,7 +32,7 @@ function getAdaptiveFontSize(len: number): number {
 
 export const ScrollVerseCard = React.memo(
   forwardRef<View, ScrollVerseCardProps>(
-    ({ verse, bgSource, font, cardHeight, cardWidth, topInset, bottomInset }, ref) => {
+    ({ verse, bgSource, font, cardHeight, cardWidth, topInset, bottomInset, onReadInContext }, ref) => {
       const fontSize = getAdaptiveFontSize(verse.text.length);
       const lineHeight = Math.round(fontSize * 1.55);
 
@@ -45,6 +47,7 @@ export const ScrollVerseCard = React.memo(
             source={bgSource}
             style={StyleSheet.absoluteFill}
             resizeMode="cover"
+            fadeDuration={0}
           />
 
           {/* Top Vignette (for mood chips readability) */}
@@ -84,12 +87,29 @@ export const ScrollVerseCard = React.memo(
               "{verse.text.trim()}"
             </Text>
 
-            <View style={styles.citationContainer}>
+            <Pressable
+              onPress={() => onReadInContext?.(verse)}
+              style={({ pressed }) => [
+                styles.citationContainer,
+                pressed && { opacity: 0.7, transform: [{ scale: 0.98 }] },
+              ]}
+              hitSlop={12}
+              accessibilityLabel={`Read ${verse.bookName} chapter ${verse.chapter} in context`}
+            >
               <View style={styles.goldDivider} />
-              <Text style={styles.citationText}>
-                {verse.bookName} {verse.chapter}:{verse.verse}
-              </Text>
-            </View>
+              <View style={styles.citationBadge}>
+                <Text style={styles.citationText}>
+                  {verse.bookName} {verse.chapter}:{verse.verse}
+                </Text>
+                <BookOpen size={12} color="rgba(245, 184, 0, 0.9)" />
+              </View>
+              <Text style={styles.readInContextText}>Read in Context →</Text>
+            </Pressable>
+          </View>
+
+          {/* Watermark for shared exports & bottom aesthetics */}
+          <View style={[styles.watermarkContainer, { bottom: Math.max(bottomInset + 6, 14) }]}>
+            <Text style={styles.watermarkText}>BIBLE UNLOCK • BIBLEUNLOCK.APP</Text>
           </View>
         </View>
       );
@@ -99,7 +119,7 @@ export const ScrollVerseCard = React.memo(
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#000000',
+    backgroundColor: '#0d120f',
     overflow: 'hidden',
   },
   topVignette: {
@@ -158,5 +178,34 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+  },
+  citationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  readInContextText: {
+    marginTop: 6,
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    color: '#f5b800',
+    letterSpacing: 0.5,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  watermarkContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  watermarkText: {
+    fontSize: 9,
+    fontFamily: 'Inter_600SemiBold',
+    color: 'rgba(255, 255, 255, 0.45)',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
 });

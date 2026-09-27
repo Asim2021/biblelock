@@ -1015,4 +1015,20 @@ export function setScrollMood(mood: MoodKey): void {
   storage.set(STORAGE_KEYS.SCROLL_MOOD, mood);
 }
 
+export const FREE_DAILY_SCROLL_LIMIT = 3;
+
+export function getScrollDailyFreeCount(): number {
+  const dateKey = getTodayDateKey();
+  const count = storage.getNumber(`scroll_free_count_${dateKey}`);
+  return typeof count === 'number' ? count : 0;
+}
+
+export function incrementScrollDailyFreeCount(): number {
+  const dateKey = getTodayDateKey();
+  const current = getScrollDailyFreeCount();
+  const next = current + 1;
+  storage.set(`scroll_free_count_${dateKey}`, next);
+  return next;
+}
+
 

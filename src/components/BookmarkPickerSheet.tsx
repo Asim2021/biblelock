@@ -39,17 +39,19 @@ export interface VerseData {
 interface BookmarkPickerSheetProps {
 	visible: boolean;
 	verse: VerseData | null;
+	initialNoteExpanded?: boolean;
 	onDone: () => void;
 	onCancel: () => void;
 }
 
 interface BookmarkPickerContentProps {
 	verse: VerseData;
+	initialNoteExpanded?: boolean;
 	onDone: () => void;
 	onCancel: () => void;
 }
 
-const BookmarkPickerContent: React.FC<BookmarkPickerContentProps> = ({ verse, onDone, onCancel }) => {
+const BookmarkPickerContent: React.FC<BookmarkPickerContentProps> = ({ verse, initialNoteExpanded, onDone, onCancel }) => {
 	const insets = useSafeAreaInsets();
 	const { height: windowHeight } = useWindowDimensions();
 	const { colors, isDark } = useTheme();
@@ -75,7 +77,7 @@ const BookmarkPickerContent: React.FC<BookmarkPickerContentProps> = ({ verse, on
 		return cols.length > 0 ? [cols[0].id] : [];
 	});
 	const [note, setNote] = useState(() => existingBookmark?.note || '');
-	const [isNoteExpanded, setIsNoteExpanded] = useState(() => !!existingBookmark?.note);
+	const [isNoteExpanded, setIsNoteExpanded] = useState(() => !!initialNoteExpanded || !!existingBookmark?.note);
 
 	// Keep isNoteExpandedRef in sync for keyboard listener
 	useEffect(() => {
@@ -709,13 +711,20 @@ const BookmarkPickerContent: React.FC<BookmarkPickerContentProps> = ({ verse, on
 	);
 };
 
-export const BookmarkPickerSheet: React.FC<BookmarkPickerSheetProps> = ({ visible, verse, onDone, onCancel }) => {
+export const BookmarkPickerSheet: React.FC<BookmarkPickerSheetProps> = ({
+	visible,
+	verse,
+	initialNoteExpanded,
+	onDone,
+	onCancel,
+}) => {
 	if (!visible || !verse) return null;
 
 	return (
 		<BookmarkPickerContent
 			key={`${verse.bookName}_${verse.chapterNumber}_${verse.verseNumber}`}
 			verse={verse}
+			initialNoteExpanded={initialNoteExpanded}
 			onDone={onDone}
 			onCancel={onCancel}
 		/>

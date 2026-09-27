@@ -26,6 +26,9 @@
 - **Android App Blocking:** Custom Expo Module (`modules/android-blocker`) using Android `AccessibilityService` (`TYPE_WINDOW_STATE_CHANGED`) to detect and redirect blocked apps to Bible Unlock.
 - **Backend & Auth:** Supabase (Auth + Postgres `profiles` table).
 - **In-App Purchases:** RevenueCat (`react-native-purchases`).
+- **Remote Content & Asset CDN:** GitHub Raw repository ([`Asim2021/bible-translations`](https://github.com/Asim2021/bible-translations))
+  - Translations (JSON): `https://raw.githubusercontent.com/Asim2021/bible-translations/main/formats/json/`
+  - Sacred Backgrounds (WebP): `https://raw.githubusercontent.com/Asim2021/bible-translations/main/scroll-backgrounds/`
 
 ## 4. Invariant Constraints & Standards
 

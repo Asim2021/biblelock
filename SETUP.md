@@ -268,3 +268,38 @@ In `Settings` tab under **Account & Diagnostics**:
 - **Reset Reading Progress**: Clears today's reading counter to 00:00 and reactivates app shields.
 - **Simulate Pro / Free**: Toggles Pro status locally to preview paywall gating and custom app selection without requiring real App Store sandbox accounts.
 - **Continue as Guest**: Instant access on the Login screen for 100% offline usage.
+
+---
+
+## 9. Remote Assets & Translation Repositories
+
+Bible Unlock streams translations and additional sacred scroll backgrounds from GitHub Raw:
+
+- **Public Repository**: [`https://github.com/Asim2021/bible-translations`](https://github.com/Asim2021/bible-translations)
+- **Base Raw CDN**: `https://raw.githubusercontent.com/Asim2021/bible-translations/main/`
+
+### Directory Structure & Endpoints:
+
+1. **Bible JSON Translations (35 languages, 92 versions)**
+   - **URL**: `https://raw.githubusercontent.com/Asim2021/bible-translations/main/formats/json/`
+   - **Files**: `<code-lower>.json` (e.g. `esv.json`, `kjv.json`, `web.json`, `niv.json`)
+   - **Local Storage**: Cached on-device in `${FileSystem.documentDirectory}bibles/`
+
+2. **Sacred Scroll Backgrounds (WebP)**
+   - **URL**: `https://raw.githubusercontent.com/Asim2021/bible-translations/main/scroll-backgrounds/`
+   - **Files**: `bg-11.webp` through `bg-30.webp` (768x1326 WebP format)
+   - **Local Storage**: Cached on-device in `${FileSystem.documentDirectory}scroll-backgrounds/`
+   - **Bundled Defaults**: `assets/scroll-backgrounds/bg-01.webp` through `bg-10.webp`
+
+### How to Add / Push Remote Background Images:
+To deploy the 20 newly generated sacred artworks (`bg-11.webp` through `bg-30.webp`) to GitHub:
+```bash
+# In your local clone of bible-translations repository:
+cd path/to/bible-translations
+mkdir -p scroll-backgrounds
+# Copy webp images from Bible Unlock app:
+cp "d:/My Projects/bibleunlock.app/assets/scroll-backgrounds/remote/*.webp" scroll-backgrounds/
+git add scroll-backgrounds/
+git commit -m "feat(assets): add 20 sacred Christian art scroll backgrounds (bg-11 to bg-30)"
+git push origin main
+```
