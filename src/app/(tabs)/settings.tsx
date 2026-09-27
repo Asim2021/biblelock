@@ -118,6 +118,9 @@ export default function SettingsScreen() {
   const [downloadProgress, setDownloadProgress] = useState({ downloaded: 0, total: 20 });
 
   const handleDownloadArtwork = async () => {
+    if (!requirePremium('Sacred Artwork Expansion (20 HD)')) {
+      return;
+    }
     setIsDownloadingArtwork(true);
     const result = await downloadSacredArtworkPack((downloaded, total) => {
       setDownloadProgress({ downloaded, total });
@@ -1310,7 +1313,9 @@ export default function SettingsScreen() {
                 <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
                   {artworkCount >= 30
                     ? 'All 30 sacred backgrounds active in Bible Scroll.'
-                    : '10 bundled offline. Download 20 additional HD biblical backgrounds.'}
+                    : isPremium
+                      ? '10 bundled offline. Download 20 additional HD biblical backgrounds.'
+                      : '10 bundled offline. Sanctuary members unlock 20 additional HD backgrounds.'}
                 </Text>
               </View>
             </View>
@@ -1337,11 +1342,18 @@ export default function SettingsScreen() {
                       Downloading ({downloadProgress.downloaded}/{downloadProgress.total})...
                     </Text>
                   </>
+                ) : !isPremium ? (
+                  <>
+                    <Lock size={15} color="#141413" style={{ marginRight: 6 }} />
+                    <Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: '#141413' }}>
+                      Unlock 20 HD Backgrounds (Sanctuary)
+                    </Text>
+                  </>
                 ) : (
                   <>
                     <Download size={15} color="#141413" style={{ marginRight: 6 }} />
                     <Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: '#141413' }}>
-                      Download 20 HD Backgrounds (Free)
+                      Download 20 HD Backgrounds
                     </Text>
                   </>
                 )}

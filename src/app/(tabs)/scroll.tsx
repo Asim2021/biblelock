@@ -13,6 +13,7 @@ import {
   Vibration,
   Animated,
   Share,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -31,9 +32,11 @@ import {
   ArrowRight,
   Globe,
   Copy,
+  Lock,
 } from 'lucide-react-native';
 
 import { usePurchases } from '../../lib/purchases';
+import { useFeatureGate } from '../../lib/useFeatureGate';
 import { useBibleTranslation } from '../../lib/bible';
 import { useReadingTimer } from '../../lib/readingTimer';
 import { useTheme } from '../../lib/themeContext';
@@ -58,6 +61,8 @@ import {
   getCollections,
   getScrollDailyFreeCount,
   incrementScrollDailyFreeCount,
+  getDailyFreeScrollVerses,
+  setDailyFreeScrollVerses,
   FREE_DAILY_SCROLL_LIMIT,
   ScrollFont,
   ScrollPosition,
@@ -81,12 +86,13 @@ const BATCH_SIZE = 12;
 export default function ScrollScreen() {
   const router = useRouter();
   const { isPremium } = usePurchases();
+  const { requirePremium } = useFeatureGate();
   const [translation] = useBibleTranslation();
   const insets = useSafeAreaInsets();
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const { colors } = useTheme();
 
-  // Screen focus & reading timer
+  // Screen focus state
   const [isFocused, setIsFocused] = useState(true);
   useFocusEffect(
     useCallback(() => {
@@ -95,7 +101,42 @@ export default function ScrollScreen() {
       return () => setIsFocused(false);
     }, [])
   );
-  const timer = useReadingTimer(isFocused);
+
+  // 60-second idle dwell cap per verse & active timer tracking
+  const [isIdle, setIsIdle] = useState(false);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetIdleTimer = useCallback(() => {
+    setIsIdle(false);
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+    }
+    idleTimerRef.current = setTimeout(() => {
+      setIsIdle(true);
+    }, 60000); // 60s max dwell per verse before pausing
+  }, []);
+
+  useEffect(() => {
+    resetIdleTimer();
+    return () => {
+      if (idleTimerRef.current) {
+        clearTimeout(idleTimerRef.current);
+      }
+    };
+  }, [resetIdleTimer]);
+
+  // Current verse index state
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    resetIdleTimer();
+  }, [currentIndex, resetIdleTimer]);
+
+  // Reading timer only ticks when screen is focused, user is not idle,
+  // and user is NOT sitting on the freemium paywall card (card 4 at index >= 3)
+  const isTimerActive =
+    isFocused && !isIdle && (isPremium || currentIndex < FREE_DAILY_SCROLL_LIMIT);
+  const timer = useReadingTimer(isTimerActive);
 
   // Scroll Preferences State
   const [font, setFontState] = useState<ScrollFont>(getScrollFont);
@@ -104,7 +145,6 @@ export default function ScrollScreen() {
 
   // Verses feed data
   const [verses, setVerses] = useState<ScrollVerseItem[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
 
   // Free Tier Daily Quota Tracking
   const [dailyFreeScrolls, setDailyFreeScrolls] = useState<number>(() => getScrollDailyFreeCount());
@@ -147,6 +187,41 @@ export default function ScrollScreen() {
   // Load verses generator based on mode & mood
   const loadInitialVerses = useCallback(
     (targetMood: MoodKey, targetMode: 'sequential' | 'random') => {
+      // Freemium: Freeze today's 3 free scrolls in storage to prevent re-roll exploits
+      if (!isPremium) {
+        const cached = getDailyFreeScrollVerses<ScrollVerseItem>();
+        if (cached && cached.length >= FREE_DAILY_SCROLL_LIMIT) {
+          // Exactly 4 items: 3 cached free scrolls + 1 terminal gate card
+          setVerses([...cached.slice(0, FREE_DAILY_SCROLL_LIMIT), cached[0]]);
+          setCurrentIndex(0);
+          return;
+        }
+
+        // Generate today's 3 free scrolls from sequential reader position
+        const savedPos = getScrollPosition();
+        let currentPos = savedPos;
+        const initialList: ScrollVerseItem[] = [];
+
+        for (let i = 0; i < FREE_DAILY_SCROLL_LIMIT; i++) {
+          const item = getVerseAtPosition(translation, currentPos);
+          if (item) {
+            initialList.push(item);
+            currentPos = getNextPosition(translation, currentPos);
+          } else {
+            initialList.push(getRandomVerseFull(translation));
+          }
+        }
+
+        const finalInitial =
+          initialList.length > 0 ? initialList : [getRandomVerseFull(translation)];
+        setDailyFreeScrollVerses(finalInitial);
+        // 4 items: 3 free scrolls + 1 terminal gate card
+        setVerses([...finalInitial, finalInitial[0]]);
+        setCurrentIndex(0);
+        return;
+      }
+
+      // Sanctuary (Premium) users: full feed with moods & sequential/random
       if (targetMood !== 'all') {
         const moodList = getMoodVerses(translation, targetMood);
         const shuffled = [...moodList].sort(() => Math.random() - 0.5);
@@ -183,7 +258,7 @@ export default function ScrollScreen() {
       setVerses(initialList.length > 0 ? initialList : [getRandomVerseFull(translation)]);
       setCurrentIndex(0);
     },
-    [translation]
+    [translation, isPremium]
   );
 
   // Reload when mood, mode, or translation changes
@@ -193,8 +268,8 @@ export default function ScrollScreen() {
 
   // Load more verses when scrolling near end
   const handleLoadMore = useCallback(() => {
-    // Non-premium users soft-capped to FREE_DAILY_SCROLL_LIMIT
-    if (!isPremium && verses.length >= FREE_DAILY_SCROLL_LIMIT) {
+    // Non-premium users cannot scroll past card 4 (3 free + 1 gated card)
+    if (!isPremium) {
       return;
     }
 
@@ -241,6 +316,7 @@ export default function ScrollScreen() {
         const newIndex = viewableItems[0].index;
         setCurrentIndex(newIndex);
         prewarmAdjacentBackgrounds(newIndex);
+        resetIdleTimer();
 
         // Track daily free scroll quota
         if (!isPremium) {
@@ -260,15 +336,24 @@ export default function ScrollScreen() {
     itemVisiblePercentThreshold: 60,
   }).current;
 
-  // Mood selection
+  // Mood selection - emotions are Sanctuary exclusive
   const handleSelectMood = (selectedKey: MoodKey) => {
+    if (selectedKey !== 'all' && !isPremium) {
+      const moodItem = MOODS.find((m) => m.key === selectedKey);
+      requirePremium(`Mood-Guided Scripture (${moodItem?.label || 'Emotion'})`);
+      return;
+    }
     setMoodState(selectedKey);
     setScrollMood(selectedKey);
     flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
   };
 
-  // Mode toggle (Sequential <-> Random)
+  // Mode toggle (Sequential <-> Random) - Sanctuary only
   const handleToggleMode = () => {
+    if (!isPremium) {
+      requirePremium('Scroll Mode (Sequential & Random)');
+      return;
+    }
     const nextMode = mode === 'sequential' ? 'random' : 'sequential';
     setModeState(nextMode);
     setScrollMode(nextMode);
@@ -318,6 +403,7 @@ export default function ScrollScreen() {
 
   // Quick 1-tap Bookmark Save
   const handleQuickSave = useCallback(() => {
+    resetIdleTimer();
     if (!currentVerseItem) return;
 
     if (isCurrentVerseSaved) {
@@ -347,16 +433,17 @@ export default function ScrollScreen() {
 
     setBookmarkSyncToken((prev) => prev + 1);
     triggerSaveAnimation();
-  }, [currentVerseItem, isCurrentVerseSaved, triggerSaveAnimation]);
+  }, [currentVerseItem, isCurrentVerseSaved, triggerSaveAnimation, resetIdleTimer]);
 
   // Handle Double-tap on Card
   const handleCardDoubleTap = useCallback(() => {
+    resetIdleTimer();
     const now = Date.now();
     if (now - lastTapRef.current < 320) {
       handleQuickSave();
     }
     lastTapRef.current = now;
-  }, [handleQuickSave]);
+  }, [handleQuickSave, resetIdleTimer]);
 
   // Open note sheet
   const handleOpenNote = () => {
@@ -392,6 +479,7 @@ export default function ScrollScreen() {
 
   // Copy current verse text to clipboard
   const handleCopyVerse = useCallback(async () => {
+    resetIdleTimer();
     if (!currentVerseItem) return;
     const citation = `${currentVerseItem.bookName} ${currentVerseItem.chapter}:${currentVerseItem.verse}`;
     const badge = getTranslationBadge(translation);
@@ -417,10 +505,11 @@ export default function ScrollScreen() {
         await Share.share({ message: text });
       } catch {}
     }
-  }, [currentVerseItem, translation]);
+  }, [currentVerseItem, translation, resetIdleTimer]);
 
   // Share current verse card as image
   const handleShare = () => {
+    resetIdleTimer();
     if (activeCardRef.current) {
       shareVerseAsImage(activeCardRef);
     }
@@ -434,10 +523,21 @@ export default function ScrollScreen() {
 
   const renderItem = useCallback(
     ({ item, index }: { item: ScrollVerseItem; index: number }) => {
-      // In-feed soft paywall card for non-premium after FREE_DAILY_SCROLL_LIMIT
+      // In-feed soft paywall card for non-premium at Card 4 (index >= 3)
       if (!isPremium && index >= FREE_DAILY_SCROLL_LIMIT) {
         return (
           <View style={[styles.inFeedGateCard, { height: containerHeight, width: containerWidth }]}>
+            {/* Background image for this card */}
+            <Image
+              source={getBackgroundForIndex(index)}
+              style={StyleSheet.absoluteFill}
+              resizeMode="cover"
+              fadeDuration={0}
+            />
+
+            {/* Dark sacred tint overlay */}
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(10, 15, 12, 0.76)' }]} />
+
             <View style={styles.inFeedGateContent}>
               <View style={styles.inFeedGateBadge}>
                 <Sparkles size={16} color="#f5b800" />
@@ -445,7 +545,7 @@ export default function ScrollScreen() {
               </View>
               <Text style={styles.inFeedGateTitle}>Deepen Your Walk in God's Word</Text>
               <Text style={styles.inFeedGateSubtitle}>
-                You've completed your 3 free daily scrolls today. Unlock unlimited sacred reels, 30+ HD biblical backgrounds, and mood guidance in the Sanctuary.
+                You've completed your 3 free daily scrolls today. Enter the Sanctuary for unlimited sacred reels, 30+ HD biblical backgrounds, and mood guidance.
               </Text>
 
               <Pressable
@@ -506,7 +606,7 @@ export default function ScrollScreen() {
   }
 
   return (
-    <View style={styles.root} onLayout={handleLayout}>
+    <View style={styles.root} onLayout={handleLayout} onTouchStart={resetIdleTimer}>
       {/* Top Header Row (Mood Chips + Translation Badge + Reading Timer Pill) */}
       <View style={[styles.topHeaderRow, { top: insets.top + 6 }]}>
         {/* Mood Chips Scroller */}
@@ -518,6 +618,7 @@ export default function ScrollScreen() {
         >
           {MOODS.map((m) => {
             const isSelected = mood === m.key;
+            const isLocked = m.key !== 'all' && !isPremium;
             return (
               <Pressable
                 key={m.key}
@@ -530,21 +631,33 @@ export default function ScrollScreen() {
                       : 'rgba(0, 0, 0, 0.55)',
                     borderColor: isSelected
                       ? '#f5b800'
-                      : 'rgba(255, 255, 255, 0.22)',
+                      : isLocked
+                        ? 'rgba(245, 184, 0, 0.35)'
+                        : 'rgba(255, 255, 255, 0.22)',
                   },
                 ]}
               >
-                <Text
-                  style={[
-                    styles.moodChipText,
-                    {
-                      color: isSelected ? '#141413' : '#ffffff',
-                      fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_500Medium',
-                    },
-                  ]}
-                >
-                  {m.emoji} {m.label}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {isLocked && (
+                    <Lock
+                      size={10}
+                      color="#f5b800"
+                      strokeWidth={2.5}
+                      style={{ marginRight: 4 }}
+                    />
+                  )}
+                  <Text
+                    style={[
+                      styles.moodChipText,
+                      {
+                        color: isSelected ? '#141413' : '#ffffff',
+                        fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_500Medium',
+                      },
+                    ]}
+                  >
+                    {m.emoji} {m.label}
+                  </Text>
+                </View>
               </Pressable>
             );
           })}
@@ -574,9 +687,18 @@ export default function ScrollScreen() {
             </>
           ) : (
             <>
-              <Clock size={12} color="#f5b800" />
-              <Text style={styles.timerBadgeText}>
+              <Clock
+                size={12}
+                color={isTimerActive ? '#f5b800' : 'rgba(255, 255, 255, 0.4)'}
+              />
+              <Text
+                style={[
+                  styles.timerBadgeText,
+                  !isTimerActive && { color: 'rgba(255, 255, 255, 0.45)' },
+                ]}
+              >
                 {Math.floor(timer.secondsRead / 60)}m / {timer.goalMinutes}m
+                {!isTimerActive ? ' (Paused)' : ''}
               </Text>
             </>
           )}
@@ -597,6 +719,8 @@ export default function ScrollScreen() {
         maxToRenderPerBatch={3}
         initialNumToRender={2}
         removeClippedSubviews={false}
+        bounces={false}
+        overScrollMode="never"
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig}
         getItemLayout={(_, index) => ({
@@ -627,8 +751,8 @@ export default function ScrollScreen() {
         </Animated.View>
       )}
 
-      {/* Mode Toggle Button - Bottom Left (only in 'all' mood) */}
-      {mood === 'all' && (
+      {/* Mode Toggle Button - Bottom Left (Sanctuary exclusive) */}
+      {mood === 'all' && isPremium && (
         <Pressable
           onPress={handleToggleMode}
           style={({ pressed }) => [
@@ -653,8 +777,9 @@ export default function ScrollScreen() {
         </Pressable>
       )}
 
-      {/* Floating Action Controls - Right Column */}
-      <View style={[styles.floatingControls, { bottom: insets.bottom + 14 }]}>
+      {/* Floating Action Controls - Right Column (Only for ungated cards) */}
+      {(isPremium || currentIndex < FREE_DAILY_SCROLL_LIMIT) && (
+        <View style={[styles.floatingControls, { bottom: insets.bottom + 14 }]}>
         {/* Bookmark / Quick Save Action with Reactive Gold State */}
         <Pressable
           onPress={handleQuickSave}
@@ -721,6 +846,7 @@ export default function ScrollScreen() {
           <Text style={styles.actionLabel}>Font</Text>
         </Pressable>
       </View>
+      )}
 
       {/* Font Picker Modal */}
       <Modal
@@ -1102,6 +1228,14 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.6)',
     fontSize: 13,
     fontFamily: 'Inter_500Medium',
+  },
+  inFeedGateCounterText: {
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+    color: 'rgba(255, 255, 255, 0.5)',
+    letterSpacing: 1,
+    marginTop: 14,
+    textTransform: 'uppercase',
   },
   modalBackdrop: {
     flex: 1,

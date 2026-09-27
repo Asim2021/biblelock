@@ -1031,4 +1031,23 @@ export function incrementScrollDailyFreeCount(): number {
   return next;
 }
 
+export function getDailyFreeScrollVerses<T = any>(dateKey: string = getTodayDateKey()): T[] | null {
+  const raw = storage.getString(`scroll_daily_verses_${dateKey}`);
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? (parsed as T[]) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setDailyFreeScrollVerses<T = any>(verses: T[], dateKey: string = getTodayDateKey()): void {
+  try {
+    storage.set(`scroll_daily_verses_${dateKey}`, JSON.stringify(verses));
+  } catch (e) {
+    console.warn('[MMKV] Failed to cache daily free scroll verses:', e);
+  }
+}
+
 

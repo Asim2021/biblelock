@@ -19,7 +19,7 @@ if .code-review-grapg exists in the root, use code-review-graph tools before Gre
 - **Code Review:** `detect_changes_tool` + `get_review_context_tool`
 - **Coverage & Callers:** `query_graph_tool` with callers_of/callees_of/tests_for
 - Fall back to Grep/Glob/Read only when the graph does not cover the query.
-- In the end or very last run directly at root `code-review-graph update`.
+- Run `code-review-graph update` **once at feature close** (see Protocol 3) — not after every bug fix or follow-up turn within the same feature.
 
 ---
 
@@ -28,9 +28,9 @@ if .code-review-grapg exists in the root, use code-review-graph tools before Gre
 This repository tracks project context across 4 files in `docs/`:
 
 - `docs/CHARTER.md`: Baseline requirements, scope limits, and core architecture.
-- `docs/STATUS.md`: Current sprint tasks, blockers, and handoff state. Update at end of session.
-- `docs/DECISIONS.md`: Architectural decisions, plan pivots, and proof of improvement.
-- `docs/CHANGELOG.md`: Chronological log of shipped features, fixes, and outcomes.
+- `docs/STATUS.md`: Current sprint tasks, blockers, and handoff state. **Update once per feature at session close — not after every turn.**
+- `docs/DECISIONS.md`: Architectural decisions, plan pivots, and proof of improvement. **One entry per architectural decision — not one per bug fix.**
+- `docs/CHANGELOG.md`: Chronological log of shipped features, fixes, and outcomes. **One consolidated entry per feature — bug fixes found during the same feature session are appended to that entry, not added as separate entries.**
 
 ---
 
@@ -58,10 +58,17 @@ Record any technical pivot, bottleneck fix, or architectural change in `docs/DEC
 
 ## 3. End-of-Work Checklist
 
+**When to run:** Only once per feature/task at natural session close — NOT after every bug fix, follow-up question, or minor tweak within the same feature.
+
+**Trigger signals:** You say "wrap it up", "feature done", "close this out", start an unrelated new topic, or end the session.
+
+**Mid-feature rule:** If a bug fix or follow-up is clearly part of the same named feature already in `STATUS.md`, do NOT create a new entry — append it to the existing task description instead.
+
 - [ ] Verify changes with tests/typecheck (`npm test`, `npx tsc --noEmit`).
-- [ ] Update `docs/STATUS.md` with progress and next handoff notes.
-- [ ] Record any architectural decisions or pivots in `docs/DECISIONS.md`.
-- [ ] Append entry to `docs/CHANGELOG.md`.
+- [ ] Update `docs/STATUS.md` with **one consolidated task entry** covering the full feature (including any bugs fixed during the session).
+- [ ] Record architectural decisions in `docs/DECISIONS.md` — only if a genuine architectural pivot occurred; skip for bug fixes.
+- [ ] Append **one consolidated entry** to `docs/CHANGELOG.md` covering the full feature and any fixes found during it.
+- [ ] Run `code-review-graph update` once at root.
 
 ## 4. Truth & Traceability
 

@@ -21,9 +21,12 @@
   - Added live Reading Goal timer micro-pill (`⏱️ 4m / 10m` or `🛡️ Goal Met`).
   - Added subtle `BIBLE UNLOCK • BIBLEUNLOCK.APP` watermark on exported story cards.
   - Added quick "Copy Verse" action with tactile vibration and floating toast confirmation.
-- **"Taste & See" Freemium Conversion Engine (`src/lib/mmkv.ts`, `src/app/(tabs)/scroll.tsx`):**
-  - Free tier users get 3 daily scrolls with automatic counter in MMKV (`getScrollDailyFreeCount`).
-  - Swipe 4 presents an in-feed Sanctuary preview card with 7-Day Free Trial CTA.
+- **"Taste & See" Freemium Conversion Engine, Mood Gating & Abuse Prevention (`src/lib/mmkv.ts`, `src/app/(tabs)/scroll.tsx`, `src/app/(tabs)/settings.tsx`):**
+  - Gated remote 20-artwork download in `settings.tsx` strictly behind Sanctuary (`requirePremium`).
+  - Free tier users get exactly 3 free scrolls. Card 4 (index 3) renders as the terminal Sanctuary conversion gate with sacred artwork background; scrolling terminates completely at Card 4 (`bounces={false}`, `overScrollMode="never"`).
+  - **Re-roll Exploit Elimination:** Cached and froze today's 3 daily free scrolls in MMKV (`getDailyFreeScrollVerses`, `setDailyFreeScrollVerses`). Re-entering the tab or reloading preserves the exact same 3 verses for the calendar day.
+  - **Mode & Mood Guidance Gating:** Gated all 7 emotion mood chips behind Sanctuary with `<Lock size={10} />` badges and paywall sheets; restricted the Sequential/Random mode toggle to Sanctuary subscribers.
+  - **Active Reading Timer & 60s Idle Dwell Cap:** Stopped fake reading time accumulation on Card 4 (`isTimerActive = isFocused && !isIdle && (isPremium || currentIndex < FREE_DAILY_SCROLL_LIMIT)`). Added a 60-second dwell cap per verse card that pauses timer on inactivity and displays `(Paused)` in the header.
 
 ### Verified Impact
 - `npx tsc --noEmit`: 0 errors across entire workspace.
