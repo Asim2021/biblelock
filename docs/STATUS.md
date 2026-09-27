@@ -317,6 +317,7 @@
     - Added translation switcher badge `[ KJV ]` / `[ WEB ]` with `BibleTranslationModal`.
     - Added live Reading Goal timer micro-pill (`⏱️ 4m / 10m` or `🛡️ Goal Met`).
     - Added subtle `BIBLE UNLOCK • BIBLEUNLOCK.APP` watermark on exported story cards.
+    - Added quick "Copy Verse" action with tactile vibration and floating toast confirmation.
   - **"Taste & See" Freemium Conversion Engine:**
     - Free tier users get 3 daily scrolls with automatic counter in MMKV (`getScrollDailyFreeCount`).
     - Swipe 4 presents an in-feed Sanctuary preview card with 7-Day Free Trial CTA.

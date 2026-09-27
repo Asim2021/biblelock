@@ -12,6 +12,7 @@ import {
   ViewToken,
   Vibration,
   Animated,
+  Share,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -29,6 +30,7 @@ import {
   Clock,
   ArrowRight,
   Globe,
+  Copy,
 } from 'lucide-react-native';
 
 import { usePurchases } from '../../lib/purchases';
@@ -116,6 +118,7 @@ export default function ScrollScreen() {
   const [initialNoteExpanded, setInitialNoteExpanded] = useState(false);
   const [fontModalVisible, setFontModalVisible] = useState(false);
   const [translationModalVisible, setTranslationModalVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Double-tap visual save burst
   const [showSaveAnimation, setShowSaveAnimation] = useState(false);
@@ -386,6 +389,35 @@ export default function ScrollScreen() {
       verseText: currentVerseItem.text,
     };
   }, [currentVerseItem]);
+
+  // Copy current verse text to clipboard
+  const handleCopyVerse = useCallback(async () => {
+    if (!currentVerseItem) return;
+    const citation = `${currentVerseItem.bookName} ${currentVerseItem.chapter}:${currentVerseItem.verse}`;
+    const badge = getTranslationBadge(translation);
+    const text = `"${currentVerseItem.text.trim()}" — ${citation} (${badge})\nhttps://bibleunlock.app`;
+
+    try {
+      Vibration.vibrate(20);
+    } catch {}
+
+    let copied = false;
+    if (typeof navigator !== 'undefined' && (navigator as any).clipboard?.writeText) {
+      try {
+        await (navigator as any).clipboard.writeText(text);
+        copied = true;
+      } catch {}
+    }
+
+    if (copied) {
+      setToastMessage(`Copied ${citation} to clipboard`);
+      setTimeout(() => setToastMessage(null), 2200);
+    } else {
+      try {
+        await Share.share({ message: text });
+      } catch {}
+    }
+  }, [currentVerseItem, translation]);
 
   // Share current verse card as image
   const handleShare = () => {
@@ -659,6 +691,16 @@ export default function ScrollScreen() {
           <Text style={styles.actionLabel}>Note</Text>
         </Pressable>
 
+        {/* Copy Text Action */}
+        <Pressable
+          onPress={handleCopyVerse}
+          style={({ pressed }) => [styles.actionBtn, pressed && styles.actionBtnPressed]}
+          accessibilityLabel="Copy verse text"
+        >
+          <Copy size={20} color="#ffffff" strokeWidth={2} />
+          <Text style={styles.actionLabel}>Copy</Text>
+        </Pressable>
+
         {/* Share Action */}
         <Pressable
           onPress={handleShare}
@@ -770,6 +812,14 @@ export default function ScrollScreen() {
           }}
           onCancel={() => setBookmarkSheetVisible(false)}
         />
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <View pointerEvents="none" style={[styles.toastContainer, { bottom: Math.max(insets.bottom + 20, 28) }]}>
+          <Copy size={14} color="#f5b800" style={{ marginRight: 8 }} />
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </View>
       )}
 
       {/* Translation Picker Modal */}
@@ -894,15 +944,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 14,
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
     zIndex: 20,
   },
   actionBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: 'rgba(0, 0, 0, 0.55)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
@@ -916,6 +966,31 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(245, 184, 0, 0.4)',
     borderColor: '#f5b800',
     transform: [{ scale: 0.94 }],
+  },
+  toastContainer: {
+    position: 'absolute',
+    left: 24,
+    right: 24,
+    backgroundColor: 'rgba(20, 26, 22, 0.95)',
+    borderWidth: 1,
+    borderColor: '#f5b800',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 99,
+  },
+  toastText: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#ffffff',
   },
   actionLabel: {
     fontSize: 10,
