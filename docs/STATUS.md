@@ -278,14 +278,20 @@
     - Implemented dynamic lazy-loading in `src/lib/bible.ts` with in-memory caching to avoid RAM bloat on mobile devices, keeping KJV and WEB permanently pre-loaded and bundled offline.
     - Created full-featured `BibleTranslationModal.tsx` bottom sheet modal with "Installed" and "Download Languages" tabs, search, and live download progress indicators.
     - Integrated modal and active indicators across `reader.tsx` and `settings.tsx`.
+- [x] `TASK-051`: Bottom Tab Bar Menu Rearrangement & Mobile Thumb Ergonomics (`src/app/(tabs)/_layout.tsx`, `DEC-035`):
+  - Rearranged bottom navigation tabs to `Home` (1) → `Library` (2) → `Scroll` (3, Center) → `Reader` (4, Right-Center) → `Settings` (5).
+  - Maximized right-handed mobile thumb ergonomics (Fitts's Law) by grouping both core reading surfaces (`Scroll` and `Reader`) in the natural zero-strain thumb sweep arc.
+  - Maintained uniform 22px Lucide vector iconography, Inter typography, and 180ms tactical snap scene transition interpolations.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `DEC-021` through `DEC-034` recorded in `docs/DECISIONS.md`.
+- `DEC-021` through `DEC-035` recorded in `docs/DECISIONS.md`.
 
 ## Session Handoff Notes
 
+- Tab bar menu rearranged to Home → Library → Scroll → Reader → Settings.
+- Both active Scripture reading modes (bite-sized Reels Scroll at center and deep Bible Reader at right-center) are now in the primary thumb reach zone.
 - Users now have 3 prominent, natural entry points from the Home tab into their reading stats and badges.
 - Users worldwide can download and read Bibles in Turkish, Spanish, French, German, Tagalog, and more, while preserving full offline functionality and memory efficiency.
 - Bible translation catalog configured to download from `https://github.com/Asim2021/bible-translations` (`https://raw.githubusercontent.com/Asim2021/bible-translations/main/`).

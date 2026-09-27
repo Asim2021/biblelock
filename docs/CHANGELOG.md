@@ -1,5 +1,22 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.42] - 2026-09-27
+
+### Bottom Tab Bar Menu Rearrangement & Mobile Thumb Ergonomics
+- **Optimized Tab Bar Navigation (`src/app/(tabs)/_layout.tsx`, `TASK-051`, `DEC-035`):**
+  - Rearranged the 5 bottom navigation tabs from `[ Home, Reader, Library, Scroll, Settings ]` to `[ Home, Library, Scroll, Reader, Settings ]`.
+  - Positioned `Scroll` in the center (tab 3) as the primary visual habit discovery engine for bite-sized Reels-style Scripture meditation.
+  - Positioned `Reader` at tab 4 (right-center), aligning deep Scripture reading directly with the natural right-handed thumb resting zone (Fitts's Law).
+  - Positioned `Library` at tab 2 as a dedicated saved-collections shelf adjacent to `Home`.
+  - Preserved standard far-left (`Home`) and far-right (`Settings`) navigational anchors.
+  - Retained all existing 22px Lucide vector icons, Inter typography, and 180ms cubic-bezier tactical snap tab transition animations without breaking any route identifiers or deep links.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Enhanced thumb-zone reachability for both daily reading surfaces without ergonomic strain.
+
+---
+
 ## [1.0.41] - 2026-09-27
 
 ### Home Stats Direct Access & Multi-Language Bible Download Engine

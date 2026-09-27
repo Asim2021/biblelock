@@ -77,15 +77,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="reader"
-        options={{
-          title: 'Reader',
-          tabBarIcon: ({ color, focused }) => (
-            <BookOpen size={22} color={color} strokeWidth={focused ? 2.5 : 1.8} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="library"
         options={{
           title: 'Library',
@@ -100,6 +91,15 @@ export default function TabLayout() {
           title: 'Scroll',
           tabBarIcon: ({ color, focused }) => (
             <ScrollText size={22} color={color} strokeWidth={focused ? 2.5 : 1.8} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="reader"
+        options={{
+          title: 'Reader',
+          tabBarIcon: ({ color, focused }) => (
+            <BookOpen size={22} color={color} strokeWidth={focused ? 2.5 : 1.8} />
           ),
         }}
       />

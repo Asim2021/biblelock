@@ -1331,5 +1331,41 @@ Selected **Option C**.
 - `npx tsc --noEmit`: 0 errors across entire workspace.
 - Offline Bible reading completely operational for bundled and downloaded translations.
 
+---
+
+## [DEC-035] Bottom Tab Bar Menu Rearrangement & Mobile Thumb Ergonomics
+
+- **Date:** 2026-09-27
+- **Status:** Validated
+- **Related Task / Baseline:** TASK-051, `src/app/(tabs)/_layout.tsx`
+
+### 1. Problem / Trigger
+The previous bottom navigation bar ordered tabs as `[ Home, Reader, Library, Scroll, Settings ]`.
+This layout had two usability and ergonomic limitations:
+1. Mobile single-handed holding ergonomics (Fitts's Law): For the majority of users holding a smartphone one-handed with their right hand, the bottom-center (tab 3) and right-center (tab 4) regions are the lowest-strain, natural thumb resting zones.
+2. Under the old order, `Scroll` (a signature, bite-sized Reels-style daily habit feature) was placed at tab 4 while `Reader` was at tab 2, leaving the middle anchor tab occupied by `Library` (bookmarks and collections management, a lower-frequency task).
+
+### 2. Alternatives Evaluated
+- **Option A (Keep Home → Reader → Scroll → Library → Settings):** Places `Reader` at tab 2 and `Library` at tab 4. Leaves primary reading at the left edge of the thumb zone.
+- **Option B (Home → Library → Scroll → Reader → Settings):** Selected.
+  - Centers `Scroll` as the core visual habit discovery engine (Tab 3).
+  - Positions `Reader` at Tab 4, putting primary deep Scripture reading directly under the natural right-thumb sweep arc.
+  - Moves `Library` to Tab 2 as a secondary asset shelf next to `Home`.
+  - Keeps standard app bookends (`Home` at far left, `Settings` at far right).
+
+### 3. Decision & Trade-offs
+Selected **Option B**.
+- Zero route-breaking changes: Expo Router retains screen identifiers (`name="reader"`, `name="scroll"`), so programmatic navigation (`router.push('/reader')`) and deep links remain 100% stable.
+- Tactical snap transition interpolator automatically adjusts sliding animation direction based on the new visual order.
+- Clean, consistent 22px iconography and Inter typography preserved across all 5 tabs.
+
+### 4. Implementation Details
+- `src/app/(tabs)/_layout.tsx`: Reordered `<Tabs.Screen>` components to `index` (Home), `library` (Library), `scroll` (Scroll), `reader` (Reader), `settings` (Settings).
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Natural thumb sweep gives zero-strain immediate access to both daily reading surfaces (`Scroll` and `Reader`).
+
+
 
 
