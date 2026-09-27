@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text } from 'react-native';
-import { Check } from 'lucide-react-native';
+import { View, Text, Pressable } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Check, ChevronRight } from 'lucide-react-native';
 import { HabitDay } from '../types/onboarding';
 import { useTheme } from '../lib/themeContext';
 
@@ -9,6 +10,7 @@ interface WeeklyStreakTrackerProps {
 }
 
 export const WeeklyStreakTracker: React.FC<WeeklyStreakTrackerProps> = ({ history }) => {
+  const router = useRouter();
   const { colors } = useTheme();
   const completedCount = history.filter((d) => d.completed).length;
 
@@ -33,28 +35,42 @@ export const WeeklyStreakTracker: React.FC<WeeklyStreakTrackerProps> = ({ histor
         >
           This Week
         </Text>
-        <Text
-          style={{
-            fontSize: 12,
-            fontFamily: 'Inter_700Bold',
-            color: colors.accent,
-            letterSpacing: 0.5,
-          }}
+        <Pressable
+          onPress={() => router.push('/stats-detail' as any)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="View Weekly Streak Details and Badges"
+          style={{ flexDirection: 'row', alignItems: 'center' }}
         >
-          {completedCount}/7 days
-        </Text>
+          <Text
+            style={{
+              fontSize: 12,
+              fontFamily: 'Inter_700Bold',
+              color: colors.accent,
+              letterSpacing: 0.5,
+              marginRight: 2,
+            }}
+          >
+            {completedCount}/7 days
+          </Text>
+          <ChevronRight size={13} color={colors.accent} />
+        </Pressable>
       </View>
 
       {/* 7-Day Matrix Container */}
-      <View
-        style={{
+      <Pressable
+        onPress={() => router.push('/stats-detail' as any)}
+        accessibilityRole="button"
+        accessibilityLabel="View Full Stats and Badges"
+        style={({ pressed }) => ({
           paddingVertical: 16,
           paddingHorizontal: 12,
           borderRadius: 20,
           backgroundColor: colors.surface,
           borderWidth: 1,
           borderColor: colors.border,
-        }}
+          opacity: pressed ? 0.92 : 1,
+        })}
       >
         <View
           style={{
@@ -132,7 +148,7 @@ export const WeeklyStreakTracker: React.FC<WeeklyStreakTrackerProps> = ({ histor
             );
           })}
         </View>
-      </View>
+      </Pressable>
     </View>
   );
 };

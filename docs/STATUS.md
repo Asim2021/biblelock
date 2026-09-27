@@ -267,16 +267,28 @@
   - **Zero-Overhead Bookmarked Verse Pastel Tint (`src/app/(tabs)/reader.tsx`):** Rendered soft translucent pastel tint matching collection/bookmark color on saved verses via in-memory lookup and `React.memo` isolation.
   - **Horizontal Chapter Swipe (`src/app/(tabs)/reader.tsx`):** Added native touch gesture listener for seamless swipe left (next chapter) and swipe right (prev chapter) navigation.
 
+- [x] `TASK-050`: Home Stats Direct Access & Multi-Language Bible Download Engine (`DEC-034`):
+  - **Home Screen Direct Entry Points to Stats (`src/app/(tabs)/index.tsx`, `src/components/WeeklyStreakTracker.tsx`):**
+    - Added dedicated Trophy icon button in top navigation bar directly routing to `/stats-detail`.
+    - Made 7-day streak card and streak header in `WeeklyStreakTracker.tsx` interactive with chevron indicator and direct push to `/stats-detail`.
+    - Transformed "Your Impact" section header in `index.tsx` into an interactive header row with "View All Stats →" link.
+  - **Multi-Language Bible Catalog & Download Engine (`src/data/bibleCatalog.ts`, `src/lib/bibleDownloader.ts`, `src/lib/mmkv.ts`, `src/lib/bible.ts`):**
+    - Created static catalog supporting 20+ world languages (Turkish, Spanish, French, German, Portuguese, Tagalog, Chinese, Russian, etc.) with configurable base repository URL.
+    - Built persistent download manager with `expo-file-system/legacy` saving verified JSON to `${FileSystem.documentDirectory}bibles/${code}.json`.
+    - Implemented dynamic lazy-loading in `src/lib/bible.ts` with in-memory caching to avoid RAM bloat on mobile devices, keeping KJV and WEB permanently pre-loaded and bundled offline.
+    - Created full-featured `BibleTranslationModal.tsx` bottom sheet modal with "Installed" and "Download Languages" tabs, search, and live download progress indicators.
+    - Integrated modal and active indicators across `reader.tsx` and `settings.tsx`.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `DEC-021` through `DEC-033` recorded in `docs/DECISIONS.md`.
+- `DEC-021` through `DEC-034` recorded in `docs/DECISIONS.md`.
 
 ## Session Handoff Notes
 
-- Scripture Reader screen now provides instant searchable book and chapter grid navigation, custom text scaling, typeface selection, Sepia and Midnight OLED themes, horizontal chapter swiping, and soft pastel tints on bookmarked verses.
-- Zero extra disk I/O, zero FlatList frame drops.
+- Users now have 3 prominent, natural entry points from the Home tab into their reading stats and badges.
+- Users worldwide can download and read Bibles in Turkish, Spanish, French, German, Tagalog, and more, while preserving full offline functionality and memory efficiency.
+- Bible translation catalog configured to download from `https://github.com/Asim2021/bible-translations` (`https://raw.githubusercontent.com/Asim2021/bible-translations/main/`).
 
 
 

@@ -1291,4 +1291,45 @@ Selected **Option C**.
 - `npx tsc --noEmit`: 0 errors across entire workspace.
 - 60/120fps scroll performance preserved via memoized `VerseRow` and $O(1)$ in-memory lookups.
 
+---
+
+## [DEC-034] Home Stats Direct Access & Multi-Language Bible Download Engine
+
+- **Date:** 2026-09-27
+- **Status:** Validated
+- **Related Task / Baseline:** TASK-050, `src/app/(tabs)/index.tsx`, `src/lib/bibleDownloader.ts`, `src/data/bibleCatalog.ts`, `src/lib/bible.ts`
+
+### 1. Problem / Trigger
+1. User reading statistics and achievement badges were deeply tucked away under Settings -> "My Stats & Badges", rendering them invisible to everyday users.
+2. Users worldwide (e.g. Turkey, Latin America, Europe, Asia) require Bible translations in their native languages, while initial app bundle size must remain compact and offline-first with pre-loaded English Bibles (KJV and WEB).
+
+### 2. Alternatives Evaluated
+- **Option A (Bundle all 50+ Bibles in APK/IPA):** Would inflate app download size to >250MB, causing massive user drop-off on cellular downloads and violating app store download best practices.
+- **Option B (Server-rendered API requests per chapter):** Breaks offline capability, incurs ongoing server hosting costs, and introduces latency when reading Scripture without signal.
+- **Option C (Offline-First Hybrid: Pre-bundled KJV & WEB + On-Demand Multi-Language Download Engine):** Selected.
+  - Pre-bundles KJV & WEB directly in `assets/bible/` for 100% offline day-1 experience.
+  - Downloads additional language translations on demand via `expo-file-system/legacy` to `${FileSystem.documentDirectory}bibles/${code}.json`.
+  - Employs lazy in-memory caching in `src/lib/bible.ts` (`loadBibleAsync`), preventing memory bloating on low-end Android hardware.
+  - Adds 3 clear home-screen access points to `/stats-detail`: Trophy header button, interactive streak tracker card, and "View All Stats →" impact header.
+
+### 3. Decision & Trade-offs
+Selected **Option C**.
+- Keeps base app download slim while offering 20+ world languages.
+- Direct raw JSON schema matching `{ translation, books: [{ name, chapters: [{ chapter, verses: [{ verse, text }] }] }] }` enables instant zero-transform rendering.
+- Configurable base repository URL in `src/data/bibleCatalog.ts` allows seamless swapping between upstream CDN and self-hosted/mirrored GitHub repositories.
+
+### 4. Implementation Details
+- `src/app/(tabs)/index.tsx` & `src/components/WeeklyStreakTracker.tsx`: Added Trophy button, clickable streak cards, and "View All Stats →" links routing to `/stats-detail`.
+- `src/data/bibleCatalog.ts`: Cataloged 20+ translations with `BIBLE_CATALOG_BASE_URL`.
+- `src/lib/bibleDownloader.ts`: Implemented atomic download resumable with JSON validation, progress listener, and active translation rollback.
+- `src/lib/mmkv.ts`: Added `INSTALLED_TRANSLATIONS` array persistence.
+- `src/lib/bible.ts`: Dynamic async Bible loader with in-memory caching.
+- `src/components/BibleTranslationModal.tsx`: Complete dual-tab bottom sheet modal with search, download progress, and active selection.
+- `src/app/(tabs)/reader.tsx` & `src/app/(tabs)/settings.tsx`: Wired modal and language selectors.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Offline Bible reading completely operational for bundled and downloaded translations.
+
+
 

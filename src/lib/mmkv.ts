@@ -131,6 +131,7 @@ export const STORAGE_KEYS = {
   SCROLL_MODE: 'scroll_mode',
   SCROLL_FONT: 'scroll_font',
   SCROLL_MOOD: 'scroll_mood',
+  INSTALLED_TRANSLATIONS: 'installed_translations',
 } as const;
 
 // Default Presets
@@ -212,23 +213,53 @@ export function addReadingSeconds(secondsDelta: number, dateKey: string = getTod
   return updated;
 }
 
-const translationListeners = new Set<(tr: 'WEB' | 'KJV') => void>();
+const translationListeners = new Set<(tr: string) => void>();
 
-export function getBibleTranslation(): 'WEB' | 'KJV' {
+export function getBibleTranslation(): string {
   const val = storage.getString(STORAGE_KEYS.TRANSLATION);
-  return val === 'KJV' ? 'KJV' : 'WEB';
+  return val || 'WEB';
 }
 
-export function setBibleTranslation(translation: 'WEB' | 'KJV'): void {
+export function setBibleTranslation(translation: string): void {
   storage.set(STORAGE_KEYS.TRANSLATION, translation);
   translationListeners.forEach((fn) => fn(translation));
 }
 
-export function subscribeBibleTranslation(listener: (tr: 'WEB' | 'KJV') => void): () => void {
+export function subscribeBibleTranslation(listener: (tr: string) => void): () => void {
   translationListeners.add(listener);
   return () => {
     translationListeners.delete(listener);
   };
+}
+
+let _installedTranslationsCache: string[] | null = null;
+
+export function getInstalledTranslationsList(): string[] {
+  if (_installedTranslationsCache !== null) {
+    return _installedTranslationsCache;
+  }
+  const raw = storage.getString(STORAGE_KEYS.INSTALLED_TRANSLATIONS);
+  if (!raw) {
+    _installedTranslationsCache = ['WEB', 'KJV'];
+    return _installedTranslationsCache;
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      if (!parsed.includes('WEB')) parsed.unshift('WEB');
+      if (!parsed.includes('KJV')) parsed.unshift('KJV');
+      _installedTranslationsCache = parsed;
+      return _installedTranslationsCache;
+    }
+  } catch {}
+  _installedTranslationsCache = ['WEB', 'KJV'];
+  return _installedTranslationsCache;
+}
+
+export function setInstalledTranslationsList(codes: string[]): void {
+  const normalized = Array.from(new Set(['WEB', 'KJV', ...codes]));
+  _installedTranslationsCache = normalized;
+  storage.set(STORAGE_KEYS.INSTALLED_TRANSLATIONS, JSON.stringify(normalized));
 }
 
 export function getDailyVerseNotificationsEnabled(): boolean {

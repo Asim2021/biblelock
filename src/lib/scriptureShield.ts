@@ -124,7 +124,7 @@ export const ScriptureShield = {
    */
   scheduleDailyVerseNotifications: async (
     count: number,
-    translation: 'WEB' | 'KJV' = getBibleTranslation()
+    translation: string = getBibleTranslation()
   ): Promise<boolean> => {
     if (Platform.OS === 'web') return false;
 

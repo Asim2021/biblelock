@@ -19,6 +19,7 @@ import {
   Pause,
   Trophy,
   X,
+  ChevronRight,
 } from 'lucide-react-native';
 import { useReadingTimer } from '../../lib/readingTimer';
 import { usePurchases } from '../../lib/purchases';
@@ -218,7 +219,28 @@ export default function HomeScreen() {
             )}
 
             <Pressable
+              onPress={() => router.push('/stats-detail' as any)}
+              accessibilityRole="button"
+              accessibilityLabel="My Stats and Badges"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: colors.surfaceSubtle,
+                borderWidth: 1,
+                borderColor: colors.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 8,
+              }}
+            >
+              <Trophy size={18} color={colors.accent} />
+            </Pressable>
+
+            <Pressable
               onPress={() => router.push('/settings' as any)}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
               style={{
                 width: 40,
                 height: 40,
@@ -456,17 +478,36 @@ export default function HomeScreen() {
 
         {/* Your Impact Section */}
         <View className="my-3">
-          <Text
-            style={{
-              fontSize: 16,
-              fontFamily: 'Inter_700Bold',
-              color: colors.textPrimary,
-              marginBottom: 12,
-              paddingHorizontal: 4,
-            }}
-          >
-            Your Impact
-          </Text>
+          <View className="flex-row items-center justify-between mb-3 px-1">
+            <Text
+              style={{
+                fontSize: 16,
+                fontFamily: 'Inter_700Bold',
+                color: colors.textPrimary,
+              }}
+            >
+              Your Impact
+            </Text>
+            <Pressable
+              onPress={() => router.push('/stats-detail' as any)}
+              hitSlop={8}
+              className="flex-row items-center"
+              accessibilityRole="button"
+              accessibilityLabel="View All Stats and Badges"
+            >
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: 'Inter_600SemiBold',
+                  color: colors.accent,
+                  marginRight: 2,
+                }}
+              >
+                View All Stats
+              </Text>
+              <ChevronRight size={14} color={colors.accent} />
+            </Pressable>
+          </View>
 
           <View className="flex-row justify-between">
             {/* Minutes Read */}

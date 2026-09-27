@@ -8,6 +8,7 @@ import {
   ScrollPosition,
 } from './mmkv';
 import { MoodVerseRef, MOOD_VERSES, MoodKey } from '../data/moodVerses';
+import { loadDownloadedBible } from './bibleDownloader';
 
 const BOOK_INDEX_MAP: Record<string, number> = {};
 (webData as unknown as BibleData).books.forEach((b, idx) => {
@@ -25,10 +26,10 @@ export interface Chapter {
 }
 
 export interface Book {
-  id: string;
+  id?: string;
   name: string;
-  shortName: string;
-  chapterCount: number;
+  shortName?: string;
+  chapterCount?: number;
   chapters: Chapter[];
 }
 
@@ -38,7 +39,7 @@ export interface BibleData {
   books: Book[];
 }
 
-const BIBLE_MAP: Record<'KJV' | 'WEB', BibleData> = {
+const BIBLE_MAP: Record<string, BibleData> = {
   KJV: kjvData as unknown as BibleData,
   WEB: webData as unknown as BibleData,
 };
@@ -51,33 +52,84 @@ export interface BookMetadata {
   chapterCount: number;
 }
 
-const BOOKS_CACHE: Record<'KJV' | 'WEB', BookMetadata[]> = {
+const BOOKS_CACHE: Record<string, BookMetadata[]> = {
   KJV: (kjvData as unknown as BibleData).books.map((b, idx) => ({
     index: idx,
-    id: b.id,
+    id: b.id || b.name.slice(0, 3).toLowerCase(),
     name: b.name,
-    shortName: b.shortName,
-    chapterCount: b.chapterCount,
+    shortName: b.shortName || b.name.slice(0, 3),
+    chapterCount: b.chapterCount || b.chapters.length,
   })),
   WEB: (webData as unknown as BibleData).books.map((b, idx) => ({
     index: idx,
-    id: b.id,
+    id: b.id || b.name.slice(0, 3).toLowerCase(),
     name: b.name,
-    shortName: b.shortName,
-    chapterCount: b.chapterCount,
+    shortName: b.shortName || b.name.slice(0, 3),
+    chapterCount: b.chapterCount || b.chapters.length,
   })),
 };
 
-export function getBible(translation: 'KJV' | 'WEB' = 'WEB'): BibleData {
+/**
+ * Loads a Bible translation into memory asynchronously if not already loaded
+ */
+export async function loadBibleAsync(translation: string): Promise<BibleData> {
+  if (BIBLE_MAP[translation]) {
+    return BIBLE_MAP[translation];
+  }
+
+  const downloaded = await loadDownloadedBible(translation);
+  if (downloaded && Array.isArray(downloaded.books) && downloaded.books.length > 0) {
+    const normalizedBooks: Book[] = downloaded.books.map((b: any, idx: number) => ({
+      id: b.id || b.name.slice(0, 3).toLowerCase(),
+      name: b.name,
+      shortName: b.shortName || b.name.slice(0, 3),
+      chapterCount: b.chapterCount || (b.chapters ? b.chapters.length : 0),
+      chapters: b.chapters || [],
+    }));
+
+    const bibleData: BibleData = {
+      translation: downloaded.translation || translation,
+      title: downloaded.title || downloaded.translation || translation,
+      books: normalizedBooks,
+    };
+
+    BIBLE_MAP[translation] = bibleData;
+    BOOKS_CACHE[translation] = normalizedBooks.map((b, idx) => ({
+      index: idx,
+      id: b.id || b.name.slice(0, 3).toLowerCase(),
+      name: b.name,
+      shortName: b.shortName || b.name.slice(0, 3),
+      chapterCount: b.chapterCount || (b.chapters ? b.chapters.length : 0),
+    }));
+
+    return bibleData;
+  }
+
+  return BIBLE_MAP.WEB;
+}
+
+export function getBible(translation: string = 'WEB'): BibleData {
   return BIBLE_MAP[translation] || BIBLE_MAP.WEB;
 }
 
-export function getBooks(translation: 'KJV' | 'WEB' = 'WEB'): BookMetadata[] {
-  return BOOKS_CACHE[translation] || BOOKS_CACHE.WEB;
+export function getBooks(translation: string = 'WEB'): BookMetadata[] {
+  if (BOOKS_CACHE[translation]) {
+    return BOOKS_CACHE[translation];
+  }
+  const bible = getBible(translation);
+  const metadata: BookMetadata[] = bible.books.map((b, idx) => ({
+    index: idx,
+    id: b.id || b.name.slice(0, 3).toLowerCase(),
+    name: b.name,
+    shortName: b.shortName || b.name.slice(0, 3),
+    chapterCount: b.chapterCount || (b.chapters ? b.chapters.length : 0),
+  }));
+  BOOKS_CACHE[translation] = metadata;
+  return metadata;
 }
 
 export function getChapter(
-  translation: 'KJV' | 'WEB',
+  translation: string,
   bookIndex: number,
   chapterNumber: number
 ): { bookName: string; shortName: string; chapter: number; totalChapters: number; verses: Verse[] } | null {
@@ -94,9 +146,9 @@ export function getChapter(
 
   return {
     bookName: book.name,
-    shortName: book.shortName,
+    shortName: book.shortName || book.name.slice(0, 3),
     chapter: ch.chapter,
-    totalChapters: book.chapterCount,
+    totalChapters: book.chapterCount || book.chapters.length,
     verses: ch.verses,
   };
 }
@@ -137,7 +189,7 @@ export interface DailyVerseItem {
 function buildInspirationalCache(bible: BibleData): DailyVerseItem[] {
   return INSPIRATIONAL_VERSES.map((pick, safeIdx) => {
     const book = bible.books.find(
-      (b) => b.name.toLowerCase() === pick.book.toLowerCase() || b.id.toLowerCase() === pick.book.toLowerCase()
+      (b) => b.name.toLowerCase() === pick.book.toLowerCase() || (b.id && b.id.toLowerCase() === pick.book.toLowerCase())
     ) || bible.books[0];
     const chapter = book.chapters.find((c) => c.chapter === pick.chapter) || book.chapters[0];
     const verse = chapter?.verses.find((v) => v.verse === pick.verseNum) || chapter?.verses[0];
@@ -151,21 +203,25 @@ function buildInspirationalCache(bible: BibleData): DailyVerseItem[] {
   });
 }
 
-const RESOLVED_INSPIRATIONAL_CACHE: Record<'KJV' | 'WEB', DailyVerseItem[]> = {
+const RESOLVED_INSPIRATIONAL_CACHE: Record<string, DailyVerseItem[]> = {
   KJV: buildInspirationalCache(kjvData as unknown as BibleData),
   WEB: buildInspirationalCache(webData as unknown as BibleData),
 };
 
 export function resolveVerseItem(
-  translation: 'KJV' | 'WEB',
+  translation: string = 'WEB',
   index: number
 ): DailyVerseItem {
   const safeIdx = ((index % INSPIRATIONAL_VERSES.length) + INSPIRATIONAL_VERSES.length) % INSPIRATIONAL_VERSES.length;
+  if (!RESOLVED_INSPIRATIONAL_CACHE[translation]) {
+    const bible = getBible(translation);
+    RESOLVED_INSPIRATIONAL_CACHE[translation] = buildInspirationalCache(bible);
+  }
   const list = RESOLVED_INSPIRATIONAL_CACHE[translation] || RESOLVED_INSPIRATIONAL_CACHE.WEB;
   return list[safeIdx];
 }
 
-export function getDailyVerse(translation: 'KJV' | 'WEB' = 'WEB'): DailyVerseItem {
+export function getDailyVerse(translation: string = 'WEB'): DailyVerseItem {
   const today = new Date();
   const dayOfYear = Math.floor(
     (today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24
@@ -174,7 +230,7 @@ export function getDailyVerse(translation: 'KJV' | 'WEB' = 'WEB'): DailyVerseIte
 }
 
 export function getRandomVerse(
-  translation: 'KJV' | 'WEB' = 'WEB',
+  translation: string = 'WEB',
   excludeIndex?: number
 ): DailyVerseItem {
   let nextIdx = Math.floor(Math.random() * INSPIRATIONAL_VERSES.length);
@@ -185,14 +241,21 @@ export function getRandomVerse(
 }
 
 export function useBibleTranslation() {
-  const [translation, setTranslation] = useState<'WEB' | 'KJV'>(getBibleTranslation);
+  const [translation, setTranslation] = useState<string>(getBibleTranslation);
 
   useEffect(() => {
-    return subscribeBibleTranslation(setTranslation);
-  }, []);
+    loadBibleAsync(translation);
+    return subscribeBibleTranslation((newTr) => {
+      loadBibleAsync(newTr).then(() => {
+        setTranslation(newTr);
+      });
+    });
+  }, [translation]);
 
-  const changeTranslation = useCallback((tr: 'WEB' | 'KJV') => {
-    setBibleTranslation(tr);
+  const changeTranslation = useCallback((tr: string) => {
+    loadBibleAsync(tr).then(() => {
+      setBibleTranslation(tr);
+    });
   }, []);
 
   return [translation, changeTranslation] as const;
@@ -208,7 +271,7 @@ export interface ScrollVerseItem {
 }
 
 export function getVerseAtPosition(
-  translation: 'KJV' | 'WEB',
+  translation: string,
   pos: ScrollPosition
 ): ScrollVerseItem | null {
   const data = BIBLE_MAP[translation] || BIBLE_MAP.WEB;
@@ -229,7 +292,7 @@ export function getVerseAtPosition(
 }
 
 export function getNextPosition(
-  translation: 'KJV' | 'WEB',
+  translation: string,
   pos: ScrollPosition
 ): ScrollPosition {
   const data = BIBLE_MAP[translation] || BIBLE_MAP.WEB;
@@ -271,7 +334,7 @@ export function getNextPosition(
 
 let _flatVersePositions: ScrollPosition[] | null = null;
 
-function ensureFlatVersePositions(translation: 'KJV' | 'WEB' = 'WEB'): ScrollPosition[] {
+function ensureFlatVersePositions(translation: string = 'WEB'): ScrollPosition[] {
   if (_flatVersePositions !== null) return _flatVersePositions;
   const data = BIBLE_MAP[translation] || BIBLE_MAP.WEB;
   const positions: ScrollPosition[] = [];
@@ -291,7 +354,7 @@ function ensureFlatVersePositions(translation: 'KJV' | 'WEB' = 'WEB'): ScrollPos
 }
 
 export function getRandomVerseFull(
-  translation: 'KJV' | 'WEB' = 'WEB'
+  translation: string = 'WEB'
 ): ScrollVerseItem {
   const positions = ensureFlatVersePositions(translation);
   const randomIndex = Math.floor(Math.random() * positions.length);
@@ -308,7 +371,7 @@ export function getRandomVerseFull(
 }
 
 export function resolveMoodVerse(
-  translation: 'KJV' | 'WEB',
+  translation: string,
   ref: MoodVerseRef
 ): ScrollVerseItem | null {
   const data = BIBLE_MAP[translation] || BIBLE_MAP.WEB;
@@ -346,9 +409,9 @@ export function resolveMoodVerse(
   };
 }
 
-// Pre-resolved in-memory lookup cache for all 13 mood categories across KJV and WEB
+// Pre-resolved in-memory lookup cache for mood categories
 const RESOLVED_MOOD_CACHE: Record<
-  'KJV' | 'WEB',
+  string,
   Record<string, ScrollVerseItem[]>
 > = {
   KJV: {},
@@ -364,9 +427,17 @@ for (const tr of ['KJV', 'WEB'] as const) {
 }
 
 export function getMoodVerses(
-  translation: 'KJV' | 'WEB',
+  translation: string,
   mood: Exclude<MoodKey, 'all'>
 ): ScrollVerseItem[] {
+  if (!RESOLVED_MOOD_CACHE[translation]) {
+    RESOLVED_MOOD_CACHE[translation] = {};
+    for (const [moodKey, refs] of Object.entries(MOOD_VERSES)) {
+      RESOLVED_MOOD_CACHE[translation][moodKey] = refs
+        .map((ref) => resolveMoodVerse(translation, ref))
+        .filter((item): item is ScrollVerseItem => item !== null);
+    }
+  }
   const trCache = RESOLVED_MOOD_CACHE[translation] || RESOLVED_MOOD_CACHE.WEB;
   return trCache[mood] || [];
 }

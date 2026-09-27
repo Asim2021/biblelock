@@ -26,6 +26,7 @@ import {
 import { BookmarkPickerSheet } from '../../components/BookmarkPickerSheet';
 import { ReaderAppearanceModal } from '../../components/reader/ReaderAppearanceModal';
 import { BibleNavigationModal } from '../../components/reader/BibleNavigationModal';
+import { BibleTranslationModal } from '../../components/BibleTranslationModal';
 import { Button } from '../../components/Button';
 import {
   Clock,
@@ -34,6 +35,7 @@ import {
   ChevronDown,
   Bookmark as BookmarkIcon,
   Type,
+  Globe,
 } from 'lucide-react-native';
 import { useTheme } from '../../lib/themeContext';
 import { useFeatureGate } from '../../lib/useFeatureGate';
@@ -245,6 +247,7 @@ export default function ReaderScreen() {
   }>();
 
   const [translation, setTranslationState] = useBibleTranslation();
+  const [showTranslationModal, setShowTranslationModal] = useState(false);
   const allBooks = useMemo(() => getBooks(translation), [translation]);
 
   // Reader typography & theme preferences
@@ -711,56 +714,35 @@ export default function ReaderScreen() {
             <Type size={16} color={colors.accent} />
           </Pressable>
 
-          {/* Translation Toggle Pill */}
-          <View
+          {/* Translation Picker Button */}
+          <Pressable
+            onPress={() => setShowTranslationModal(true)}
             style={{
               flexDirection: 'row',
+              alignItems: 'center',
               backgroundColor: colors.surfaceSubtle,
               borderRadius: 8,
-              padding: 3,
+              paddingHorizontal: 10,
+              paddingVertical: 7,
               borderWidth: 1,
               borderColor: colors.borderSubtle,
             }}
+            accessibilityRole="button"
+            accessibilityLabel="Select Bible Translation"
           >
-            <Pressable
-              onPress={() => handleToggleTranslation('WEB')}
+            <Globe size={14} color={colors.accent} style={{ marginRight: 6 }} />
+            <Text
               style={{
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-                borderRadius: 6,
-                backgroundColor: translation === 'WEB' ? colors.accent : 'transparent',
+                fontSize: 12,
+                fontFamily: 'Inter_700Bold',
+                color: colors.textPrimary,
+                marginRight: 4,
               }}
             >
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontFamily: 'Inter_600SemiBold',
-                  color: translation === 'WEB' ? '#141413' : colors.textSecondary,
-                }}
-              >
-                WEB
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => handleToggleTranslation('KJV')}
-              style={{
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-                borderRadius: 6,
-                backgroundColor: translation === 'KJV' ? colors.accent : 'transparent',
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 12,
-                  fontFamily: 'Inter_600SemiBold',
-                  color: translation === 'KJV' ? '#141413' : colors.textSecondary,
-                }}
-              >
-                KJV
-              </Text>
-            </Pressable>
-          </View>
+              {translation}
+            </Text>
+            <ChevronDown size={12} color={colors.textSecondary} />
+          </Pressable>
         </View>
       </View>
 
@@ -998,6 +980,12 @@ export default function ReaderScreen() {
           }}
         />
       )}
+
+      {/* Bible Translation Hub Modal */}
+      <BibleTranslationModal
+        visible={showTranslationModal}
+        onClose={() => setShowTranslationModal(false)}
+      />
     </SafeAreaView>
   );
 }

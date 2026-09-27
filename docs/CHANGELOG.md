@@ -1,5 +1,27 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.41] - 2026-09-27
+
+### Home Stats Direct Access & Multi-Language Bible Download Engine
+- **Home Screen Direct Entry Points to Stats (`src/app/(tabs)/index.tsx`, `src/components/WeeklyStreakTracker.tsx`, `TASK-050`, `DEC-034`):**
+  - Added dedicated Trophy icon button in top navigation bar directly routing to `/stats-detail`.
+  - Transformed 7-day streak card and streak header in `WeeklyStreakTracker.tsx` into interactive pressables with right chevron indicator pushing directly to `/stats-detail`.
+  - Converted "Your Impact" section header in `index.tsx` into an interactive header row with a "View All Stats →" link.
+- **Multi-Language Bible Catalog & On-Demand Download Pipeline (`src/data/bibleCatalog.ts`, `src/lib/bibleDownloader.ts`, `src/lib/mmkv.ts`, `src/lib/bible.ts`):**
+  - Built static catalog with 20+ translations across Turkish (`TUR`), Spanish (`SpaRV`), French (`FreCrampon`), German (`GerBoLut`), Portuguese (`PorBLivre`), Tagalog (`TagAngBiblia`), Chinese (`ChiUn`), Russian (`RusSynodal`), etc.
+  - Configured `BIBLE_CATALOG_BASE_URL` pointing to `https://raw.githubusercontent.com/Asim2021/bible-translations/main/`.
+  - Implemented persistent atomic downloader using `expo-file-system/legacy` saving validated JSON to `${FileSystem.documentDirectory}bibles/${code}.json`.
+  - Added JSON schema validation to guarantee integrity before marking any translation as installed.
+  - Integrated dynamic async loading (`loadBibleAsync`) in `src/lib/bible.ts` with in-memory caching to safeguard RAM on mobile devices while keeping KJV and WEB pre-bundled and instant offline.
+  - Built dual-tab bottom sheet modal (`src/components/BibleTranslationModal.tsx`) with search, filter chips, download progress spinners, active switches, and deletion controls.
+  - Integrated translation selector and active badges into `src/app/(tabs)/reader.tsx` and `src/app/(tabs)/settings.tsx`.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Seamless offline reading preserved for pre-bundled and downloaded translations.
+
+---
+
 ## [1.0.40] - 2026-09-27
 
 ### Reader Navigation & Reading Comfort Overhaul

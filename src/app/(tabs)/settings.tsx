@@ -37,7 +37,9 @@ import {
   Sparkles,
   BarChart2,
   ChevronRight,
+  Globe,
 } from 'lucide-react-native';
+import { BibleTranslationModal } from '../../components/BibleTranslationModal';
 import { usePurchases } from '../../lib/purchases';
 import { useFeatureGate } from '../../lib/useFeatureGate';
 import { AppBlocker, InstalledApp } from '../../lib/appBlocker';
@@ -103,6 +105,7 @@ export default function SettingsScreen() {
     getScheduledReadingTimes()
   );
   const [showTimePickerModal, setShowTimePickerModal] = useState(false);
+  const [showTranslationModal, setShowTranslationModal] = useState(false);
 
   const handleAddReminderTime = (time: string) => {
     if (scheduledTimes.includes(time)) {
@@ -197,7 +200,7 @@ export default function SettingsScreen() {
     setShowCustomGoalInput(false);
   };
 
-  const handleSelectTranslation = async (tr: 'WEB' | 'KJV') => {
+  const handleSelectTranslation = async (tr: string) => {
     setTranslationState(tr);
     if (verseNotifsEnabled) {
       await ScriptureShield.scheduleDailyVerseNotifications(verseNotifCount, tr);
@@ -1086,24 +1089,49 @@ export default function SettingsScreen() {
             </View>
           </Card>
         </View>
+        {/* Bible Translation Section */}
+        <View className="mb-6">
+          <View className="flex-row items-center justify-between mb-2.5 px-1">
+            <Text
+              style={{
+                fontSize: 11,
+                fontFamily: 'Inter_600SemiBold',
+                textTransform: 'uppercase',
+                letterSpacing: 1,
+                color: colors.textSecondary,
+              }}
+            >
+              Bible Translations & Languages
+            </Text>
+            <Pressable
+              onPress={() => setShowTranslationModal(true)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Manage and download Bible translations"
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                backgroundColor: colors.accentBg,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+              }}
+            >
+              <Globe size={13} color={colors.accent} style={{ marginRight: 4 }} />
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: colors.accent,
+                  fontFamily: 'Inter_600SemiBold',
+                }}
+              >
+                Browse & Download
+              </Text>
+            </Pressable>
+          </View>
 
-        {/* Translation Preference */}
-        <View className="mb-5">
-          <Text
-            style={{
-              fontSize: 11,
-              fontFamily: 'Inter_600SemiBold',
-              textTransform: 'uppercase',
-              letterSpacing: 1,
-              color: colors.textSecondary,
-              marginBottom: 10,
-              paddingHorizontal: 4,
-            }}
-          >
-            Default Bible Translation
-          </Text>
-          <Card variant="dark" style={{ padding: 12 }}>
-            <View className="flex-row justify-between">
+          <Card variant="dark" style={{ padding: 14 }}>
+            <View className="flex-row justify-between mb-3">
               <Pressable
                 onPress={() => handleSelectTranslation('WEB')}
                 style={{
@@ -1128,7 +1156,7 @@ export default function SettingsScreen() {
                   WEB
                 </Text>
                 <Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
-                  World English Bible (Easy Modern)
+                  World English Bible
                 </Text>
               </Pressable>
 
@@ -1156,10 +1184,55 @@ export default function SettingsScreen() {
                   KJV
                 </Text>
                 <Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
-                  King James (Classical Serif)
+                  King James Version
                 </Text>
               </Pressable>
             </View>
+
+            {/* Custom / Downloaded Active Banner if not WEB or KJV */}
+            {translation !== 'WEB' && translation !== 'KJV' && (
+              <View
+                style={{
+                  padding: 10,
+                  borderRadius: 10,
+                  backgroundColor: colors.accentBg,
+                  borderWidth: 1,
+                  borderColor: colors.accent,
+                  marginBottom: 10,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <View className="flex-row items-center">
+                  <Globe size={14} color={colors.accent} style={{ marginRight: 6 }} />
+                  <Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: colors.accent }}>
+                    Active: {translation}
+                  </Text>
+                </View>
+                <Text style={{ fontSize: 11, color: colors.textSecondary }}>Downloaded Translation</Text>
+              </View>
+            )}
+
+            <Pressable
+              onPress={() => setShowTranslationModal(true)}
+              style={{
+                width: '100%',
+                paddingVertical: 10,
+                borderRadius: 10,
+                backgroundColor: colors.surfaceSubtle,
+                borderWidth: 1,
+                borderColor: colors.borderSubtle,
+                alignItems: 'center',
+                flexDirection: 'row',
+                justifyContent: 'center',
+              }}
+            >
+              <Globe size={14} color={colors.accent} style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.accent }}>
+                Manage All Bibles & Download Languages (50+) →
+              </Text>
+            </Pressable>
           </Card>
         </View>
 
@@ -1866,6 +1939,12 @@ export default function SettingsScreen() {
         onClose={() => setShowTimePickerModal(false)}
         onSave={handleAddReminderTime}
         title="Add Reminder Time"
+      />
+
+      {/* Bible Translation & Download Modal */}
+      <BibleTranslationModal
+        visible={showTranslationModal}
+        onClose={() => setShowTranslationModal(false)}
       />
     </SafeAreaView>
   );
