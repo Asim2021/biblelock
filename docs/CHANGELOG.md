@@ -1,5 +1,30 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.47] - 2026-09-28
+
+### Production Readiness Audit & Cleanup
+- **Developer Controls Isolation (`src/app/(tabs)/settings.tsx`, `TASK-056`):**
+  - Gated the "Developer Controls" card containing "Reset Reading Progress" and "Simulate Free/Pro" buttons behind React Native's `__DEV__` global.
+  - Controls are completely excluded from production bundle renders while remaining accessible during local development.
+- **User-Facing Copy Humanization (`src/app/(tabs)/settings.tsx`):**
+  - Updated section title from "Local Storage & Profile" to "Your Profile".
+  - Replaced technical internal jargon ("100% Offline (Local MMKV Storage)") with privacy-centered copy: "All data stays on this device" under a "Privacy" label.
+- **Dead Component Elimination (`src/components/Last30DaysTracker.tsx`):**
+  - Deleted obsolete 73-line `Last30DaysTracker.tsx` component superseded by `WeeklyStreakTracker.tsx`.
+- **Package Manifest & Env Scaffolding Cleanup (`package.json`, `.env.example`):**
+  - Renamed package identity from default boilerplate `"frontend"` to `"bible-unlock"`.
+  - Commented out unused Unsplash API key in `.env.example` to prevent developer confusion.
+- **Reader Profile Name Editing (`src/app/(tabs)/settings.tsx`):**
+  - Added an "Edit" action with Pencil icon beside the Reader Profile name in Settings.
+  - Implemented a themed modal dialog with keyboard avoidance, 30-character limit, whitespace trim, fallback to `"Disciple"`, and instant MMKV persistence that propagates to the Home greeting, Paywall, and Stats.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Production UI is free of debug triggers, simulation buttons, and internal storage naming.
+- Users can update their reader profile name at any time without reinstalling or resetting storage.
+
+---
+
 ## [1.0.46] - 2026-09-28
 
 ### Stats Floating Navigation, Devotional Translation Alignment & Virtualized Catalog Drawer

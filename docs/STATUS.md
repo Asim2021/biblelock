@@ -330,24 +330,23 @@
   - **Stats Floating Navigation Header (`src/app/stats-detail.tsx`):** Extracted header outside `ScrollView` with `backgroundColor: colors.background`, bottom border, and safe area insets; pinned in-house `ArrowLeft` back navigation and refresh button persistently at any scroll depth.
   - **Daily Devotional Translation Alignment (`src/components/DailyDevotionalCard.tsx`):** Removed hardcoded interactive WEB/KJV toggle pill; replaced with active translation indicator badge that dynamically follows what the user selected in Reader or Settings.
   - **Virtualized Translation Drawer (`src/components/BibleTranslationModal.tsx`):** Replaced unvirtualized 90-item `ScrollView` with `<FlatList>` using memoized item renderer, `initialNumToRender={8}`, `maxToRenderPerBatch={10}`, and responsive tab press feedback, eliminating 1-2 second UI freeze on tab switch.
-  - **Settings Reminder Trash Icon Theme Alignment (`src/app/(tabs)/settings.tsx`):** Swapped hardcoded dark background (`#331a1a`) for `colors.dangerBg` and `colors.danger`, fixing dark circle artifact in light mode.
+- [x] `TASK-056`: Production Readiness Audit & Cleanup:
+  - **Developer Controls Isolation (`src/app/(tabs)/settings.tsx`):** Gated "Developer Controls" card ("Reset Reading Progress" and "Simulate Free/Pro" buttons) strictly behind `__DEV__` so debug triggers are completely invisible in production builds.
+  - **User-Facing Copy Humanization (`src/app/(tabs)/settings.tsx`):** Renamed "Local Storage & Profile" to "Your Profile". Replaced technical implementation detail ("100% Offline (Local MMKV Storage)") with user-centric privacy copy ("All data stays on this device").
+  - **Dead Code Pruning (`src/components/Last30DaysTracker.tsx`):** Deleted unreferenced 73-line `Last30DaysTracker.tsx` component superseded by `WeeklyStreakTracker.tsx`.
+  - **Project Metadata & Env Cleanup (`package.json`, `.env.example`):** Renamed root package name from generic scaffolding `"frontend"` to `"bible-unlock"`. Commented out unused Unsplash API key in `.env.example`.
+  - **Reader Profile Name Editing (`src/app/(tabs)/settings.tsx`):** Added interactive "Edit" action with Pencil icon in the Your Profile card; opens a themed modal dialog with soft keyboard handling, 30-character limit, whitespace trim, fallback to `"Disciple"`, and instant MMKV persistence.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- Stats header floats persistently above scroll content with accessible back navigation.
-- Armor of God badge verified locked for unconfigured shields.
-- Daily Devotional card dynamically mirrors active selected translation without WEB/KJV switcher.
-- Bible Translation Modal tab switch verified instant (<16ms) via virtualized `FlatList`.
-- Settings reminder trash icon renders harmoniously in both light and dark themes.
+- Developer controls verified invisible in production release builds.
+- Privacy copy accurately conveys local offline storage without exposing internal engine details (MMKV).
+- Reader name editable in Settings with live preview and cross-tab propagation.
+- Package manifest and env templates fully aligned with production standards.
 
 ## Session Handoff Notes
 
-- Navigation on `stats-detail.tsx` is completely self-contained with a floating top header.
-- The 92-translation catalog in `BibleTranslationModal.tsx` now uses virtualized rendering, making it smooth and responsive.
-
-
-
-
-
-
+- Developer-only controls in Settings are now strictly isolated behind `__DEV__`.
+- All dead code and placeholder package configurations have been removed.
+- Reader Profile name is now user-editable directly within Settings.
