@@ -6,52 +6,81 @@ import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { usePurchases, isRevenueCatConfigured } from '../lib/purchases';
 import { useTheme } from '../lib/themeContext';
 import { getStreak, getUserName } from '../lib/mmkv';
-import { Card } from '../components/Card';
 import { SCROLL_BACKGROUNDS } from '../../assets/scroll-backgrounds';
-import { X, Check, ShieldCheck, Flame, Clock, Zap, BarChart3, Bookmark, Sparkles, Heart, Share2, Type } from 'lucide-react-native';
+import {
+	X,
+	Check,
+	ShieldCheck,
+	Flame,
+	Clock,
+	Zap,
+	BarChart3,
+	Bookmark,
+	Sparkles,
+	Heart,
+	Share2,
+	Type,
+	Lock,
+	CheckCircle2,
+} from 'lucide-react-native';
 
-const FEATURES = [
+interface FeatureComparison {
+	icon: any;
+	title: string;
+	code: string;
+	covenant: string;
+	sanctuary: string;
+}
+
+const FEATURES: FeatureComparison[] = [
 	{
 		icon: ShieldCheck,
 		title: 'Block Any App on Device',
-		free: '5 Presets only',
-		pro: 'Unlimited custom apps',
+		code: 'MOD-01',
+		covenant: '5 Presets only',
+		sanctuary: 'Unlimited custom apps',
 	},
 	{
 		icon: Sparkles,
 		title: 'Bible Scroll Visual Feed',
-		free: 'Preview mode',
-		pro: '336 sacred mood verses & art',
+		code: 'MOD-02',
+		covenant: 'Preview mode',
+		sanctuary: '336 sacred mood verses & art',
 	},
 	{
 		icon: Flame,
 		title: 'Streak Grace Protection',
-		free: '—',
-		pro: '1 Grace Day / month',
+		code: 'MOD-03',
+		covenant: 'None',
+		sanctuary: '1 Grace Day / month',
 	},
 	{
 		icon: Clock,
 		title: 'Reading Goals & Custom Time',
-		free: '5m, 10m, 15m',
-		pro: '30m & custom (1–120m)',
+		code: 'MOD-04',
+		covenant: '5m, 10m, 15m presets',
+		sanctuary: '30m & custom (1–120m)',
 	},
 	{
 		icon: Bookmark,
 		title: 'Study Library Collections',
-		free: '1 collection • 5 bookmarks',
-		pro: 'Unlimited collections & notes',
+		code: 'MOD-05',
+		covenant: '1 list • 5 bookmarks',
+		sanctuary: 'Unlimited lists & notes',
 	},
 	{
 		icon: Zap,
 		title: 'Daily Reminders & Verse Alerts',
-		free: '1 reminder • 6 verses/day',
-		pro: 'Multi-hour alerts • 24 verses/day',
+		code: 'MOD-06',
+		covenant: '1 reminder • 6 verses/day',
+		sanctuary: 'Multi-hour • 24 verses/day',
 	},
 	{
 		icon: BarChart3,
 		title: 'Spiritual Growth Analytics',
-		free: '7-Day Week view',
-		pro: '30-Day Heatmap & Year telemetry',
+		code: 'MOD-07',
+		covenant: '7-day week view',
+		sanctuary: '30-day heatmap & telemetry',
 	},
 ];
 
@@ -65,11 +94,11 @@ export default function PaywallScreen() {
 	const streak = getStreak().currentStreak;
 	const userName = getUserName();
 
-	let subtitle = 'Choose Scripture over scrolling. Start your journey deeper.';
+	let subtitle = 'Choose Scripture over scrolling. Guard your attention with mechanical discipline.';
 	if (streak >= 7) {
-		subtitle = `A ${streak}-day streak, ${userName}. Don't let it break — Sanctuary protects your progress.`;
+		subtitle = `${streak}-day streak active, ${userName}. Sanctuary protects your progress with zero interruptions.`;
 	} else if (streak >= 3) {
-		subtitle = `You've chosen Scripture over scrolling for ${streak} days. That's who you're becoming.`;
+		subtitle = `You've chosen Scripture over scrolling for ${streak} consecutive days. Strengthen the foundation.`;
 	}
 
 	const currentPackages = offerings?.current?.availablePackages || [];
@@ -110,15 +139,15 @@ export default function PaywallScreen() {
 			} else {
 				Alert.alert(
 					'Product Unavailable',
-					'Unable to connect to store products. Please check your internet connection or try again shortly.'
+					'Unable to connect to store products. Please check your internet connection or try again shortly.',
 				);
 			}
 		}
 
 		setIsProcessing(false);
 		if (success) {
-			Alert.alert('Welcome to the Sanctuary 🙏', 'Your subscription is active. All premium features unlocked.', [
-				{ text: 'Continue', onPress: () => router.back() },
+			Alert.alert('Sanctuary Access Granted 🙏', 'All premium disciplines and tools have been unlocked.', [
+				{ text: 'Enter Sanctuary', onPress: () => router.back() },
 			]);
 		}
 	};
@@ -132,7 +161,7 @@ export default function PaywallScreen() {
 				{ text: 'OK', onPress: () => router.back() },
 			]);
 		} else {
-			Alert.alert('Restore', 'No active subscription found for this Apple or Google Play account.');
+			Alert.alert('Restore Purchases', 'No active subscription found for this Apple or Google Play account.');
 		}
 	};
 
@@ -146,35 +175,54 @@ export default function PaywallScreen() {
 
 	return (
 		<SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-			{/* Modal Close Header */}
+			{/* Top Telemetry Header Bar */}
 			<View
-				style={{ borderBottomColor: colors.borderSubtle, borderBottomWidth: 1 }}
+				style={{
+					borderBottomColor: colors.border,
+					borderBottomWidth: 1,
+					backgroundColor: colors.surface,
+				}}
 				className='px-5 py-3 flex-row justify-between items-center'
 			>
-				<View className='w-8' />
-				<Text style={{ color: colors.accent }} className='text-xs font-sans-bold uppercase tracking-widest'>
-					SANCTUARY
-				</Text>
+				<View className='flex-row items-center'>
+					<View
+						style={{
+							backgroundColor: colors.accent,
+							width: 6,
+							height: 6,
+							borderRadius: 3,
+							marginRight: 8,
+						}}
+					/>
+					<Text
+						style={{ color: colors.textSecondary }}
+						className='text-[10px] font-sans-bold uppercase tracking-widest'
+					>
+						TIER // SANCTUARY EDITION
+					</Text>
+				</View>
+
 				<Pressable
 					onPress={() => router.back()}
+					hitSlop={12}
 					style={{
 						backgroundColor: colors.surfaceElevated,
-						borderColor: colors.borderSubtle,
+						borderColor: colors.border,
 						borderWidth: 1,
 					}}
-					className='w-8 h-8 items-center justify-center rounded-full active:opacity-70'
+					className='w-8 h-8 items-center justify-center rounded-lg active:opacity-70'
 				>
-					<X size={16} color={colors.textPrimary} />
+					<X size={15} color={colors.textPrimary} />
 				</Pressable>
 			</View>
 
 			<ScrollView
 				className='flex-1 px-5'
-				contentContainerStyle={{ paddingBottom: 40 }}
+				contentContainerStyle={{ paddingBottom: 48 }}
 				showsVerticalScrollIndicator={false}
 			>
-				{/* Hero Title & Master Icon */}
-				<View className='items-center my-4'>
+				{/* Hero Architectural Header */}
+				<View className='items-center mt-5 mb-5'>
 					<View
 						style={{
 							backgroundColor: colors.accentBg,
@@ -184,9 +232,9 @@ export default function PaywallScreen() {
 							shadowOffset: { width: 0, height: 4 },
 							shadowOpacity: isDark ? 0.35 : 0.15,
 							shadowRadius: 10,
-							elevation: 5,
+							elevation: 4,
 						}}
-						className='w-16 h-16 rounded-2xl items-center justify-center mb-2.5 p-1'
+						className='w-16 h-16 rounded-2xl items-center justify-center mb-3 p-1'
 					>
 						<Image
 							source={require('../../assets/images/icon.png')}
@@ -194,47 +242,64 @@ export default function PaywallScreen() {
 							resizeMode='cover'
 						/>
 					</View>
+
+					<View
+						style={{
+							backgroundColor: colors.surfaceSubtle,
+							borderColor: colors.border,
+							borderWidth: 1,
+						}}
+						className='px-2.5 py-0.5 rounded mb-2'
+					>
+						<Text
+							style={{ color: colors.accent }}
+							className='text-[10px] font-sans-bold uppercase tracking-widest'
+						>
+							[ HABIT DEFENSE & FOCUS ]
+						</Text>
+					</View>
+
 					<Text
 						style={{
 							fontFamily: 'EBGaramond_700Bold',
 							color: colors.textPrimary,
 						}}
-						className='text-2xl text-center'
+						className='text-3xl text-center'
 					>
 						Enter the Sanctuary
 					</Text>
 					<Text
 						style={{ color: colors.textSecondary }}
-						className='text-xs text-center mt-1 px-4 leading-relaxed'
+						className='text-xs text-center mt-1.5 px-3 leading-relaxed'
 					>
 						{subtitle}
 					</Text>
 				</View>
 
-				{/* Bible Scroll Signature Feature Spotlight */}
+				{/* Sacred Telemetry Viewport (Dedicated Cosmic Instrument Viewport) */}
 				<View
 					style={{
-						borderRadius: 20,
+						borderRadius: 18,
 						overflow: 'hidden',
 						borderWidth: 1.5,
-						borderColor: colors.accent,
-						marginBottom: 16,
-						backgroundColor: '#0d120f',
-						shadowColor: colors.accent,
-						shadowOffset: { width: 0, height: 4 },
-						shadowOpacity: isDark ? 0.35 : 0.15,
-						shadowRadius: 12,
-						elevation: 6,
+						borderColor: isDark ? '#2b3f33' : '#324a3c',
+						backgroundColor: '#070b09',
+						marginBottom: 18,
+						shadowColor: '#000000',
+						shadowOffset: { width: 0, height: 6 },
+						shadowOpacity: 0.45,
+						shadowRadius: 14,
+						elevation: 8,
 					}}
 				>
-					{/* Sacred Background Art */}
+					{/* Authentic Deep Starfield Background */}
 					<Image
 						source={SCROLL_BACKGROUNDS[7] || SCROLL_BACKGROUNDS[0]}
 						style={StyleSheet.absoluteFill}
 						resizeMode='cover'
 					/>
 
-					{/* Dark Multi-Stop Gradient Overlay for guaranteed contrast */}
+					{/* Calibrated Dark Vignette Overlay for Crisp Readability */}
 					<Svg
 						pointerEvents='none'
 						style={StyleSheet.absoluteFill}
@@ -242,179 +307,204 @@ export default function PaywallScreen() {
 						height='100%'
 					>
 						<Defs>
-							<LinearGradient id='paywallScrollMockup' x1='0' y1='0' x2='0' y2='1'>
-								<Stop offset='0%' stopColor='#0d120f' stopOpacity='0.55' />
-								<Stop offset='40%' stopColor='#0d120f' stopOpacity='0.70' />
-								<Stop offset='75%' stopColor='#0d120f' stopOpacity='0.85' />
-								<Stop offset='100%' stopColor='#0d120f' stopOpacity='0.96' />
+							<LinearGradient id='viewportGradient' x1='0' y1='0' x2='0' y2='1'>
+								<Stop offset='0%' stopColor='#070b09' stopOpacity={0.65} />
+								<Stop offset='45%' stopColor='#070b09' stopOpacity={0.75} />
+								<Stop offset='80%' stopColor='#070b09' stopOpacity={0.92} />
+								<Stop offset='100%' stopColor='#070b09' stopOpacity={0.98} />
 							</LinearGradient>
 						</Defs>
-						<Rect width='100%' height='100%' fill='url(#paywallScrollMockup)' />
+						<Rect width='100%' height='100%' fill='url(#viewportGradient)' />
 					</Svg>
 
 					<View style={{ padding: 16 }}>
-						{/* Top Tag Row */}
-						<View className='flex-row items-center justify-between mb-3'>
+						{/* Viewport HUD Status Bar */}
+						<View className='flex-row items-center justify-between mb-3.5'>
 							<View
 								style={{
-									backgroundColor: 'rgba(245, 184, 0, 0.18)',
-									borderColor: colors.accent,
+									backgroundColor: 'rgba(245, 184, 0, 0.16)',
+									borderColor: '#f5b800',
 									borderWidth: 1,
 								}}
-								className='flex-row items-center px-2.5 py-1 rounded-full'
+								className='flex-row items-center px-2 py-0.5 rounded'
 							>
-								<Sparkles size={11} color={colors.accent} />
-								<Text
-									style={{ color: colors.accent }}
-									className='text-[10px] font-sans-bold uppercase tracking-wider ml-1.5'
-								>
-									Sanctuary Exclusive • Bible Scroll
+								<View className='w-1.5 h-1.5 rounded-full bg-[#f5b800] mr-1.5' />
+								<Text className='text-[10px] font-sans-bold uppercase tracking-wider text-[#f5b800]'>
+									SACRED ENGINE // REELS
 								</Text>
 							</View>
 
 							<View
-								style={{ backgroundColor: 'rgba(255, 255, 255, 0.12)' }}
-								className='px-2 py-0.5 rounded-full'
+								style={{
+									backgroundColor: 'rgba(255, 255, 255, 0.08)',
+									borderColor: 'rgba(255, 255, 255, 0.16)',
+									borderWidth: 1,
+								}}
+								className='px-2 py-0.5 rounded'
 							>
-								<Text className='text-[10px] font-sans-medium text-white/90'>
-									Vertical Reels
+								<Text className='text-[10px] font-sans-medium text-white/70'>
+									VIEWPORT • 336 CARDS
 								</Text>
 							</View>
 						</View>
 
-						{/* Mood Filter Simulation */}
-						<View className='flex-row items-center space-x-1.5 mb-3'>
+						{/* Mood State Telemetry Pills */}
+						<View className='flex-row items-center mb-3.5'>
 							<View
 								style={{
-									backgroundColor: 'rgba(245, 184, 0, 0.25)',
-									borderColor: colors.accent,
+									backgroundColor: '#232014',
+									borderColor: '#f5b800',
 									borderWidth: 1,
 								}}
-								className='px-2.5 py-1 rounded-full mr-1.5'
+								className='px-2.5 py-1 rounded mr-2'
 							>
-								<Text style={{ color: colors.accent }} className='text-[11px] font-sans-bold'>
+								<Text className='text-[11px] font-sans-bold text-[#f5b800]'>
 									🕊️ Peace
 								</Text>
 							</View>
 							<View
-								style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)', borderColor: 'rgba(255, 255, 255, 0.15)', borderWidth: 1 }}
-								className='px-2.5 py-1 rounded-full mr-1.5'
+								style={{
+									backgroundColor: 'rgba(255, 255, 255, 0.07)',
+									borderColor: 'rgba(255, 255, 255, 0.15)',
+									borderWidth: 1,
+								}}
+								className='px-2.5 py-1 rounded mr-2'
 							>
-								<Text className='text-[11px] font-sans-medium text-white/80'>
+								<Text className='text-[11px] font-sans-medium text-white/75'>
 									🛡️ Strength
 								</Text>
 							</View>
 							<View
-								style={{ backgroundColor: 'rgba(0, 0, 0, 0.45)', borderColor: 'rgba(255, 255, 255, 0.15)', borderWidth: 1 }}
-								className='px-2.5 py-1 rounded-full'
+								style={{
+									backgroundColor: 'rgba(255, 255, 255, 0.07)',
+									borderColor: 'rgba(255, 255, 255, 0.15)',
+									borderWidth: 1,
+								}}
+								className='px-2.5 py-1 rounded'
 							>
-								<Text className='text-[11px] font-sans-medium text-white/80'>
+								<Text className='text-[11px] font-sans-medium text-white/75'>
 									✨ Comfort
 								</Text>
 							</View>
 						</View>
 
-						{/* Scripture Card Simulation & Floating Actions */}
-						<View className='flex-row items-center justify-between mb-3'>
+						{/* Scripture Card Simulation & Tactical Floating Controls */}
+						<View className='flex-row items-center justify-between mb-3.5'>
 							<View className='flex-1 pr-3'>
 								<Text
 									style={{
 										fontFamily: 'EBGaramond_700Bold',
-										textShadowColor: 'rgba(0, 0, 0, 0.9)',
-										textShadowOffset: { width: 0, height: 2 },
+										color: '#faf9f5',
+										textShadowColor: 'rgba(0, 0, 0, 0.95)',
+										textShadowOffset: { width: 0, height: 1.5 },
 										textShadowRadius: 4,
 									}}
-									className='text-base text-white leading-snug italic'
+									className='text-base leading-snug italic'
 								>
 									“Come to me, all who labor and are heavy laden, and I will give you rest.”
 								</Text>
 								<Text
-									style={{ color: colors.accent }}
+									style={{
+										color: '#f5b800',
+										letterSpacing: 0.5,
+									}}
 									className='text-xs font-sans-bold mt-1.5'
 								>
-									Matthew 11:28 • KJV
+									MATTHEW 11:28 • KJV
 								</Text>
 							</View>
 
-							{/* Mock Floating Action Stack */}
+							{/* Tactical Viewport Controls */}
 							<View className='items-center space-y-2'>
 								<View
 									style={{
-										backgroundColor: 'rgba(20, 20, 20, 0.65)',
-										borderColor: 'rgba(255, 255, 255, 0.18)',
+										backgroundColor: 'rgba(15, 22, 18, 0.85)',
+										borderColor: 'rgba(245, 184, 0, 0.4)',
 										borderWidth: 1,
 									}}
-									className='w-7 h-7 rounded-full items-center justify-center mb-1.5'
+									className='w-7 h-7 rounded-lg items-center justify-center mb-1.5'
 								>
-									<Heart size={13} color={colors.accent} fill={colors.accent} />
+									<Heart size={13} color='#f5b800' fill='#f5b800' />
 								</View>
 								<View
 									style={{
-										backgroundColor: 'rgba(20, 20, 20, 0.65)',
+										backgroundColor: 'rgba(15, 22, 18, 0.85)',
 										borderColor: 'rgba(255, 255, 255, 0.18)',
 										borderWidth: 1,
 									}}
-									className='w-7 h-7 rounded-full items-center justify-center mb-1.5'
+									className='w-7 h-7 rounded-lg items-center justify-center mb-1.5'
 								>
-									<Type size={13} color='#ffffff' />
+									<Type size={13} color='#faf9f5' />
 								</View>
 								<View
 									style={{
-										backgroundColor: 'rgba(20, 20, 20, 0.65)',
+										backgroundColor: 'rgba(15, 22, 18, 0.85)',
 										borderColor: 'rgba(255, 255, 255, 0.18)',
 										borderWidth: 1,
 									}}
-									className='w-7 h-7 rounded-full items-center justify-center'
+									className='w-7 h-7 rounded-lg items-center justify-center'
 								>
-									<Share2 size={13} color='#ffffff' />
+									<Share2 size={13} color='#faf9f5' />
 								</View>
 							</View>
 						</View>
 
-						{/* Bottom Benefit Callout */}
+						{/* Viewport Footer Telemetry */}
 						<View
-							style={{ borderTopColor: 'rgba(255, 255, 255, 0.12)', borderTopWidth: 1 }}
+							style={{
+								borderTopColor: 'rgba(255, 255, 255, 0.12)',
+								borderTopWidth: 1,
+							}}
 							className='pt-2.5 flex-row items-center justify-between'
 						>
-							<View className='flex-row items-center flex-1 mr-2'>
-								<Sparkles size={12} color={colors.accent} />
-								<Text className='text-[11px] font-sans-medium text-white/80 ml-1.5'>
+							<View className='flex-row items-center'>
+								<Sparkles size={12} color='#f5b800' />
+								<Text className='text-[10px] font-sans-bold uppercase tracking-wider text-white/80 ml-1.5'>
 									336 Curated Mood Verses & Sacred Art
 								</Text>
 							</View>
 							<View
 								style={{
-									backgroundColor: 'rgba(16, 185, 129, 0.2)',
-									borderColor: 'rgba(16, 185, 129, 0.4)',
+									backgroundColor: 'rgba(93, 184, 114, 0.22)',
+									borderColor: '#5db872',
 									borderWidth: 1,
 								}}
 								className='px-2 py-0.5 rounded'
 							>
-								<Text className='text-[10px] font-sans-bold text-emerald-300 uppercase'>
-									Counts to Goal
+								<Text className='text-[9px] font-sans-bold uppercase tracking-wider text-[#5db872]'>
+									COUNTS TO GOAL
 								</Text>
 							</View>
 						</View>
 					</View>
 				</View>
 
-				{/* Comparison Feature Table */}
-				<Card
+				{/* Swiss Modular Comparison Matrix ("WHAT YOU GET") */}
+				<View
 					style={{
 						backgroundColor: colors.surface,
 						borderColor: colors.border,
 						borderWidth: 1,
-						padding: 14,
-						marginBottom: 16,
 						borderRadius: 16,
+						padding: 14,
+						marginBottom: 18,
 					}}
 				>
-					<Text
-						style={{ color: colors.accent }}
-						className='text-xs font-sans-bold uppercase tracking-wider mb-2'
-					>
-						What You Get
-					</Text>
+					<View className='flex-row items-center justify-between pb-3 border-b' style={{ borderBottomColor: colors.borderSubtle }}>
+						<Text
+							style={{ color: colors.accent }}
+							className='text-xs font-sans-bold uppercase tracking-widest'
+						>
+							SPECIFICATIONS // WHAT YOU GET
+						</Text>
+						<Text
+							style={{ color: colors.textMuted }}
+							className='text-[10px] font-sans-medium uppercase'
+						>
+							7 CAPABILITIES
+						</Text>
+					</View>
+
 					{FEATURES.map((feat, idx) => {
 						const IconComponent = feat.icon;
 						return (
@@ -426,108 +516,181 @@ export default function PaywallScreen() {
 									paddingVertical: 10,
 								}}
 							>
-								<View className='flex-row items-center mb-1'>
-									<View
-										style={{ backgroundColor: colors.accentBg }}
-										className='w-6 h-6 rounded-md items-center justify-center mr-2'
-									>
-										<IconComponent size={14} color={colors.accent} />
+								{/* Module Header */}
+								<View className='flex-row items-center justify-between mb-1.5'>
+									<View className='flex-row items-center flex-1 pr-2'>
+										<View
+											style={{
+												backgroundColor: colors.accentBg,
+												borderColor: colors.accent,
+												borderWidth: 0.5,
+											}}
+											className='w-6 h-6 rounded-md items-center justify-center mr-2'
+										>
+											<IconComponent size={13} color={colors.accent} />
+										</View>
+										<Text
+											style={{ color: colors.textPrimary }}
+											className='text-xs font-sans-bold'
+											numberOfLines={1}
+										>
+											{feat.title}
+										</Text>
 									</View>
-									<Text style={{ color: colors.textPrimary }} className='text-sm font-sans-semibold'>
-										{feat.title}
+									<Text
+										style={{ color: colors.textMuted }}
+										className='text-[9px] font-sans-medium tracking-widest'
+									>
+										{feat.code}
 									</Text>
 								</View>
-								<View className='flex-row justify-between items-center ml-8'>
-									<Text style={{ color: colors.textSecondary }} className='text-xs'>
-										Covenant: {feat.free}
-									</Text>
-									<View className='flex-row items-center'>
-										<Check size={13} color={colors.accent} strokeWidth={2.5} />
+
+								{/* Precision Split Telemetry Strip (Zero Text Collision) */}
+								<View className='flex-row items-stretch gap-1.5 pl-8'>
+									{/* Free / Covenant Pill */}
+									<View
+										style={{
+											flex: 1,
+											backgroundColor: colors.surfaceSubtle,
+											borderColor: colors.borderSubtle,
+											borderWidth: 1,
+										}}
+										className='px-2.5 py-1.5 rounded-md justify-center'
+									>
 										<Text
-											style={{ color: colors.accent }}
-											className='text-xs font-sans-medium ml-1'
+											style={{ color: colors.textMuted }}
+											className='text-[9px] font-sans-bold uppercase tracking-wider mb-0.5'
 										>
-											{feat.pro}
+											FREE COVENANT
+										</Text>
+										<Text
+											style={{ color: colors.textSecondary }}
+											className='text-[11px] font-sans'
+											numberOfLines={1}
+										>
+											{feat.covenant}
+										</Text>
+									</View>
+
+									{/* Pro / Sanctuary Badge */}
+									<View
+										style={{
+											flex: 1.25,
+											backgroundColor: colors.accentBg,
+											borderColor: colors.accent,
+											borderWidth: 1,
+										}}
+										className='px-2.5 py-1.5 rounded-md justify-center'
+									>
+										<View className='flex-row items-center justify-between mb-0.5'>
+											<Text
+												style={{ color: colors.accent }}
+												className='text-[9px] font-sans-bold uppercase tracking-wider'
+											>
+												SANCTUARY
+											</Text>
+											<Check size={11} color={colors.accent} strokeWidth={3} />
+										</View>
+										<Text
+											style={{ color: colors.textPrimary }}
+											className='text-[11px] font-sans-bold'
+											numberOfLines={1}
+										>
+											{feat.sanctuary}
 										</Text>
 									</View>
 								</View>
 							</View>
 						);
 					})}
-				</Card>
+				</View>
 
-				{/* Pricing Plan Selector */}
+				{/* Pricing Plans Architecture */}
 				<View className='mb-3'>
-					{/* Annual Card (Hero with 7-Day Free Trial) */}
+					<Text
+						style={{ color: colors.accent }}
+						className='text-xs font-sans-bold uppercase tracking-widest mb-2.5'
+					>
+						SELECT ENROLLMENT TIER
+					</Text>
+
+					{/* Annual Plan (Hero Card with 7-Day Free Trial) */}
 					<Pressable
 						onPress={() => setSelectedPlan('annual')}
 						style={{
 							backgroundColor: selectedPlan === 'annual' ? colors.accentBg : colors.surface,
 							borderColor: selectedPlan === 'annual' ? colors.accent : colors.border,
-							borderWidth: 1.5,
+							borderWidth: selectedPlan === 'annual' ? 2 : 1,
 							borderRadius: 14,
 							padding: 14,
 							marginBottom: 10,
 						}}
-						className='flex-row items-center justify-between'
 					>
-						<View className='flex-1 mr-3'>
-							<View className='flex-row items-center flex-wrap gap-1.5'>
+						{/* Top Banner Tag */}
+						<View className='flex-row items-center justify-between mb-2'>
+							<View
+								style={{
+									backgroundColor: colors.accent,
+								}}
+								className='px-2.5 py-0.5 rounded'
+							>
+								<Text
+									style={{ color: colors.accentText }}
+									className='text-[9px] font-sans-bold uppercase tracking-wider'
+								>
+									★ RECOMMENDED // 7-DAY FREE TRIAL
+								</Text>
+							</View>
+							<View
+								style={{
+									backgroundColor: colors.surfaceElevated,
+									borderColor: colors.borderSubtle,
+									borderWidth: 1,
+								}}
+								className='px-2 py-0.5 rounded'
+							>
+								<Text
+									style={{ color: colors.accent }}
+									className='text-[10px] font-sans-bold uppercase'
+								>
+									SAVE 50%
+								</Text>
+							</View>
+						</View>
+
+						<View className='flex-row items-center justify-between'>
+							<View className='flex-1 mr-3'>
 								<Text style={{ color: colors.textPrimary }} className='text-base font-sans-bold'>
 									Annual Sanctuary
 								</Text>
-								<View
-									style={{ backgroundColor: colors.accent }}
-									className='px-2 py-0.5 rounded-full'
-								>
-									<Text
-										style={{ color: colors.accentText }}
-										className='text-[10px] font-sans-bold uppercase'
-									>
-										7-Day Free Trial
-									</Text>
-								</View>
-								<View
-									style={{
-										backgroundColor: colors.surfaceElevated,
-										borderColor: colors.borderSubtle,
-										borderWidth: 1,
-									}}
-									className='px-2 py-0.5 rounded-full'
-								>
-									<Text
-										style={{ color: colors.accent }}
-										className='text-[10px] font-sans-bold uppercase'
-									>
-										Save 50%
-									</Text>
-								</View>
+								<Text style={{ color: colors.textSecondary }} className='text-xs mt-0.5'>
+									<Text style={{ color: colors.accent, fontWeight: '700' }}>$2.49/mo</Text> · {annualPrice} billed yearly after 7-day trial
+								</Text>
 							</View>
-							<Text style={{ color: colors.textSecondary }} className='text-xs mt-1'>
-								$2.49/mo · {annualPrice} billed yearly after 7-day trial
-							</Text>
-						</View>
-						<View
-							style={{
-								borderColor: selectedPlan === 'annual' ? colors.accent : colors.borderSubtle,
-								backgroundColor: selectedPlan === 'annual' ? colors.accent : 'transparent',
-								borderWidth: 1.5,
-							}}
-							className='w-5 h-5 rounded-full items-center justify-center'
-						>
-							{selectedPlan === 'annual' && (
-								<View style={{ backgroundColor: colors.accentText }} className='w-2 h-2 rounded-full' />
-							)}
+
+							{/* Tactical Radio Indicator */}
+							<View
+								style={{
+									borderColor: selectedPlan === 'annual' ? colors.accent : colors.borderSubtle,
+									backgroundColor: selectedPlan === 'annual' ? colors.accent : 'transparent',
+									borderWidth: 1.5,
+								}}
+								className='w-5 h-5 rounded-full items-center justify-center'
+							>
+								{selectedPlan === 'annual' && (
+									<View style={{ backgroundColor: colors.accentText }} className='w-2 h-2 rounded-full' />
+								)}
+							</View>
 						</View>
 					</Pressable>
 
-					{/* Monthly Card */}
+					{/* Monthly Plan */}
 					<Pressable
 						onPress={() => setSelectedPlan('monthly')}
 						style={{
 							backgroundColor: selectedPlan === 'monthly' ? colors.accentBg : colors.surface,
 							borderColor: selectedPlan === 'monthly' ? colors.accent : colors.border,
-							borderWidth: 1.5,
+							borderWidth: selectedPlan === 'monthly' ? 2 : 1,
 							borderRadius: 14,
 							padding: 14,
 							marginBottom: 10,
@@ -538,8 +701,8 @@ export default function PaywallScreen() {
 							<Text style={{ color: colors.textPrimary }} className='text-base font-sans-bold'>
 								Monthly Sanctuary
 							</Text>
-							<Text style={{ color: colors.textSecondary }} className='text-xs mt-1'>
-								{monthlyPrice}/month · Cancel anytime
+							<Text style={{ color: colors.textSecondary }} className='text-xs mt-0.5'>
+								<Text style={{ color: colors.textPrimary, fontWeight: '700' }}>{monthlyPrice}/month</Text> · Flexible commitment, cancel anytime
 							</Text>
 						</View>
 						<View
@@ -556,13 +719,13 @@ export default function PaywallScreen() {
 						</View>
 					</Pressable>
 
-					{/* Lifetime Card */}
+					{/* Lifetime Plan */}
 					<Pressable
 						onPress={() => setSelectedPlan('lifetime')}
 						style={{
 							backgroundColor: selectedPlan === 'lifetime' ? colors.accentBg : colors.surface,
 							borderColor: selectedPlan === 'lifetime' ? colors.accent : colors.border,
-							borderWidth: 1.5,
+							borderWidth: selectedPlan === 'lifetime' ? 2 : 1,
 							borderRadius: 14,
 							padding: 14,
 						}}
@@ -579,18 +742,18 @@ export default function PaywallScreen() {
 										borderColor: colors.borderSubtle,
 										borderWidth: 1,
 									}}
-									className='ml-2.5 px-2 py-0.5 rounded-full'
+									className='ml-2 px-1.5 py-0.5 rounded'
 								>
 									<Text
 										style={{ color: colors.textSecondary }}
-										className='text-[10px] font-sans-bold uppercase'
+										className='text-[9px] font-sans-bold uppercase'
 									>
-										Forever
+										ONE-TIME
 									</Text>
 								</View>
 							</View>
-							<Text style={{ color: colors.textSecondary }} className='text-xs mt-1'>
-								{lifetimePrice} · Pay once, keep forever
+							<Text style={{ color: colors.textSecondary }} className='text-xs mt-0.5'>
+								<Text style={{ color: colors.textPrimary, fontWeight: '700' }}>{lifetimePrice}</Text> · Single investment, perpetual unlock
 							</Text>
 						</View>
 						<View
@@ -620,48 +783,85 @@ export default function PaywallScreen() {
 							marginBottom: 16,
 						}}
 					>
-						<View className='flex-row items-center mb-2.5'>
-							<Sparkles size={13} color={colors.accent} />
-							<Text style={{ color: colors.accent }} className='text-xs font-sans-bold uppercase tracking-wider ml-1.5'>
-								How Your 7-Day Free Trial Works
+						<View className='flex-row items-center justify-between mb-3 border-b pb-2' style={{ borderBottomColor: colors.borderSubtle }}>
+							<View className='flex-row items-center'>
+								<Sparkles size={13} color={colors.accent} />
+								<Text style={{ color: colors.accent }} className='text-xs font-sans-bold uppercase tracking-wider ml-1.5'>
+									7-DAY FREE TRIAL PROTOCOL
+								</Text>
+							</View>
+							<Text style={{ color: colors.textMuted }} className='text-[9px] font-sans-medium uppercase'>
+								AUTOMATED
 							</Text>
 						</View>
 
-						<View className='space-y-2'>
+						<View className='space-y-2.5'>
+							{/* Step 1 */}
 							<View className='flex-row items-start'>
-								<View style={{ backgroundColor: colors.accent }} className='w-4.5 h-4.5 rounded-full items-center justify-center mr-2.5 mt-0.5'>
-									<Text style={{ color: colors.accentText }} className='text-[10px] font-sans-bold'>1</Text>
+								<View
+									style={{ backgroundColor: colors.accent }}
+									className='w-5 h-5 rounded items-center justify-center mr-2.5 mt-0.5'
+								>
+									<Text style={{ color: colors.accentText }} className='text-[10px] font-sans-bold'>01</Text>
 								</View>
 								<View className='flex-1'>
-									<Text style={{ color: colors.textPrimary }} className='text-xs font-sans-bold'>Today: Instant Access ($0.00)</Text>
-									<Text style={{ color: colors.textSecondary }} className='text-[11px] font-sans'>Full access to all Sanctuary spiritual disciplines.</Text>
+									<Text style={{ color: colors.textPrimary }} className='text-xs font-sans-bold'>
+										Today: Instant Zero-Cost Access ($0.00)
+									</Text>
+									<Text style={{ color: colors.textSecondary }} className='text-[11px] font-sans'>
+										Full immediate unlock of all Sanctuary blocker presets and sacred tools.
+									</Text>
 								</View>
 							</View>
 
+							{/* Step 2 */}
 							<View className='flex-row items-start'>
-								<View style={{ backgroundColor: colors.surfaceElevated, borderColor: colors.borderSubtle, borderWidth: 1 }} className='w-4.5 h-4.5 rounded-full items-center justify-center mr-2.5 mt-0.5'>
-									<Text style={{ color: colors.textSecondary }} className='text-[10px] font-sans-bold'>5</Text>
+								<View
+									style={{
+										backgroundColor: colors.surfaceElevated,
+										borderColor: colors.borderSubtle,
+										borderWidth: 1,
+									}}
+									className='w-5 h-5 rounded items-center justify-center mr-2.5 mt-0.5'
+								>
+									<Text style={{ color: colors.textSecondary }} className='text-[10px] font-sans-bold'>05</Text>
 								</View>
 								<View className='flex-1'>
-									<Text style={{ color: colors.textPrimary }} className='text-xs font-sans-bold'>Day 5: Friendly Reminder</Text>
-									<Text style={{ color: colors.textSecondary }} className='text-[11px] font-sans'>We notify you 2 days before the trial period concludes.</Text>
+									<Text style={{ color: colors.textPrimary }} className='text-xs font-sans-bold'>
+										Day 5: 48-Hour Courtesy Reminder
+									</Text>
+									<Text style={{ color: colors.textSecondary }} className='text-[11px] font-sans'>
+										We dispatch a push reminder 2 days before your trial period concludes.
+									</Text>
 								</View>
 							</View>
 
+							{/* Step 3 */}
 							<View className='flex-row items-start'>
-								<View style={{ backgroundColor: colors.surfaceElevated, borderColor: colors.borderSubtle, borderWidth: 1 }} className='w-4.5 h-4.5 rounded-full items-center justify-center mr-2.5 mt-0.5'>
-									<Text style={{ color: colors.textSecondary }} className='text-[10px] font-sans-bold'>7</Text>
+								<View
+									style={{
+										backgroundColor: colors.surfaceElevated,
+										borderColor: colors.borderSubtle,
+										borderWidth: 1,
+									}}
+									className='w-5 h-5 rounded items-center justify-center mr-2.5 mt-0.5'
+								>
+									<Text style={{ color: colors.textSecondary }} className='text-[10px] font-sans-bold'>07</Text>
 								</View>
 								<View className='flex-1'>
-									<Text style={{ color: colors.textPrimary }} className='text-xs font-sans-bold'>Day 7: Subscription Begins</Text>
-									<Text style={{ color: colors.textSecondary }} className='text-[11px] font-sans'>Renews at {annualPrice}/year ($2.49/mo). Cancel anytime before.</Text>
+									<Text style={{ color: colors.textPrimary }} className='text-xs font-sans-bold'>
+										Day 7: Subscription Renews
+									</Text>
+									<Text style={{ color: colors.textSecondary }} className='text-[11px] font-sans'>
+										Renews at {annualPrice}/year ($2.49/mo). Easily cancel anytime before in app store settings.
+									</Text>
 								</View>
 							</View>
 						</View>
 					</View>
 				)}
 
-				{/* Primary CTA Button */}
+				{/* Primary High-Tactile CTA Button */}
 				<Pressable
 					onPress={handleSubscribe}
 					disabled={isProcessing}
@@ -672,8 +872,13 @@ export default function PaywallScreen() {
 						borderRadius: 14,
 						alignItems: 'center',
 						justifyContent: 'center',
-						marginBottom: 4,
+						marginBottom: 6,
 						opacity: isProcessing ? 0.7 : 1,
+						shadowColor: colors.accent,
+						shadowOffset: { width: 0, height: 4 },
+						shadowOpacity: isDark ? 0.4 : 0.2,
+						shadowRadius: 8,
+						elevation: 4,
 					}}
 				>
 					{isProcessing ? (
@@ -686,42 +891,47 @@ export default function PaywallScreen() {
 									fontSize: 16,
 									fontWeight: '700',
 									fontFamily: 'Inter_700Bold',
+									letterSpacing: 0.5,
 								}}
 							>
 								{selectedPlan === 'annual'
-									? 'Start 7-Day Free Trial'
+									? 'START 7-DAY FREE TRIAL'
 									: selectedPlan === 'lifetime'
-										? `Unlock Forever — ${lifetimePrice}`
-										: `Start for ${monthlyPrice}/mo`}
+										? `UNLOCK FOREVER — ${lifetimePrice}`
+										: `SUBSCRIBE FOR ${monthlyPrice}/MO`}
 							</Text>
 							{selectedPlan === 'annual' && (
 								<Text
 									style={{
 										color: colors.accentText,
-										fontSize: 11,
+										fontSize: 10,
 										opacity: 0.9,
 										marginTop: 2,
-										fontFamily: 'Inter_500Medium',
+										fontFamily: 'Inter_600SemiBold',
+										letterSpacing: 0.3,
 									}}
 								>
-									$0.00 today · Then {annualPrice}/year · Cancel anytime
+									$0.00 TODAY · THEN {annualPrice}/YEAR · CANCEL ANYTIME
 								</Text>
 							)}
 						</View>
 					)}
 				</Pressable>
 
-				{/* Emotional anchor line */}
-				<Text style={{ color: colors.accent }} className='text-xs font-sans-medium text-center mt-2 mb-2'>
+				{/* Behavioral Anchor Guarantee */}
+				<Text
+					style={{ color: colors.accent }}
+					className='text-xs font-sans-medium text-center mt-1.5 mb-3'
+				>
 					{selectedPlan === 'annual'
 						? '~$2.49/month — replace scrolling with Scripture'
 						: selectedPlan === 'lifetime'
-							? 'One investment in your spiritual walk, forever'
-							: 'Less than a cup of coffee to guard your focus'}
+							? 'Single investment for lifetime focus and habit shield'
+							: 'Less than a coffee to guard your daily scripture walk'}
 				</Text>
 
-				{/* Store Compliance & Legal Links */}
-				<View className='flex-row items-center justify-center space-x-3 mt-2 mb-2'>
+				{/* Legal and Compliance Links */}
+				<View className='flex-row items-center justify-center space-x-3 mt-1 mb-2'>
 					<Pressable onPress={() => openLink('https://bibleunlock.app/terms')} hitSlop={8}>
 						<Text style={{ color: colors.textSecondary }} className='text-xs font-sans-medium underline'>
 							Terms of Service
@@ -736,12 +946,12 @@ export default function PaywallScreen() {
 					<Text style={{ color: colors.textMuted }}>•</Text>
 					<Pressable onPress={handleRestore} hitSlop={8}>
 						<Text style={{ color: colors.textSecondary }} className='text-xs font-sans-medium underline'>
-							Restore
+							Restore Purchases
 						</Text>
 					</Pressable>
 				</View>
 
-				{/* Apple & Google auto-renewal disclosure */}
+				{/* Store Compliance Disclosure */}
 				<Text style={{ color: colors.textMuted }} className='text-[10px] text-center mt-1 leading-relaxed px-2'>
 					Annual plan includes a 7-day free trial, then renews at {annualPrice}/year. Subscriptions automatically renew unless cancelled in store account settings at least 24 hours before the end of the trial or current period. Payment is charged to your Apple ID or Google Play account.
 				</Text>

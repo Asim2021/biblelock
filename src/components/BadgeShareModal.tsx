@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, Pressable, Modal, Share, Alert } from 'react-native';
+import { View, Text, Pressable, Modal, Share } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Share2 } from 'lucide-react-native';
 import { BadgeItem } from '../types/onboarding';
 import { useFeatureGate } from '../lib/useFeatureGate';
+import { useTheme } from '../lib/themeContext';
 
 interface BadgeShareModalProps {
   badge: BadgeItem | null;
@@ -19,6 +20,7 @@ export const BadgeShareModal: React.FC<BadgeShareModalProps> = ({
   onClose,
 }) => {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const { requirePremium } = useFeatureGate();
   if (!badge) return null;
 
@@ -37,48 +39,117 @@ export const BadgeShareModal: React.FC<BadgeShareModalProps> = ({
   };
 
   return (
-    <Modal visible={!!badge} transparent animationType="slide">
+    <Modal visible={!!badge} transparent animationType="slide" onRequestClose={onClose}>
       <View
-        className="flex-1 bg-black/85 justify-center items-center px-6"
-        style={{ paddingBottom: Math.max(16, insets.bottom + 16), paddingTop: Math.max(16, insets.top + 16) }}
+        className="flex-1 justify-center items-center px-6"
+        style={{
+          backgroundColor: isDark ? 'rgba(0,0,0,0.85)' : 'rgba(0,0,0,0.5)',
+          paddingBottom: Math.max(16, insets.bottom + 16),
+          paddingTop: Math.max(16, insets.top + 16),
+        }}
       >
-        <View className="w-full bg-[#141e18] border border-[#2b4434] rounded-3xl p-6 shadow-2xl items-center">
+        <View
+          style={{
+            width: '100%',
+            maxWidth: 380,
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            borderWidth: 1,
+            borderRadius: 24,
+            padding: 24,
+            alignItems: 'center',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: isDark ? 0.45 : 0.15,
+            shadowRadius: 20,
+            elevation: 10,
+          }}
+        >
           {/* Top Badge Icon */}
-          <View className="w-24 h-24 rounded-full bg-[#203126] border-2 border-[#f5b800] items-center justify-center mb-4 shadow-lg">
-            <Text className="text-5xl">{badge.icon}</Text>
+          <View
+            style={{
+              width: 88,
+              height: 88,
+              borderRadius: 44,
+              backgroundColor: colors.accentBg,
+              borderWidth: 2,
+              borderColor: colors.accent,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 16,
+            }}
+          >
+            <Text style={{ fontSize: 44 }}>{badge.icon}</Text>
           </View>
 
           <Text
-            className="text-2xl font-serif-bold text-[#faf9f5] text-center mb-1"
-            style={{ fontFamily: 'EBGaramond_700Bold' }}
+            style={{
+              fontSize: 22,
+              fontFamily: 'EBGaramond_700Bold',
+              color: colors.textPrimary,
+              textAlign: 'center',
+              marginBottom: 4,
+            }}
           >
             {badge.title}
           </Text>
 
-          <Text className="text-xs font-sans text-[#f5b800] uppercase tracking-widest mb-3">
+          <Text
+            style={{
+              fontSize: 11,
+              fontFamily: 'Inter_600SemiBold',
+              color: colors.accent,
+              textTransform: 'uppercase',
+              letterSpacing: 1.2,
+              marginBottom: 12,
+            }}
+          >
             {badge.subtitle}
           </Text>
 
-          <Text className="text-sm font-sans text-[#aee2d1] text-center px-4 leading-relaxed mb-6">
+          <Text
+            style={{
+              fontSize: 13,
+              fontFamily: 'Inter_400Regular',
+              color: colors.textSecondary,
+              textAlign: 'center',
+              paddingHorizontal: 16,
+              lineHeight: 18,
+              marginBottom: 20,
+            }}
+          >
             {badge.requirement}
           </Text>
 
           {/* Social Proof Card */}
-          <View className="w-full p-4 rounded-2xl bg-[#1a2920] border border-[#2a4735] mb-6 flex-row items-center justify-around">
-            <View className="items-center">
-              <Text className="text-xl font-sans-bold text-[#faf9f5]">
+          <View
+            style={{
+              width: '100%',
+              padding: 16,
+              borderRadius: 16,
+              backgroundColor: colors.surfaceSubtle,
+              borderColor: colors.borderSubtle,
+              borderWidth: 1,
+              marginBottom: 20,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-around',
+            }}
+          >
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
                 {streak} Days
               </Text>
-              <Text className="text-[10px] font-sans text-[#78a898]">
+              <Text style={{ fontSize: 10, fontFamily: 'Inter_400Regular', color: colors.textSecondary, marginTop: 2 }}>
                 Current Streak
               </Text>
             </View>
-            <View className="w-[1px] h-8 bg-[#2a4735]" />
-            <View className="items-center">
-              <Text className="text-xl font-sans-bold text-[#f5b800]">
+            <View style={{ width: 1, height: 32, backgroundColor: colors.border }} />
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.accent }}>
                 {userName}
               </Text>
-              <Text className="text-[10px] font-sans text-[#78a898]">
+              <Text style={{ fontSize: 10, fontFamily: 'Inter_400Regular', color: colors.textSecondary, marginTop: 2 }}>
                 Disciple
               </Text>
             </View>
@@ -87,19 +158,33 @@ export const BadgeShareModal: React.FC<BadgeShareModalProps> = ({
           {/* Action Buttons */}
           <Pressable
             onPress={handleShare}
-            className="w-full py-4 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg mb-3 flex-row"
+            style={{
+              width: '100%',
+              paddingVertical: 14,
+              borderRadius: 14,
+              backgroundColor: colors.accent,
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'row',
+              marginBottom: 10,
+            }}
           >
-            <Share2 size={18} color="#141413" style={{ marginRight: 8 }} />
-            <Text className="text-base font-sans-bold text-[#141413]">
+            <Share2 size={18} color={colors.accentText || '#141413'} style={{ marginRight: 8 }} />
+            <Text style={{ fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.accentText || '#141413' }}>
               Share with Friends
             </Text>
           </Pressable>
 
           <Pressable
             onPress={onClose}
-            className="w-full py-2.5 items-center justify-center"
+            style={{
+              width: '100%',
+              paddingVertical: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
           >
-            <Text className="text-xs font-sans-medium text-[#78a898]">
+            <Text style={{ fontSize: 13, fontFamily: 'Inter_500Medium', color: colors.textSecondary }}>
               Close
             </Text>
           </Pressable>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, Modal } from 'react-native';
 import { Clock, X, Check } from 'lucide-react-native';
+import { useTheme } from '../lib/themeContext';
 
 interface TimePickerModalProps {
   visible: boolean;
@@ -20,6 +21,7 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
   initialTime = '7:00 AM',
   title = 'Select Reading Time',
 }) => {
+  const { colors, isDark } = useTheme();
   const [pickerHour, setPickerHour] = useState('07');
   const [pickerMin, setPickerMin] = useState('00');
   const [pickerPeriod, setPickerPeriod] = useState<'AM' | 'PM'>('AM');
@@ -62,15 +64,49 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View className="flex-1 bg-black/80 justify-center items-center px-5">
-        <View className="w-full max-w-sm bg-[#182e25] border border-[#2d5c4b] rounded-3xl p-6 shadow-2xl">
+      <View
+        className="flex-1 justify-center items-center px-5"
+        style={{ backgroundColor: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)' }}
+      >
+        <View
+          style={{
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+            borderWidth: 1,
+            borderRadius: 24,
+            padding: 24,
+            width: '100%',
+            maxWidth: 380,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: isDark ? 0.45 : 0.15,
+            shadowRadius: 20,
+            elevation: 10,
+          }}
+        >
           {/* Header */}
-          <View className="flex-row items-center justify-between mb-4">
-            <View className="flex-row items-center">
-              <View className="w-8 h-8 rounded-full bg-[#12382d] items-center justify-center mr-2.5">
-                <Clock size={16} color="#f5b800" />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 12,
+                  backgroundColor: colors.surfaceSubtle,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginRight: 10,
+                }}
+              >
+                <Clock size={18} color={colors.accent} />
               </View>
-              <Text className="text-lg font-sans-bold text-[#faf9f5]">
+              <Text
+                style={{
+                  fontSize: 18,
+                  fontFamily: 'Inter_700Bold',
+                  color: colors.textPrimary,
+                }}
+              >
                 {title}
               </Text>
             </View>
@@ -79,28 +115,68 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
               hitSlop={12}
               accessibilityRole="button"
               accessibilityLabel="Close time picker"
-              className="w-8 h-8 rounded-full bg-[#12382d] items-center justify-center active:opacity-70"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: colors.surfaceSubtle,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <X size={16} color="#78a898" />
+              <X size={16} color={colors.textSecondary} />
             </Pressable>
           </View>
 
           {/* Time Preview Badge */}
-          <View className="items-center py-3 px-4 rounded-2xl bg-[#0f241d] border border-[#1e483a] mb-5">
-            <Text className="text-xs font-sans-medium text-[#78a898] mb-0.5">
+          <View
+            style={{
+              alignItems: 'center',
+              paddingVertical: 12,
+              paddingHorizontal: 16,
+              borderRadius: 16,
+              backgroundColor: colors.surfaceSubtle,
+              borderColor: colors.borderSubtle,
+              borderWidth: 1,
+              marginBottom: 18,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 12,
+                fontFamily: 'Inter_500Medium',
+                color: colors.textSecondary,
+                marginBottom: 2,
+              }}
+            >
               Scheduled Reminder
             </Text>
-            <Text className="text-3xl font-sans-bold text-[#f5b800] tracking-wide">
+            <Text
+              style={{
+                fontSize: 28,
+                fontFamily: 'Inter_700Bold',
+                color: colors.accent,
+                letterSpacing: 0.5,
+              }}
+            >
               {previewTime}
             </Text>
           </View>
 
           {/* Hours Grid */}
-          <View className="mb-4">
-            <Text className="text-xs font-sans-bold text-[#78a898] mb-2 text-center">
+          <View style={{ marginBottom: 16 }}>
+            <Text
+              style={{
+                fontSize: 12,
+                fontFamily: 'Inter_600SemiBold',
+                color: colors.textSecondary,
+                marginBottom: 8,
+                textAlign: 'center',
+              }}
+            >
               Select Hour
             </Text>
-            <View className="flex-row flex-wrap justify-center">
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center' }}>
               {HOURS.map((h) => {
                 const isSelected = pickerHour === h;
                 const hourNum = parseInt(h, 10);
@@ -111,14 +187,24 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Hour ${hourNum}`}
                     accessibilityState={{ selected: isSelected }}
-                    className={`w-11 h-11 m-1 rounded-xl items-center justify-center ${
-                      isSelected ? 'bg-[#f5b800]' : 'bg-[#12382d] border border-[#205243]'
-                    }`}
+                    style={{
+                      width: 44,
+                      height: 44,
+                      margin: 4,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1,
+                      borderColor: isSelected ? colors.accent : colors.border,
+                      backgroundColor: isSelected ? colors.accent : colors.surfaceSubtle,
+                    }}
                   >
                     <Text
-                      className={`text-sm font-sans-bold ${
-                        isSelected ? 'text-[#141413]' : 'text-[#faf9f5]'
-                      }`}
+                      style={{
+                        fontSize: 14,
+                        fontFamily: 'Inter_700Bold',
+                        color: isSelected ? (colors.accentText || '#141413') : colors.textPrimary,
+                      }}
                     >
                       {hourNum}
                     </Text>
@@ -129,13 +215,21 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
           </View>
 
           {/* Minutes and Period Row */}
-          <View className="flex-row justify-between items-center mb-6 px-1">
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             {/* Minute Chips */}
-            <View className="flex-1 mr-3">
-              <Text className="text-xs font-sans-bold text-[#78a898] mb-2 text-center">
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: 'Inter_600SemiBold',
+                  color: colors.textSecondary,
+                  marginBottom: 8,
+                  textAlign: 'center',
+                }}
+              >
                 Minute
               </Text>
-              <View className="flex-row justify-around">
+              <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
                 {MINUTES.map((m) => {
                   const isSelected = pickerMin === m;
                   return (
@@ -145,14 +239,25 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
                       accessibilityRole="button"
                       accessibilityLabel={`Minute ${m}`}
                       accessibilityState={{ selected: isSelected }}
-                      className={`px-3 py-2.5 min-h-[44px] min-w-[40px] rounded-xl items-center justify-center ${
-                        isSelected ? 'bg-[#f5b800]' : 'bg-[#12382d] border border-[#205243]'
-                      }`}
+                      style={{
+                        paddingHorizontal: 10,
+                        paddingVertical: 10,
+                        minHeight: 44,
+                        minWidth: 42,
+                        borderRadius: 12,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderWidth: 1,
+                        borderColor: isSelected ? colors.accent : colors.border,
+                        backgroundColor: isSelected ? colors.accent : colors.surfaceSubtle,
+                      }}
                     >
                       <Text
-                        className={`text-xs font-sans-bold ${
-                          isSelected ? 'text-[#141413]' : 'text-[#faf9f5]'
-                        }`}
+                        style={{
+                          fontSize: 13,
+                          fontFamily: 'Inter_700Bold',
+                          color: isSelected ? (colors.accentText || '#141413') : colors.textPrimary,
+                        }}
                       >
                         :{m}
                       </Text>
@@ -163,11 +268,30 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
             </View>
 
             {/* Period Toggle */}
-            <View className="w-22">
-              <Text className="text-xs font-sans-bold text-[#78a898] mb-2 text-center">
+            <View style={{ width: 90 }}>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: 'Inter_600SemiBold',
+                  color: colors.textSecondary,
+                  marginBottom: 8,
+                  textAlign: 'center',
+                }}
+              >
                 Period
               </Text>
-              <View className="flex-row rounded-xl bg-[#12382d] border border-[#205243] p-1 min-h-[44px] items-center">
+              <View
+                style={{
+                  flexDirection: 'row',
+                  borderRadius: 12,
+                  backgroundColor: colors.surfaceSubtle,
+                  borderColor: colors.border,
+                  borderWidth: 1,
+                  padding: 4,
+                  minHeight: 44,
+                  alignItems: 'center',
+                }}
+              >
                 {(['AM', 'PM'] as const).map((period) => {
                   const isSelected = pickerPeriod === period;
                   return (
@@ -177,14 +301,21 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
                       accessibilityRole="button"
                       accessibilityLabel={`${period} period`}
                       accessibilityState={{ selected: isSelected }}
-                      className={`flex-1 py-2 rounded-lg items-center justify-center ${
-                        isSelected ? 'bg-[#f5b800]' : 'bg-transparent'
-                      }`}
+                      style={{
+                        flex: 1,
+                        paddingVertical: 8,
+                        borderRadius: 8,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: isSelected ? colors.accent : 'transparent',
+                      }}
                     >
                       <Text
-                        className={`text-xs font-sans-bold ${
-                          isSelected ? 'text-[#141413]' : 'text-[#78a898]'
-                        }`}
+                        style={{
+                          fontSize: 12,
+                          fontFamily: 'Inter_700Bold',
+                          color: isSelected ? (colors.accentText || '#141413') : colors.textSecondary,
+                        }}
                       >
                         {period}
                       </Text>
@@ -196,23 +327,46 @@ export const TimePickerModal: React.FC<TimePickerModalProps> = ({
           </View>
 
           {/* Modal Bottom Actions */}
-          <View className="flex-row justify-between space-x-3">
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
             <Pressable
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Cancel"
-              className="flex-1 py-3.5 mr-2 rounded-xl bg-[#163f33] items-center min-h-[44px] justify-center active:opacity-80"
+              style={{
+                flex: 1,
+                paddingVertical: 12,
+                marginRight: 8,
+                borderRadius: 12,
+                backgroundColor: colors.surfaceSubtle,
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 44,
+              }}
             >
-              <Text className="text-sm font-sans-bold text-[#78a898]">Cancel</Text>
+              <Text style={{ fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.textSecondary }}>
+                Cancel
+              </Text>
             </Pressable>
             <Pressable
               onPress={handleSave}
               accessibilityRole="button"
               accessibilityLabel="Confirm reading time"
-              className="flex-1 py-3.5 ml-2 rounded-xl bg-[#f5b800] items-center min-h-[44px] justify-center shadow-md active:opacity-90 flex-row"
+              style={{
+                flex: 1,
+                paddingVertical: 12,
+                marginLeft: 8,
+                borderRadius: 12,
+                backgroundColor: colors.accent,
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 44,
+                flexDirection: 'row',
+              }}
             >
-              <Check size={16} color="#141413" style={{ marginRight: 6 }} />
-              <Text className="text-sm font-sans-bold text-[#141413]">Set Time</Text>
+              <Check size={16} color={colors.accentText || '#141413'} style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 14, fontFamily: 'Inter_700Bold', color: colors.accentText || '#141413' }}>
+                Set Time
+              </Text>
             </Pressable>
           </View>
         </View>
