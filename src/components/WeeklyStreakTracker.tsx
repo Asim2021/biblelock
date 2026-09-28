@@ -1,77 +1,142 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Check, ChevronRight } from 'lucide-react-native';
+import { Check, ChevronRight, Flame, Shield } from 'lucide-react-native';
 import { HabitDay } from '../types/onboarding';
 import { useTheme } from '../lib/themeContext';
+import { getGraceDayStatus } from '../lib/mmkv';
 
 interface WeeklyStreakTrackerProps {
   history: HabitDay[];
+  streak?: number;
+  isPremium?: boolean;
 }
 
-export const WeeklyStreakTracker: React.FC<WeeklyStreakTrackerProps> = ({ history }) => {
+export const WeeklyStreakTracker: React.FC<WeeklyStreakTrackerProps> = ({
+  history,
+  streak = 0,
+  isPremium = false,
+}) => {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const completedCount = history.filter((d) => d.completed).length;
+  const { hasGraceDayAvailable } = getGraceDayStatus();
 
   return (
     <View style={{ marginVertical: 12 }}>
-      {/* Header */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 10,
-          paddingHorizontal: 4,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 16,
-            fontFamily: 'EBGaramond_700Bold',
-            color: colors.textPrimary,
-          }}
-        >
-          This Week
-        </Text>
-        <Pressable
-          onPress={() => router.push('/stats-detail' as any)}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="View Weekly Streak Details and Badges"
-          style={{ flexDirection: 'row', alignItems: 'center' }}
-        >
-          <Text
-            style={{
-              fontSize: 12,
-              fontFamily: 'Inter_700Bold',
-              color: colors.accent,
-              letterSpacing: 0.5,
-              marginRight: 2,
-            }}
-          >
-            {completedCount}/7 days
-          </Text>
-          <ChevronRight size={13} color={colors.accent} />
-        </Pressable>
-      </View>
-
-      {/* 7-Day Matrix Container */}
+      {/* 7-Day Matrix Container with Consolidated Streak Header */}
       <Pressable
         onPress={() => router.push('/stats-detail' as any)}
         accessibilityRole="button"
         accessibilityLabel="View Full Stats and Badges"
         style={({ pressed }) => ({
-          paddingVertical: 16,
-          paddingHorizontal: 12,
-          borderRadius: 20,
+          padding: 18,
+          borderRadius: 22,
           backgroundColor: colors.surface,
           borderWidth: 1,
           borderColor: colors.border,
-          opacity: pressed ? 0.92 : 1,
+          opacity: pressed ? 0.95 : 1,
         })}
       >
+        {/* Header Row: Flame & Streak on Left, Grace & Days Count on Right */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 16,
+            paddingBottom: 14,
+            borderBottomWidth: 1,
+            borderBottomColor: colors.borderSubtle,
+          }}
+        >
+          {/* Left: Flame & Streak Count */}
+          <View style={{ flex: 1, paddingRight: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Flame size={20} color="#ff7b42" style={{ marginRight: 6 }} />
+              <Text
+                style={{
+                  fontSize: 17,
+                  fontFamily: 'Inter_700Bold',
+                  color: colors.textPrimary,
+                }}
+              >
+                {streak} {streak === 1 ? 'Day' : 'Days'} Streak
+              </Text>
+            </View>
+            <Text
+              style={{
+                fontSize: 11,
+                color: colors.textSecondary,
+                marginTop: 2,
+              }}
+            >
+              Keep your spiritual flame burning
+            </Text>
+          </View>
+
+          {/* Right: Sanctuary Grace Badge & Weekly Progress Link */}
+          <View style={{ alignItems: 'flex-end' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+              {isPremium && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    paddingHorizontal: 7,
+                    paddingVertical: 2,
+                    borderRadius: 10,
+                    backgroundColor: colors.accentBg,
+                    borderWidth: 1,
+                    borderColor: colors.accent,
+                    marginRight: 6,
+                  }}
+                >
+                  <Shield size={10} color={colors.accent} style={{ marginRight: 3 }} />
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontFamily: 'Inter_700Bold',
+                      color: colors.accent,
+                      letterSpacing: 0.3,
+                    }}
+                  >
+                    {hasGraceDayAvailable ? 'Grace Active' : 'Grace Used'}
+                  </Text>
+                </View>
+              )}
+
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontFamily: 'Inter_700Bold',
+                    color: colors.accent,
+                    letterSpacing: 0.5,
+                    marginRight: 2,
+                  }}
+                >
+                  {completedCount}/7 days
+                </Text>
+                <ChevronRight size={13} color={colors.accent} />
+              </View>
+            </View>
+
+            <Text
+              style={{
+                fontSize: 10,
+                fontFamily: 'Inter_500Medium',
+                color: colors.textMuted,
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+              }}
+            >
+              This Week
+            </Text>
+          </View>
+        </View>
+
+        {/* 7-Day Matrix Row */}
         <View
           style={{
             flexDirection: 'row',
@@ -101,14 +166,14 @@ export const WeeklyStreakTracker: React.FC<WeeklyStreakTrackerProps> = ({ histor
                 {/* Status Indicator Circle */}
                 <View
                   style={{
-                    width: 38,
-                    height: 38,
-                    borderRadius: 19,
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
                     alignItems: 'center',
                     justifyContent: 'center',
                     borderWidth: 1.5,
                     backgroundColor: isCompleted
-                      ? colors.successBg || '#1a4a35'
+                      ? colors.successBg || (isDark ? '#1a4a35' : '#e6f7ee')
                       : isToday
                       ? colors.accentBg
                       : colors.surfaceSubtle,
@@ -120,7 +185,7 @@ export const WeeklyStreakTracker: React.FC<WeeklyStreakTrackerProps> = ({ histor
                   }}
                 >
                   {isCompleted ? (
-                    <Check size={16} color={colors.success} strokeWidth={3} />
+                    <Check size={15} color={colors.success} strokeWidth={3} />
                   ) : isToday ? (
                     <View
                       style={{
