@@ -1,5 +1,32 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.51] - 2026-09-28
+
+### Stats Screen Overhaul: Circular Progress Gauge, Freedom Reclaimed Telemetry & 12-Tier Spiritual Badges
+- **Authentic Weekly Habit Data Binding (`src/app/stats-detail.tsx`, `TASK-060`, `DEC-043`):**
+  - Connected Week view directly to authentic daily reading minutes from `getWeeklyHabitDays()`, fixing the placeholder fallback bug.
+- **Dynamic SVG Circular Progress Ring (`src/components/stats/CircularProgressRing.tsx`, `src/app/stats-detail.tsx`):**
+  - Built high-contrast SVG circular gauge component calculating circumference stroke offset dynamically with gold in-progress state and emerald completion state.
+- **"Freedom Reclaimed" Interception Telemetry (`src/components/stats/FreedomReclaimedCard.tsx`, `src/lib/mmkv.ts`, `src/lib/appBlocker.ts`):**
+  - Added digital liberation card tracking Temptations Overcome (today and all-time app interceptions), Screen Time Redeemed from doomscrolling (hours saved), and Guarded Apps status with horizontal app chips.
+- **Streak Grace Shield Loss Aversion Banner (`src/app/stats-detail.tsx`):**
+  - Added month-aware Grace Shield status banner (`🛡️ Streak Grace Shield Active` or `⚠️ Shield Spent for this Month`) protecting streak investment and reinforcing Sanctuary retention.
+- **Persistent All-Time Best Streak (`src/lib/mmkv.ts`, `src/app/stats-detail.tsx`):**
+  - Stored and tracked highest achieved streak in MMKV `ALL_TIME_BEST_STREAK` so record streaks persist through streak resets.
+- **12-Tier Spiritual Milestones with Anti-Alienation Preview (`src/types/onboarding.ts`, `src/components/BadgesGrid.tsx`, `src/app/stats-detail.tsx`):**
+  - Expanded badge system to 12 milestone tiers across 4 categories (`foundations`, `endurance`, `discipline`, `devotion`) with lock states and a collapsible disclosure toggle (`"View All 12 Milestones"` / `"Show Fewer Milestones"`).
+- **Fabricated Metrics Purge & Duplicate Cleanup (`src/app/stats-detail.tsx`):**
+  - Purged hardcoded community stats (`145.9M verses read`, `434.1M minutes`) upholding the zero-fabricated-data standard (`DEC-031`) and removed redundant duplicate `DailyDevotionalCard`.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- 100% offline local telemetry with MMKV Nitro storage.
+- Zero fabricated metrics remaining on Stats screen.
+- Touch target minimum 44x44pt satisfied across all buttons and actions.
+- Dual-theme verified in Celestial Dark (`#0d120f`) and Parchment Light (`#f8f6f0`).
+
+---
+
 ## [1.0.50] - 2026-09-28
 
 ### Library Screen Architectural Redesign & Spiritual Treasury

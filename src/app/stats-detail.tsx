@@ -2,14 +2,30 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, RefreshControl, Pressable, Share } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { ArrowLeft, RotateCw, Flame, Zap, Clock, Award, MoreHorizontal, Share2, BookOpen, Lock } from 'lucide-react-native';
+import { ArrowLeft, RotateCw, Flame, Zap, Clock, Award, MoreHorizontal, Share2, Lock } from 'lucide-react-native';
 import { useReadingTimer } from '../lib/readingTimer';
 import { useFeatureGate } from '../lib/useFeatureGate';
-import { getUserName, getImpactStats, getBlockedApps, hasConfiguredBlockedApps, getIsShielded, getReadingHistory30Days, getReadingHistoryYear } from '../lib/mmkv';
+import {
+	getUserName,
+	getImpactStats,
+	getBlockedApps,
+	hasConfiguredBlockedApps,
+	getIsShielded,
+	getReadingHistory30Days,
+	getReadingHistoryYear,
+	getWeeklyHabitDays,
+	getBestStreak,
+	updateBestStreak,
+	getTodayInterceptions,
+	getTotalInterceptions,
+	getScreenTimeRedeemedHours,
+	getGraceDayStatus,
+} from '../lib/mmkv';
 import { AppBlocker } from '../lib/appBlocker';
 import { BadgesGrid } from '../components/BadgesGrid';
 import { BadgeShareModal } from '../components/BadgeShareModal';
-import { DailyDevotionalCard } from '../components/DailyDevotionalCard';
+import { CircularProgressRing } from '../components/stats/CircularProgressRing';
+import { FreedomReclaimedCard } from '../components/stats/FreedomReclaimedCard';
 import { BadgeItem, ImpactStats, HabitDay, YearMonthData } from '../types/onboarding';
 import { useTheme } from '../lib/themeContext';
 
@@ -23,6 +39,7 @@ export default function StatsScreen() {
 	const [name, setName] = useState('Disciple');
 	const [impact, setImpact] = useState<ImpactStats>({ minutesRead: 0, hoursSaved: 0, sessions: 0 });
 	const [selectedBadge, setSelectedBadge] = useState<BadgeItem | null>(null);
+	const [weeklyDays, setWeeklyDays] = useState<HabitDay[]>([]);
 	const [history, setHistory] = useState<HabitDay[]>([]);
 	const [yearHistory, setYearHistory] = useState<YearMonthData[]>([]);
 	const [historyPeriod, setHistoryPeriod] = useState<'week' | 'month' | 'year'>('week');
@@ -30,6 +47,15 @@ export default function StatsScreen() {
 	const [selectedMonth, setSelectedMonth] = useState<YearMonthData | null>(null);
 	const [shieldConfigured, setShieldConfigured] = useState(false);
 	const [blockedAppsCount, setBlockedAppsCount] = useState(0);
+	const [blockedAppsList, setBlockedAppsList] = useState<string[]>([]);
+	const [bestStreak, setBestStreak] = useState(1);
+	const [todayInterceptions, setTodayInterceptions] = useState(0);
+	const [totalInterceptions, setTotalInterceptions] = useState(0);
+	const [redeemedHours, setRedeemedHours] = useState(0);
+	const [graceStatus, setGraceStatus] = useState<{ hasGraceDayAvailable: boolean; lastUsedMonth: string | null }>({
+		hasGraceDayAvailable: true,
+		lastUsedMonth: null,
+	});
 
 	const timer = useReadingTimer(false);
 
@@ -46,12 +72,21 @@ export default function StatsScreen() {
 		const storedName = getUserName();
 		setName(storedName);
 
+		const currentBest = updateBestStreak(timer.streak);
+		setBestStreak(currentBest);
+
 		setImpact(getImpactStats());
+		setWeeklyDays(getWeeklyHabitDays());
 		setHistory(getReadingHistory30Days());
 		setYearHistory(getReadingHistoryYear());
+		setTodayInterceptions(getTodayInterceptions());
+		setTotalInterceptions(getTotalInterceptions());
+		setRedeemedHours(getScreenTimeRedeemedHours());
+		setGraceStatus(getGraceDayStatus());
 
 		const hasConfigured = hasConfiguredBlockedApps();
 		const apps = hasConfigured ? getBlockedApps() : [];
+		setBlockedAppsList(apps);
 		setBlockedAppsCount(apps.length);
 
 		try {
@@ -60,7 +95,7 @@ export default function StatsScreen() {
 		} catch {
 			setShieldConfigured(hasConfigured && getIsShielded());
 		}
-	}, []);
+	}, [timer.streak]);
 
 	useFocusEffect(
 		useCallback(() => {
@@ -83,14 +118,16 @@ export default function StatsScreen() {
 		return parts[0].slice(0, 2).toUpperCase();
 	};
 
-	// Badges calculation
+	// Badges calculation (12 Spiritual Milestone Tiers)
 	const badges: BadgeItem[] = useMemo(
 		() => [
+			// Foundations
 			{
 				id: 'genesis',
 				title: 'Genesis',
 				subtitle: 'First Step',
 				icon: '🌱',
+				category: 'foundations',
 				unlocked: impact.sessions >= 1 || timer.streak >= 1,
 				requirement: 'Complete your first Scripture reading session',
 			},
@@ -99,7 +136,8 @@ export default function StatsScreen() {
 				title: "David's Courage",
 				subtitle: '3-Day Habit',
 				icon: '⚔️',
-				unlocked: timer.streak >= 3,
+				category: 'foundations',
+				unlocked: timer.streak >= 3 || bestStreak >= 3,
 				requirement: 'Maintain your reading streak for 3 consecutive days',
 			},
 			{
@@ -107,35 +145,96 @@ export default function StatsScreen() {
 				title: "Solomon's Wisdom",
 				subtitle: '7-Day Streak',
 				icon: '👑',
-				unlocked: timer.streak >= 7,
+				category: 'foundations',
+				unlocked: timer.streak >= 7 || bestStreak >= 7,
 				requirement: "Complete 7 consecutive days in God's Word",
 			},
+			// Endurance
+			{
+				id: 'fortress',
+				title: 'Fortress of Faith',
+				subtitle: '14-Day Walk',
+				icon: '🏰',
+				category: 'endurance',
+				unlocked: timer.streak >= 14 || bestStreak >= 14,
+				requirement: 'Reach a 14-day consecutive reading streak',
+			},
+			{
+				id: 'pillar_of_faith',
+				title: 'Pillar of Faith',
+				subtitle: '30-Day Devotion',
+				icon: '🏛️',
+				category: 'endurance',
+				unlocked: timer.streak >= 30 || bestStreak >= 30,
+				requirement: 'Reach a 30-day consecutive reading streak',
+			},
+			{
+				id: 'centurion',
+				title: 'Centurion Walk',
+				subtitle: '50-Day Steadfast',
+				icon: '🛡️',
+				category: 'endurance',
+				unlocked: timer.streak >= 50 || bestStreak >= 50,
+				requirement: 'Reach 50 consecutive days walking with Jesus',
+			},
+			{
+				id: 'saint_walk',
+				title: "Saint's Walk",
+				subtitle: '100-Day Centurion',
+				icon: '🕊️',
+				category: 'endurance',
+				unlocked: timer.streak >= 100 || bestStreak >= 100,
+				requirement: 'Complete 100 days of faithful Scripture habit',
+			},
+			// Discipline
 			{
 				id: 'armor_of_god',
 				title: 'Armor of God',
 				subtitle: 'Apps Guarded',
 				icon: '🛡️',
+				category: 'discipline',
 				unlocked: shieldConfigured && blockedAppsCount >= 3,
 				requirement: 'Shield at least 3 distracting apps from temptation',
+			},
+			{
+				id: 'iron_wall',
+				title: 'Iron Wall',
+				subtitle: '5 Apps Guarded',
+				icon: '🧱',
+				category: 'discipline',
+				unlocked: shieldConfigured && blockedAppsCount >= 5,
+				requirement: 'Shield 5 or more distracting apps from temptation',
 			},
 			{
 				id: 'living_water',
 				title: 'Living Water',
 				subtitle: '30m in Word',
 				icon: '🌊',
+				category: 'discipline',
 				unlocked: impact.minutesRead >= 30,
 				requirement: 'Read Scripture for over 30 cumulative minutes',
 			},
 			{
-				id: 'morning_light',
-				title: 'Morning Light',
-				subtitle: 'Devotion',
-				icon: '🕊️',
-				unlocked: impact.sessions >= 3,
-				requirement: 'Complete 3 Bible reading sessions with consistency',
+				id: 'wellspring',
+				title: 'Deep Wellspring',
+				subtitle: '2h in Scripture',
+				icon: '⛲',
+				category: 'discipline',
+				unlocked: impact.minutesRead >= 120,
+				requirement: 'Read Scripture for over 120 cumulative minutes',
+			},
+			// Devotion
+			{
+				id: 'dawn_devotion',
+				title: 'Dawn Watcher',
+				subtitle: 'Morning Grace',
+				icon: '🌅',
+				category: 'devotion',
+				unlocked: impact.sessions >= 1 && new Date().getHours() < 9,
+				requirement: 'Complete a Bible reading session before 9:00 AM',
 			},
 		],
-		[impact.sessions, impact.minutesRead, timer.streak, shieldConfigured, blockedAppsCount]
+		[impact.sessions, impact.minutesRead, timer.streak, bestStreak, shieldConfigured, blockedAppsCount]
 	);
 
 	// Milestone calculation
@@ -318,14 +417,27 @@ export default function StatsScreen() {
 				>
 					<View className='flex-1 pr-3'>
 						<Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 4 }}>Read Today</Text>
-						<View className='flex-row items-baseline mb-3'>
+						<View className='flex-row items-baseline mb-2'>
 							<Text style={{ fontSize: 24, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
 								{minutesToday} min{' '}
 							</Text>
 							<Text style={{ fontSize: 14, color: colors.textMuted }}>/{timer.goalMinutes} min</Text>
 						</View>
 
-						<Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 4 }}>
+						<Text
+							style={{
+								fontSize: 11,
+								fontFamily: 'Inter_600SemiBold',
+								color: timer.isGoalMet ? colors.success : colors.accent,
+								marginBottom: 10,
+							}}
+						>
+							{timer.isGoalMet
+								? '✓ Goal Met — Apps Unshielded'
+								: `${Math.max(0, timer.goalMinutes - minutesToday)}m left to unshield apps`}
+						</Text>
+
+						<Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 2 }}>
 							Current Streak
 						</Text>
 						<Text style={{ fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
@@ -333,42 +445,13 @@ export default function StatsScreen() {
 						</Text>
 					</View>
 
-					{/* Circular Gauge */}
-					<View
-						style={{
-							width: 96,
-							height: 96,
-							borderRadius: 48,
-							backgroundColor: colors.surfaceSubtle,
-							borderWidth: 4,
-							borderColor: colors.border,
-							alignItems: 'center',
-							justifyContent: 'center',
-						}}
-					>
-						<View
-							style={{
-								width: 64,
-								height: 64,
-								borderRadius: 32,
-								alignItems: 'center',
-								justifyContent: 'center',
-								borderWidth: 2,
-								backgroundColor: timer.isGoalMet
-									? isDark
-										? '#293d25'
-										: '#edf8f0'
-									: colors.surfaceSubtle,
-								borderColor: timer.isGoalMet ? colors.success : colors.accent,
-							}}
-						>
-							<Zap
-								size={24}
-								color={timer.isGoalMet ? colors.success : colors.accent}
-								fill={timer.isGoalMet ? colors.success : colors.accent}
-							/>
-						</View>
-					</View>
+					{/* SVG Circular Progress Ring */}
+					<CircularProgressRing
+						size={96}
+						strokeWidth={8}
+						progress={timer.goalMinutes > 0 ? minutesToday / timer.goalMinutes : 0}
+						isGoalMet={timer.isGoalMet}
+					/>
 				</View>
 
 				{/* Card 2: This Week 7-Day Tracker */}
@@ -426,14 +509,13 @@ export default function StatsScreen() {
 					{/* VIEW 1: WEEK */}
 					{historyPeriod === 'week' && (
 						<View className='flex-row items-center justify-between'>
-							{weekDays.map((wd, i) => {
-								const isToday = wd.dayIndex === todayDayOfWeek;
-								const isPastOrToday = wd.dayIndex <= todayDayOfWeek;
-								const hasRead = isToday ? minutesToday > 0 : isPastOrToday;
-								const dayMins = isToday ? minutesToday : isPastOrToday ? (timer.streak > 0 ? 1 : 0) : 0;
+							{weeklyDays.map((wd) => {
+								const isToday = wd.isToday;
+								const isCompleted = wd.completed;
+								const dayMins = wd.minutesRead ?? 0;
 
 								return (
-									<View key={`${wd.label}-${i}`} className='items-center'>
+									<View key={wd.date} className='items-center'>
 										<View
 											style={{
 												width: 36,
@@ -443,30 +525,30 @@ export default function StatsScreen() {
 												justifyContent: 'center',
 												borderWidth: 1,
 												marginBottom: 6,
-												backgroundColor: isToday
+												backgroundColor: isCompleted
+													? (isDark ? '#1a3324' : '#eaf7ee')
+													: isToday
 													? colors.accentBg
-													: isPastOrToday
-														? colors.surfaceSubtle
-														: colors.surface,
-												borderColor: isToday
+													: colors.surfaceSubtle,
+												borderColor: isCompleted
+													? colors.success
+													: isToday
 													? colors.accent
-													: isPastOrToday
-														? colors.border
-														: colors.borderSubtle,
+													: colors.borderSubtle,
 											}}
 										>
 											<Text
 												style={{
 													fontSize: 12,
-													fontFamily: 'Inter_700Bold',
-													color: isToday
+													fontFamily: isToday || isCompleted ? 'Inter_700Bold' : 'Inter_500Medium',
+													color: isCompleted
+														? colors.success
+														: isToday
 														? colors.accent
-														: isPastOrToday
-															? colors.textPrimary
-															: colors.textMuted,
+														: colors.textPrimary,
 												}}
 											>
-												{wd.label}
+												{wd.dayLabel[0]}
 											</Text>
 										</View>
 
@@ -1054,14 +1136,50 @@ export default function StatsScreen() {
 					</View>
 				</View>
 
+				{/* Freedom Reclaimed Telemetry Card */}
+				<FreedomReclaimedCard
+					todayInterceptions={todayInterceptions}
+					totalInterceptions={totalInterceptions}
+					redeemedHours={redeemedHours}
+					blockedAppsCount={blockedAppsCount}
+					blockedApps={blockedAppsList}
+				/>
+
+				{/* Streak Grace Shield Banner (Loss-Aversion Framing) */}
+				<View
+					style={{
+						padding: 16,
+						borderRadius: 18,
+						backgroundColor: colors.surfaceSubtle,
+						borderWidth: 1,
+						borderColor: isPremium ? colors.accent : colors.borderSubtle,
+						marginBottom: 16,
+					}}
+				>
+					<Text
+						style={{
+							fontSize: 13,
+							fontFamily: 'Inter_700Bold',
+							color: isPremium ? colors.accent : colors.textPrimary,
+							marginBottom: 4,
+						}}
+					>
+						{isPremium
+							? !graceStatus.hasGraceDayAvailable
+								? '🛡️ Streak Grace Shield Used (Protected This Month)'
+								: '🛡️ Streak Grace Shield Active (1 Day Protected)'
+							: '🛡️ Protect Your Walk with Grace Shield'}
+					</Text>
+					<Text style={{ fontSize: 11, color: colors.textSecondary, lineHeight: 16 }}>
+						{isPremium
+							? 'Your daily walk with Jesus is preserved. Even if an unexpected emergency happens, your streak is shielded.'
+							: 'Sanctuary includes monthly Streak Grace Protection so an unexpected emergency doesn’t break your hard-earned streak.'}
+					</Text>
+				</View>
+
 				{/* Badges Section */}
 				<View className='my-2'>
 					<BadgesGrid badges={badges} onSelectBadge={(b) => setSelectedBadge(b)} />
-				</View>
-
-				{/* Daily Devotional Card */}
-				<View className='my-3'>
-					<DailyDevotionalCard />
 				</View>
 
 				{/* Section: Lifetime Activity */}
@@ -1180,7 +1298,7 @@ export default function StatsScreen() {
 								<Award size={18} color={colors.accent} />
 							</View>
 							<Text style={{ fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
-								{Math.max(timer.streak, 1)}d
+								{bestStreak}d
 							</Text>
 							<Text
 								style={{ fontSize: 10, color: colors.textSecondary, marginTop: 2, textAlign: 'center' }}
@@ -1191,67 +1309,29 @@ export default function StatsScreen() {
 					</View>
 				</View>
 
-				{/* Section: Our Week in Review / Community Impact */}
+				{/* Share Bible Unlock Card */}
 				<View
 					style={{
-						marginTop: 20,
+						marginTop: 16,
 						padding: 20,
 						borderRadius: 24,
 						backgroundColor: colors.surface,
 						borderWidth: 1,
 						borderColor: colors.border,
+						marginBottom: 16,
 					}}
 				>
 					<Text
 						style={{
-							fontSize: 12,
-							fontFamily: 'Inter_500Medium',
-							color: colors.textSecondary,
+							fontSize: 14,
+							fontFamily: 'Inter_700Bold',
+							color: colors.textPrimary,
 							textAlign: 'center',
-							textTransform: 'uppercase',
-							letterSpacing: 1.5,
-							marginBottom: 16,
+							marginBottom: 6,
 						}}
 					>
-						Our Week in Review
+						Spread the Word
 					</Text>
-
-					<View
-						style={{
-							padding: 16,
-							borderRadius: 16,
-							backgroundColor: colors.surfaceSubtle,
-							borderWidth: 1,
-							borderColor: colors.border,
-							marginBottom: 12,
-							alignItems: 'center',
-						}}
-					>
-						<Text style={{ fontSize: 24, fontFamily: 'Inter_700Bold', color: colors.success }}>145.9M</Text>
-						<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
-							Total Verses Read
-						</Text>
-					</View>
-
-					<View
-						style={{
-							padding: 16,
-							borderRadius: 16,
-							backgroundColor: colors.surfaceSubtle,
-							borderWidth: 1,
-							borderColor: colors.border,
-							marginBottom: 16,
-							alignItems: 'center',
-						}}
-					>
-						<Text style={{ fontSize: 24, fontFamily: 'Inter_700Bold', color: '#4fa6e8' }}>
-							434.1M minutes
-						</Text>
-						<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
-							Time Spent in Scripture
-						</Text>
-					</View>
-
 					<Text
 						style={{
 							fontSize: 12,
@@ -1262,7 +1342,7 @@ export default function StatsScreen() {
 							paddingHorizontal: 8,
 						}}
 					>
-						See the impact from disciples worldwide! Keep the momentum alive — share Bible Unlock today.
+						Help friends and family replace mindless screen scrolling with God’s Word.
 					</Text>
 
 					<Pressable

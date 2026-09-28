@@ -134,6 +134,9 @@ export const STORAGE_KEYS = {
   SCROLL_FONT: 'scroll_font',
   SCROLL_MOOD: 'scroll_mood',
   INSTALLED_TRANSLATIONS: 'installed_translations',
+  ALL_TIME_BEST_STREAK: 'all_time_best_streak',
+  INTERCEPTIONS_PREFIX: 'interceptions_',
+  TOTAL_INTERCEPTIONS_COUNT: 'total_interceptions_count',
 } as const;
 
 // Default Presets
@@ -681,6 +684,50 @@ export function getImpactStats(): ImpactStats {
     hoursSaved,
     sessions,
   };
+}
+
+// All-Time Best Streak & Interceptions Telemetry
+
+export function getBestStreak(): number {
+  return storage.getNumber(STORAGE_KEYS.ALL_TIME_BEST_STREAK) ?? 1;
+}
+
+export function updateBestStreak(streak: number): number {
+  const currentBest = getBestStreak();
+  if (streak > currentBest) {
+    storage.set(STORAGE_KEYS.ALL_TIME_BEST_STREAK, streak);
+    return streak;
+  }
+  return currentBest;
+}
+
+export function recordInterception(): void {
+  const todayKey = getTodayDateKey();
+  const dailyKey = `${STORAGE_KEYS.INTERCEPTIONS_PREFIX}${todayKey}`;
+  const todayCount = storage.getNumber(dailyKey) ?? 0;
+  storage.set(dailyKey, todayCount + 1);
+
+  const totalCount = storage.getNumber(STORAGE_KEYS.TOTAL_INTERCEPTIONS_COUNT) ?? 0;
+  storage.set(STORAGE_KEYS.TOTAL_INTERCEPTIONS_COUNT, totalCount + 1);
+}
+
+export function getTodayInterceptions(): number {
+  const todayKey = getTodayDateKey();
+  const dailyKey = `${STORAGE_KEYS.INTERCEPTIONS_PREFIX}${todayKey}`;
+  return storage.getNumber(dailyKey) ?? 0;
+}
+
+export function getTotalInterceptions(): number {
+  return storage.getNumber(STORAGE_KEYS.TOTAL_INTERCEPTIONS_COUNT) ?? 0;
+}
+
+export function getScreenTimeRedeemedHours(): number {
+  const totalInterceptions = getTotalInterceptions();
+  const impact = getImpactStats();
+  // Average intercepted social session = ~12 mins (0.2 hrs) prevented + active Scripture time
+  const hoursFromInterceptions = totalInterceptions * 0.2;
+  const hoursFromScripture = impact.minutesRead / 60;
+  return parseFloat((hoursFromInterceptions + hoursFromScripture).toFixed(1));
 }
 
 // Last Read Position Tracking

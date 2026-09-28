@@ -52,4 +52,6 @@ export interface BadgeItem {
   icon: string;
   unlocked: boolean;
   requirement: string;
+  category?: 'foundations' | 'endurance' | 'discipline' | 'devotion';
 }
+

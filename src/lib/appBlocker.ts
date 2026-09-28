@@ -6,6 +6,7 @@ import {
   getIsShielded,
   setIsShielded,
   setBlockedApps as saveBlockedAppsToStorage,
+  recordInterception,
 } from './mmkv';
 
 export interface BlockerStatus {
@@ -127,6 +128,13 @@ export const AppBlocker = {
       hasPermission,
       platform: Platform.OS as 'ios' | 'android' | 'web',
     };
+  },
+
+  /**
+   * Record a distraction interception event
+   */
+  recordInterception: (): void => {
+    recordInterception();
   },
 
   /**
