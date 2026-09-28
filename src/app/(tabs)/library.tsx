@@ -52,10 +52,17 @@ import {
 	COLLECTION_COLORS,
 } from '../../lib/mmkv';
 import { BookmarkPickerSheet } from '../../components/BookmarkPickerSheet';
+import {
+	getAllPrayers,
+	getPrayersByCategory,
+	PrayerItem,
+	PrayerCategory,
+} from '../../lib/prayers';
+import { PrayerMeditationModal } from '../../components/PrayerMeditationModal';
 import { useTheme } from '../../lib/themeContext';
 import { useFeatureGate } from '../../lib/useFeatureGate';
 
-type TabType = 'collections' | 'pins' | 'notes';
+type TabType = 'collections' | 'prayers' | 'pins' | 'notes';
 
 export default function LibraryScreen() {
 	const router = useRouter();
@@ -94,6 +101,11 @@ export default function LibraryScreen() {
 	// Re-edit Bookmark (Collections) Sheet
 	const [pickerVerseData, setPickerVerseData] = useState<Bookmark | null>(null);
 	const [isPickerVisible, setIsPickerVisible] = useState(false);
+
+	// Prayers State
+	const [selectedPrayerCategory, setSelectedPrayerCategory] = useState<'all' | PrayerCategory>('all');
+	const [selectedPrayerForModal, setSelectedPrayerForModal] = useState<PrayerItem | null>(null);
+	const [isPrayerModalVisible, setIsPrayerModalVisible] = useState(false);
 
 	const loadData = useCallback(() => {
 		setLastRead(getLastReadPosition());
@@ -296,6 +308,21 @@ export default function LibraryScreen() {
 				);
 			});
 	}, [bookmarks, searchQuery]);
+
+	// Filtered prayers
+	const filteredPrayers = useMemo(() => {
+		const baseList =
+			selectedPrayerCategory === 'all'
+				? getAllPrayers()
+				: getPrayersByCategory(selectedPrayerCategory);
+		if (!searchQuery.trim()) return baseList;
+		const q = searchQuery.toLowerCase().trim();
+		return baseList.filter(
+			(p) =>
+				p.title.toLowerCase().includes(q) ||
+				p.prayerText.toLowerCase().includes(q)
+		);
+	}, [selectedPrayerCategory, searchQuery]);
 
 	// Memoized verse counts per collection computed directly in memory from bookmarks state
 	const collectionVerseCountMap = useMemo(() => {
@@ -708,9 +735,16 @@ export default function LibraryScreen() {
 							padding: 4,
 						}}
 					>
-						{(['collections', 'pins', 'notes'] as TabType[]).map((tab) => {
+						{(['collections', 'prayers', 'pins', 'notes'] as TabType[]).map((tab) => {
 							const isActive = activeTab === tab;
-							const label = tab === 'collections' ? 'Collections' : tab === 'pins' ? 'Pins' : 'Notes';
+							const label =
+								tab === 'collections'
+									? 'Collections'
+									: tab === 'prayers'
+									? 'Prayers'
+									: tab === 'pins'
+									? 'Pins'
+									: 'Notes';
 							return (
 								<Pressable
 									key={tab}
@@ -953,6 +987,178 @@ export default function LibraryScreen() {
 										New Collection
 									</Text>
 								</Pressable>
+							</View>
+						)}
+
+						{/* TAB: PRAYERS */}
+						{activeTab === 'prayers' && (
+							<View>
+								{/* Category Filter Pills */}
+								<ScrollView
+									horizontal
+									showsHorizontalScrollIndicator={false}
+									contentContainerStyle={{ gap: 8, paddingBottom: 14 }}
+								>
+									{(
+										[
+											{ key: 'all', label: `All (${getAllPrayers().length})` },
+											{ key: 'daily', label: `Daily (${getPrayersByCategory('daily').length})` },
+											{ key: 'foundations', label: `Foundations (${getPrayersByCategory('foundations').length})` },
+											{ key: 'traditional', label: `Traditional (${getPrayersByCategory('traditional').length})` },
+										] as const
+									).map((cat) => {
+										const isSelected = selectedPrayerCategory === cat.key;
+										return (
+											<Pressable
+												key={cat.key}
+												onPress={() => setSelectedPrayerCategory(cat.key)}
+												style={{
+													paddingVertical: 6,
+													paddingHorizontal: 14,
+													borderRadius: 16,
+													backgroundColor: isSelected
+														? colors.accent
+														: isDark
+														? '#141d24'
+														: '#ebe7de',
+												}}
+											>
+												<Text
+													style={{
+														fontSize: 12,
+														fontFamily: isSelected ? 'Inter_600SemiBold' : 'Inter_500Medium',
+														color: isSelected
+															? (colors.accentText || '#000000')
+															: colors.textSecondary,
+													}}
+												>
+													{cat.label}
+												</Text>
+											</Pressable>
+										);
+									})}
+								</ScrollView>
+
+								{/* Prayers List */}
+								{filteredPrayers.length === 0 ? (
+									<View style={{ alignItems: 'center', paddingVertical: 40 }}>
+										<Text
+											style={{
+												fontSize: 15,
+												fontFamily: 'Inter_600SemiBold',
+												color: colors.textPrimary,
+												marginBottom: 4,
+											}}
+										>
+											No prayers found
+										</Text>
+										<Text
+											style={{
+												fontSize: 12,
+												fontFamily: 'Inter_400Regular',
+												color: colors.textSecondary,
+												textAlign: 'center',
+											}}
+										>
+											Try searching with a different keyword.
+										</Text>
+									</View>
+								) : (
+									filteredPrayers.map((prayer) => {
+										const categoryLabel =
+											prayer.category === 'daily'
+												? 'Daily Rhythm'
+												: prayer.category === 'foundations'
+												? 'Foundations & Creeds'
+												: 'Traditional Liturgy';
+										const previewText = prayer.prayerText
+											.replace(/\n+/g, ' ')
+											.trim();
+
+										return (
+											<Pressable
+												key={prayer.id}
+												onPress={() => {
+													setSelectedPrayerForModal(prayer);
+													setIsPrayerModalVisible(true);
+												}}
+												style={{
+													paddingVertical: 14,
+													paddingHorizontal: 4,
+													borderBottomWidth: 1,
+													borderBottomColor: colors.border,
+												}}
+											>
+												<View
+													style={{
+														flexDirection: 'row',
+														alignItems: 'center',
+														justifyContent: 'space-between',
+														marginBottom: 4,
+													}}
+												>
+													<Text
+														style={{
+															fontSize: 16,
+															fontFamily: 'EBGaramond_700Bold',
+															color: colors.textPrimary,
+															flex: 1,
+															marginRight: 8,
+														}}
+														numberOfLines={1}
+													>
+														{prayer.title}
+													</Text>
+													<View
+														style={{
+															paddingHorizontal: 8,
+															paddingVertical: 2,
+															borderRadius: 6,
+															backgroundColor: isDark ? '#1a2730' : '#eef2f6',
+														}}
+													>
+														<Text
+															style={{
+																fontSize: 10,
+																fontFamily: 'Inter_600SemiBold',
+																color: colors.textMuted,
+																textTransform: 'uppercase',
+																letterSpacing: 0.5,
+															}}
+														>
+															{categoryLabel}
+														</Text>
+													</View>
+												</View>
+
+												<Text
+													numberOfLines={2}
+													style={{
+														fontSize: 13,
+														fontFamily: 'Inter_400Regular',
+														color: colors.textSecondary,
+														lineHeight: 18,
+														marginBottom: 6,
+													}}
+												>
+													{previewText}
+												</Text>
+
+												<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+													<Text
+														style={{
+															fontSize: 12,
+															fontFamily: 'Inter_600SemiBold',
+															color: colors.accent,
+														}}
+													>
+														Pray & Meditate →
+													</Text>
+												</View>
+											</Pressable>
+										);
+									})
+								)}
 							</View>
 						)}
 
@@ -1854,6 +2060,16 @@ export default function LibraryScreen() {
 					}}
 				/>
 			)}
+
+			{/* 10. Prayer Meditation Modal */}
+			<PrayerMeditationModal
+				visible={isPrayerModalVisible}
+				prayer={selectedPrayerForModal}
+				onClose={() => {
+					setIsPrayerModalVisible(false);
+					setSelectedPrayerForModal(null);
+				}}
+			/>
 		</SafeAreaView>
 	);
 }
