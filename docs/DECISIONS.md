@@ -1478,6 +1478,49 @@ Selected **Option B**.
 - Asset footprint reduced by 80% (from 8.8MB to 1.7MB for base bundle).
 - Zero black flash on Android with `fadeDuration={0}` and pre-warmed adjacent buffers.
 
+---
+
+## [DEC-040] Home Page Elevation & Christian Prayers Integration
+
+- **Date:** 2026-09-28
+- **Status:** Validated
+- **Related Task / Baseline:** TASK-057, `assets/bible/en_prayers.json`, `src/lib/prayers.ts`, `src/data/devotionalReflections.ts`, `src/components/PrayerMeditationModal.tsx`, `src/components/DailyDevotionalCard.tsx`, `src/components/ShieldedAppsStrip.tsx`, `src/components/WeeklyStreakTracker.tsx`, `src/app/(tabs)/index.tsx`, `src/app/(tabs)/library.tsx`
+
+### 1. Problem / Trigger
+1. **MVP Home Screen Redundancies:** The Home dashboard displayed duplicate streak widgets (one in the weekly tracker card and another redundant standalone card) and had no direct visibility into which apps were currently shielded or paused.
+2. **Dead & Dirty Prayer Data:** `assets/bible/en_prayers.json` was bloated with HTML markup (`<p>`, `<br>`, `&rsquo;`), duplicate `prayerHTML` keys, and typos (`"tilte"`). React Native cannot parse HTML natively, leading to crashes or needing heavy external parsers.
+3. **Passive Devotional Engagement:** Daily devotional cards offered only passive scripture reading without actionable reflection or prayer guidance.
+4. **No Prayer Time Credit:** Users who took time to pray or meditate had no mechanism to earn unshielding credit towards their daily Scripture goal.
+
+### 2. Alternatives Evaluated
+- **Option A (Add external HTML renderer and keep raw HTML in JSON):** High bundle bloat, slow runtime parsing, and memory overhead.
+- **Option B (In-place JSON cleaning + native typed prayer engine + MMKV timer integration):** Selected. Following `/ponytail`, cleaned the JSON asset directly (50% size cut from 25.4KB to 12.5KB). Built a zero-dependency prayer library with time-of-day resolution, an active meditation timer that feeds reading progress, a quick shielded apps strip, and a 4-tab Library screen.
+
+### 3. Decision & Trade-offs
+Selected **Option B**:
+- **Normalized Data Architecture:** 27 Christian prayers categorized into `daily` (5 prayers), `foundations` (11 prayers), and `traditional` (11 prayers) with `getTimeOfDayPrayer()` providing Morning, Afternoon, and Evening suggestions.
+- **Dual-Mode Devotional Card:** Added `[ 📖 Daily Scripture | 🙏 Daily Prayer ]` segmented switcher with 1-sentence actionable reflections and instant prayer modal trigger.
+- **Active Timer Integration:** `PrayerMeditationModal` ticks every second, saving directly to MMKV `getReadingProgress()` / `setReadingProgress()`, giving users unshielding credit for spiritual prayer.
+- **Shielded Apps Strip:** Clear, immediate visual accountability showing currently shielded apps with lock badges and pause indicators.
+
+### 4. Implementation Details
+- `assets/bible/en_prayers.json`: Cleaned and stripped all HTML artifacts and typos.
+- `src/lib/prayers.ts`: Typed data models, categories, and time-of-day contextual resolution.
+- `src/data/devotionalReflections.ts`: 20 actionable reflections mapped 1:1 to inspirational verses.
+- `src/components/PrayerMeditationModal.tsx`: Full-screen modal with active timer, reverent typography, and MMKV progress integration.
+- `src/components/DailyDevotionalCard.tsx`: Segmented switch, dynamic prayer suggestion, and reflection text.
+- `src/components/ShieldedAppsStrip.tsx`: Horizontal strip with vector SVG app icons and pause status.
+- `src/components/WeeklyStreakTracker.tsx`: Consolidated streak counter, flame icon, and Sanctuary Grace Day badge into unified header.
+- `src/app/(tabs)/index.tsx`: Integrated new components and purged redundant streak card.
+- `src/app/(tabs)/library.tsx`: Added 4th tab segment (`Prayers`), category filters, search, and modal trigger.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- `en_prayers.json` size reduced by 50.8% (25.4KB -> 12.5KB).
+- Zero new third-party dependencies introduced.
+- Dual-theme support verified in both Celestial Dark and Parchment Light.
+
+
 
 
 

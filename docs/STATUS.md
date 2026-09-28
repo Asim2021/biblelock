@@ -336,17 +336,26 @@
   - **Dead Code Pruning (`src/components/Last30DaysTracker.tsx`):** Deleted unreferenced 73-line `Last30DaysTracker.tsx` component superseded by `WeeklyStreakTracker.tsx`.
   - **Project Metadata & Env Cleanup (`package.json`, `.env.example`):** Renamed root package name from generic scaffolding `"frontend"` to `"bible-unlock"`. Commented out unused Unsplash API key in `.env.example`.
   - **Reader Profile Name Editing (`src/app/(tabs)/settings.tsx`):** Added interactive "Edit" action with Pencil icon in the Your Profile card; opens a themed modal dialog with soft keyboard handling, 30-character limit, whitespace trim, fallback to `"Disciple"`, and instant MMKV persistence.
+- [x] `TASK-057`: Home Page Elevation & Christian Prayers Integration (`DEC-040`):
+  - **Prayers Data Normalization (`assets/bible/en_prayers.json`, `src/lib/prayers.ts`):** Cleaned raw prayers JSON by stripping dead HTML tags, fixing typos, and normalizing whitespace (50% file size reduction). Mapped 27 prayers into three typed categories (`daily`, `foundations`, `traditional`) with dynamic time-of-day resolution (Morning, Afternoon, Evening).
+  - **Devotional Reflections & Prompts (`src/data/devotionalReflections.ts`):** Authored 20 curated 1-sentence reflections and prayer prompts mapped 1:1 to `INSPIRATIONAL_VERSES` for actionable spiritual engagement.
+  - **Active Prayer Meditation Modal (`src/components/PrayerMeditationModal.tsx`):** Built a full-screen reverent prayer sheet featuring an active timer that increments MMKV reading progress, counting devotional prayer time towards unshielding blocked apps.
+  - **Dual-Mode Daily Devotional Card (`src/components/DailyDevotionalCard.tsx`):** Added interactive segmented switcher (`[ 📖 Daily Scripture | 🙏 Daily Prayer ]`), practical reflection callouts, time-of-day contextual prayer suggestions, and 1-tap "Pray & Meditate" modal launch.
+  - **Shielded Apps Quick-Status Strip (`src/components/ShieldedAppsStrip.tsx`):** Implemented an at-a-glance horizontal carousel showing real vector app icons with lock badges, active shield/pause status, and deep-link shortcuts to app blocking settings.
+  - **Unified Weekly Streak Header (`src/components/WeeklyStreakTracker.tsx`):** Consolidated flame counter, streak status, and Sanctuary Grace Day protection badge (`🛡️ Grace Protected`) into a single clean header card above the 7-day matrix.
+  - **Streamlined Home Screen Experience (`src/app/(tabs)/index.tsx`):** Integrated `ShieldedAppsStrip`, upgraded hero card with context chip (`📖 Romans 8 • WEB`) and dual action buttons (`Read Chapter` + `Visual Scroll`), and purged redundant duplicate streak card.
+  - **Dedicated Prayers Library Catalog (`src/app/(tabs)/library.tsx`):** Expanded Library tab bar to 4 segments (`Collections`, `Prayers`, `Pins`, `Notes`), adding category filter pills (`All`, `Daily Rhythm`, `Foundations`, `Traditional`), real-time search, and meditation modal integration.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- Developer controls verified invisible in production release builds.
-- Privacy copy accurately conveys local offline storage without exposing internal engine details (MMKV).
-- Reader name editable in Settings with live preview and cross-tab propagation.
-- Package manifest and env templates fully aligned with production standards.
+- `assets/bible/en_prayers.json`: 50% payload cut (25.4KB -> 12.5KB), free of HTML artifacts.
+- Prayer meditation time verified to accumulate in MMKV `getReadingProgress()` and unshield blocked apps.
+- Home screen verified with zero duplicate streak widgets, active app shield status, and dual-mode devotional.
+- Library tab bar verified with responsive 4-way segmented navigation and instant prayer search.
 
 ## Session Handoff Notes
 
-- Developer-only controls in Settings are now strictly isolated behind `__DEV__`.
-- All dead code and placeholder package configurations have been removed.
-- Reader Profile name is now user-editable directly within Settings.
+- 27 Christian prayers are now integrated across Home and Library with active timer credit.
+- Home screen is transformed into a habit launchpad with quick-status shielded apps strip and streamlined hero card.
+- All components adhere to the dual-theme design system (`useTheme()`) with zero external dependencies.
