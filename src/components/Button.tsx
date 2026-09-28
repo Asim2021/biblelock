@@ -79,17 +79,18 @@ export function Button({
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: 12,
+            ...padding,
+          },
+          style,
+          {
             backgroundColor: bg,
             borderColor: border,
             borderWidth,
             opacity: disabled ? 0.6 : 1,
             transform: [{ scale: pressed && !disabled && !loading ? 0.97 : 1 }],
-            ...padding,
           },
-          style,
         ];
       }}
-      className={className}
     >
       {loading ? (
         <ActivityIndicator

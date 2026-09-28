@@ -581,13 +581,13 @@ export default function SettingsScreen() {
 							</Text>
 						</View>
 					</View>
-					<View className='flex-row space-x-2 mt-1'>
+					<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
 						<Button
 							title={hasPermission ? 'Manage in Settings' : 'Grant Blocker Permission'}
 							variant={hasPermission ? 'outline' : 'primary'}
 							size='sm'
 							onPress={handleRequestPermissions}
-							className='flex-1 mr-2'
+							style={{ flex: 1 }}
 						/>
 						<Button title='Verify Status' variant='ghost' size='sm' onPress={handleCheckPermission} />
 					</View>
@@ -1962,20 +1962,20 @@ export default function SettingsScreen() {
 								>
 									Developer Controls
 								</Text>
-								<View className='flex-row space-x-2'>
+								<View style={{ flexDirection: 'row', gap: 8 }}>
 									<Button
 										title='Reset Reading Progress'
 										variant='ghost'
 										size='sm'
 										onPress={handleResetProgress}
-										className='flex-1 mr-2'
+										style={{ flex: 1 }}
 									/>
 									<Button
 										title={isPremium ? 'Simulate Free' : 'Simulate Pro'}
 										variant='ghost'
 										size='sm'
 										onPress={handleToggleSimulatePlan}
-										className='flex-1 ml-2'
+										style={{ flex: 1 }}
 									/>
 								</View>
 							</View>
@@ -2352,20 +2352,20 @@ export default function SettingsScreen() {
 								</View>
 
 								{/* Actions */}
-								<View style={{ flexDirection: 'row' }}>
+								<View style={{ flexDirection: 'row', gap: 8 }}>
 									<Button
 										title='Cancel'
 										variant='ghost'
 										size='md'
 										onPress={() => setShowEditNameModal(false)}
-										className='flex-1 mr-2'
+										style={{ flex: 1 }}
 									/>
 									<Button
 										title='Save Name'
 										variant='primary'
 										size='md'
 										onPress={handleSaveName}
-										className='flex-1 ml-2'
+										style={{ flex: 1 }}
 									/>
 								</View>
 							</Pressable>
