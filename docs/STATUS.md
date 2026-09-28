@@ -345,6 +345,7 @@
   - **Unified Weekly Streak Header (`src/components/WeeklyStreakTracker.tsx`):** Consolidated flame counter, streak status, and Sanctuary Grace Day protection badge (`🛡️ Grace Protected`) into a single clean header card above the 7-day matrix.
   - **Streamlined Home Screen Experience (`src/app/(tabs)/index.tsx`):** Integrated `ShieldedAppsStrip`, upgraded hero card with context chip (`📖 Romans 8 • WEB`) and dual action buttons (`Read Chapter` + `Visual Scroll`), and purged redundant duplicate streak card.
   - **Dedicated Prayers Library Catalog (`src/app/(tabs)/library.tsx`):** Expanded Library tab bar to 4 segments (`Collections`, `Prayers`, `Pins`, `Notes`), adding category filter pills (`All`, `Daily Rhythm`, `Foundations`, `Traditional`), real-time search, and meditation modal integration.
+  - **Liturgical Treasury Gating (`src/lib/prayers.ts`, `src/app/(tabs)/library.tsx`, `src/app/paywall.tsx`, `src/components/DailyDevotionalCard.tsx`):** Applied freemium gating: 16 Daily & Foundational prayers remain 100% free for habit building; 11 Traditional Contemplative Liturgies are gated behind Sanctuary with subtle gold lock badges and paywall triggers; added MOD-08 to Paywall comparison.
 
 ## Verification Evidence
 
@@ -352,7 +353,7 @@
 - `assets/bible/en_prayers.json`: 50% payload cut (25.4KB -> 12.5KB), free of HTML artifacts.
 - Prayer meditation time verified to accumulate in MMKV `getReadingProgress()` and unshield blocked apps.
 - Home screen verified with zero duplicate streak widgets, active app shield status, and dual-mode devotional.
-- Library tab bar verified with responsive 4-way segmented navigation and instant prayer search.
+- Library tab bar verified with responsive 4-way segmented navigation, instant prayer search, and Sanctuary gating.
 
 ## Session Handoff Notes
 

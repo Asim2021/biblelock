@@ -34,6 +34,7 @@ import {
 	Share2,
 	Copy,
 	CircleMinus,
+	Lock,
 } from 'lucide-react-native';
 import {
 	getLastReadPosition,
@@ -55,6 +56,7 @@ import { BookmarkPickerSheet } from '../../components/BookmarkPickerSheet';
 import {
 	getAllPrayers,
 	getPrayersByCategory,
+	isPrayerGated,
 	PrayerItem,
 	PrayerCategory,
 } from '../../lib/prayers';
@@ -1008,11 +1010,15 @@ export default function LibraryScreen() {
 										] as const
 									).map((cat) => {
 										const isSelected = selectedPrayerCategory === cat.key;
+										const isCatGated = cat.key === 'traditional' && !isPremium;
 										return (
 											<Pressable
 												key={cat.key}
 												onPress={() => setSelectedPrayerCategory(cat.key)}
 												style={{
+													flexDirection: 'row',
+													alignItems: 'center',
+													gap: 5,
 													paddingVertical: 6,
 													paddingHorizontal: 14,
 													borderRadius: 16,
@@ -1023,6 +1029,16 @@ export default function LibraryScreen() {
 														: '#ebe7de',
 												}}
 											>
+												{isCatGated && (
+													<Lock
+														size={10}
+														color={
+															isSelected
+																? (colors.accentText || '#000000')
+																: colors.textSecondary
+														}
+													/>
+												)}
 												<Text
 													style={{
 														fontSize: 12,
@@ -1065,6 +1081,7 @@ export default function LibraryScreen() {
 									</View>
 								) : (
 									filteredPrayers.map((prayer) => {
+										const isLocked = isPrayerGated(prayer) && !isPremium;
 										const categoryLabel =
 											prayer.category === 'daily'
 												? 'Daily Rhythm'
@@ -1079,6 +1096,10 @@ export default function LibraryScreen() {
 											<Pressable
 												key={prayer.id}
 												onPress={() => {
+													if (isLocked) {
+														requirePremium('Traditional Liturgies & Historical Devotions');
+														return;
+													}
 													setSelectedPrayerForModal(prayer);
 													setIsPrayerModalVisible(true);
 												}}
@@ -1111,22 +1132,36 @@ export default function LibraryScreen() {
 													</Text>
 													<View
 														style={{
+															flexDirection: 'row',
+															alignItems: 'center',
+															gap: 4,
 															paddingHorizontal: 8,
 															paddingVertical: 2,
 															borderRadius: 6,
-															backgroundColor: isDark ? '#1a2730' : '#eef2f6',
+															backgroundColor: isLocked
+																? (isDark ? '#2e2415' : '#fef3c7')
+																: (isDark ? '#1a2730' : '#eef2f6'),
+															borderWidth: isLocked ? 1 : 0,
+															borderColor: isLocked
+																? (isDark ? '#5e4a23' : '#fde68a')
+																: 'transparent',
 														}}
 													>
+														{isLocked && (
+															<Lock size={9} color={isDark ? '#f59e0b' : '#b45309'} />
+														)}
 														<Text
 															style={{
 																fontSize: 10,
 																fontFamily: 'Inter_600SemiBold',
-																color: colors.textMuted,
+																color: isLocked
+																	? (isDark ? '#f59e0b' : '#b45309')
+																	: colors.textMuted,
 																textTransform: 'uppercase',
 																letterSpacing: 0.5,
 															}}
 														>
-															{categoryLabel}
+															{isLocked ? 'Sanctuary' : categoryLabel}
 														</Text>
 													</View>
 												</View>
@@ -1144,15 +1179,20 @@ export default function LibraryScreen() {
 													{previewText}
 												</Text>
 
-												<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+												<View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+													{isLocked && (
+														<Lock size={12} color={isDark ? '#f59e0b' : '#b45309'} />
+													)}
 													<Text
 														style={{
 															fontSize: 12,
 															fontFamily: 'Inter_600SemiBold',
-															color: colors.accent,
+															color: isLocked
+																? (isDark ? '#f59e0b' : '#b45309')
+																: colors.accent,
 														}}
 													>
-														Pray & Meditate →
+														{isLocked ? 'Unlock with Sanctuary' : 'Pray & Meditate →'}
 													</Text>
 												</View>
 											</Pressable>

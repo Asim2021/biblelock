@@ -82,6 +82,13 @@ const FEATURES: FeatureComparison[] = [
 		covenant: '7-day week view',
 		sanctuary: '30-day heatmap & telemetry',
 	},
+	{
+		icon: Heart,
+		title: 'Christian Prayer Treasury',
+		code: 'MOD-08',
+		covenant: 'Daily & Foundations (16)',
+		sanctuary: 'Full Traditional Liturgy (27+)',
+	},
 ];
 
 export default function PaywallScreen() {

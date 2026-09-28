@@ -7,6 +7,7 @@ import { getTimeOfDayPrayer, getRandomPrayer, PrayerItem } from '../lib/prayers'
 import { getDevotionalReflection } from '../data/devotionalReflections';
 import { PrayerMeditationModal } from './PrayerMeditationModal';
 import { useTheme } from '../lib/themeContext';
+import { usePurchases } from '../lib/purchases';
 
 interface DailyDevotionalCardProps {
   title?: string;
@@ -19,6 +20,7 @@ export function DailyDevotionalCard({
 }: DailyDevotionalCardProps) {
   const router = useRouter();
   const { colors, isDark } = useTheme();
+  const { isPremium } = usePurchases();
   const [translation] = useBibleTranslation();
 
   const [mode, setMode] = useState<'scripture' | 'prayer'>('scripture');
@@ -41,7 +43,7 @@ export function DailyDevotionalCard({
 
   const handleRefreshPrayer = () => {
     setIsRotating(true);
-    const next = getRandomPrayer(prayer.id);
+    const next = getRandomPrayer(prayer.id, !isPremium);
     setPrayer(next);
     setTimeout(() => setIsRotating(false), 300);
   };

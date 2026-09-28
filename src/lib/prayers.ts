@@ -89,8 +89,19 @@ export function getTimeOfDayPrayer(date: Date = new Date()): PrayerItem {
   return PRAYERS_BY_ID.get('26') || NORMALIZED_PRAYERS[0];
 }
 
-export function getRandomPrayer(excludeId?: string): PrayerItem {
-  const filtered = excludeId ? NORMALIZED_PRAYERS.filter((p) => p.id !== excludeId) : NORMALIZED_PRAYERS;
-  const idx = Math.floor(Math.random() * filtered.length);
-  return filtered[idx] || NORMALIZED_PRAYERS[0];
+export function isPrayerGated(prayer: PrayerItem): boolean {
+  return prayer.category === 'traditional';
 }
+
+export function getFreePrayers(): PrayerItem[] {
+  return NORMALIZED_PRAYERS.filter((p) => p.category !== 'traditional');
+}
+
+export function getRandomPrayer(excludeId?: string, onlyFree: boolean = false): PrayerItem {
+  let pool = onlyFree ? getFreePrayers() : NORMALIZED_PRAYERS;
+  const filtered = excludeId ? pool.filter((p) => p.id !== excludeId) : pool;
+  const list = filtered.length > 0 ? filtered : pool;
+  const idx = Math.floor(Math.random() * list.length);
+  return list[idx] || NORMALIZED_PRAYERS[0];
+}
+

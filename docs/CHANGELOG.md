@@ -20,6 +20,9 @@
   - Integrated `ShieldedAppsStrip`, upgraded hero card with context chip (`📖 Romans 8 • WEB`) and dual action buttons (`Read Chapter` + `Visual Scroll`), and purged redundant duplicate streak card.
 - **Dedicated Prayers Library Catalog (`src/app/(tabs)/library.tsx`):**
   - Expanded Library tab bar to 4 segments (`Collections`, `Prayers`, `Pins`, `Notes`), adding category filter pills (`All`, `Daily Rhythm`, `Foundations`, `Traditional`), real-time search, and meditation modal integration.
+- **Liturgical Treasury Gating (`src/lib/prayers.ts`, `src/app/(tabs)/library.tsx`, `src/app/paywall.tsx`, `src/components/DailyDevotionalCard.tsx`):**
+  - Gated 11 traditional contemplative liturgies behind Sanctuary with subtle gold lock badges and paywall triggers, while keeping all 16 daily & foundational prayers completely free for habit building.
+  - Added MOD-08 Christian Prayer Treasury to the Sanctuary paywall comparison table.
 
 ### Verified Impact
 - `npx tsc --noEmit`: 0 errors across entire workspace.
