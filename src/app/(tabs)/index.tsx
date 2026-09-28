@@ -11,12 +11,10 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useRouter, useFocusEffect } from 'expo-router';
 import {
   Settings,
-  ShieldCheck,
-  ShieldAlert,
   Clock,
   BookOpen,
+  Sparkles,
   Flame,
-  Pause,
   Trophy,
   X,
   ChevronRight,
@@ -32,12 +30,13 @@ import {
   getPauseBlockingUntil,
   setPauseBlockingUntil,
   getLastReadPosition,
+  getBlockedApps,
 } from '../../lib/mmkv';
+import { ShieldedAppsStrip } from '../../components/ShieldedAppsStrip';
 import { WeeklyStreakTracker } from '../../components/WeeklyStreakTracker';
 import { DailyDevotionalCard } from '../../components/DailyDevotionalCard';
 import { PauseBlockingModal } from '../../components/PauseBlockingModal';
 import { HabitDay, ImpactStats } from '../../types/onboarding';
-
 import { useTheme } from '../../lib/themeContext';
 
 export default function HomeScreen() {
@@ -50,6 +49,7 @@ export default function HomeScreen() {
   const [isShielded, setIsShielded] = useState(true);
   const [isPaused, setIsPaused] = useState(false);
   const [pauseUntil, setPauseUntil] = useState<number | null>(null);
+  const [blockedApps, setBlockedApps] = useState<string[]>([]);
 
   const [isPauseModalVisible, setIsPauseModalVisible] = useState(false);
   const [history, setHistory] = useState<HabitDay[]>([]);
@@ -73,6 +73,7 @@ export default function HomeScreen() {
     setPauseUntil(getPauseBlockingUntil());
     setHistory(getWeeklyHabitDays());
     setImpact(getImpactStats());
+    setBlockedApps(getBlockedApps());
 
     const storedName = getUserName();
     setName(storedName);
@@ -124,6 +125,8 @@ export default function HomeScreen() {
     timer.goalMinutes - Math.floor(timer.secondsRead / 60)
   );
 
+  const lastPos = getLastReadPosition();
+
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.background }}
@@ -142,7 +145,7 @@ export default function HomeScreen() {
         }
       >
         {/* Top Header Bar */}
-        <View className="flex-row items-center justify-between pt-4 pb-2">
+        <View className="flex-row items-center justify-between pt-4 pb-3">
           <View className="flex-1 pr-3">
             <Text
               style={{
@@ -166,58 +169,8 @@ export default function HomeScreen() {
             </Text>
           </View>
 
-          {/* Quick Settings & Status Badge */}
+          {/* Quick Header Actions: Stats & Settings */}
           <View className="flex-row items-center">
-            {isPaused ? (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingHorizontal: 10,
-                  paddingVertical: 4,
-                  borderRadius: 20,
-                  backgroundColor: colors.accentBg,
-                  borderWidth: 1,
-                  borderColor: colors.accent,
-                  marginRight: 8,
-                }}
-              >
-                <Pause size={12} color={colors.accent} style={{ marginRight: 4 }} />
-                <Text style={{ fontSize: 10, fontFamily: 'Inter_700Bold', color: colors.accent }}>
-                  Paused ({remainingMins}m)
-                </Text>
-              </View>
-            ) : (
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingHorizontal: 10,
-                  paddingVertical: 4,
-                  borderRadius: 20,
-                  borderWidth: 1,
-                  borderColor: isShielded ? '#385e48' : '#5e3838',
-                  backgroundColor: isShielded ? (isDark ? '#18261e' : '#edf8f0') : (isDark ? '#291b1b' : '#fdeeed'),
-                  marginRight: 8,
-                }}
-              >
-                {isShielded ? (
-                  <ShieldCheck size={12} color={colors.success} style={{ marginRight: 4 }} />
-                ) : (
-                  <ShieldAlert size={12} color={colors.danger} style={{ marginRight: 4 }} />
-                )}
-                <Text
-                  style={{
-                    fontSize: 10,
-                    fontFamily: 'Inter_700Bold',
-                    color: isShielded ? colors.success : colors.danger,
-                  }}
-                >
-                  {isShielded ? 'Shielded' : 'Unshielded'}
-                </Text>
-              </View>
-            )}
-
             <Pressable
               onPress={() => router.push('/stats-detail' as any)}
               accessibilityRole="button"
@@ -257,12 +210,27 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Shielded Apps Status Strip with Authentic App Icons */}
+        <ShieldedAppsStrip
+          isShielded={isShielded}
+          isPaused={isPaused}
+          remainingMins={remainingMins}
+          blockedApps={blockedApps}
+          onPressPause={() => {
+            if (isPaused) {
+              handleResumeBlocking();
+            } else {
+              setIsPauseModalVisible(true);
+            }
+          }}
+          onPressManage={() => router.push('/settings' as any)}
+        />
+
         {/* Soft Sanctuary Prompt for 3+ day streak */}
         {!isPremium && timer.streak >= 3 && !sanctuaryPromptDismissed && (
           <View
             style={{
-              marginTop: 10,
-              marginBottom: 4,
+              marginBottom: 12,
               padding: 16,
               borderRadius: 20,
               backgroundColor: colors.accentBg,
@@ -302,10 +270,10 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Hero Card: "Time to Read" */}
+        {/* Smart Resume Hero Card: "Time to Read" */}
         <View
           style={{
-            marginVertical: 16,
+            marginBottom: 16,
             padding: 20,
             borderRadius: 24,
             backgroundColor: colors.surface,
@@ -357,7 +325,7 @@ export default function HomeScreen() {
               fontSize: 18,
               color: colors.textPrimary,
               lineHeight: 24,
-              marginBottom: 8,
+              marginBottom: 6,
             }}
           >
             {timer.isGoalMet
@@ -365,11 +333,39 @@ export default function HomeScreen() {
               : 'Feed your spirit before feeding the scroll'}
           </Text>
 
-          <Text style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 18, marginBottom: 16 }}>
+          <Text style={{ fontSize: 12, color: colors.textSecondary, lineHeight: 18, marginBottom: 12 }}>
             {timer.isGoalMet
               ? 'Praise God! You have fulfilled your reading target today. All apps are unshielded.'
               : `${minutesRemainingToGoal} min remaining to unlock your guarded apps today.`}
           </Text>
+
+          {/* Context Reading Location Chip */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 8,
+                backgroundColor: colors.surfaceSubtle,
+                borderWidth: 1,
+                borderColor: colors.borderSubtle,
+              }}
+            >
+              <BookOpen size={12} color={colors.accent} style={{ marginRight: 6 }} />
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontFamily: 'Inter_700Bold',
+                  color: colors.textPrimary,
+                  letterSpacing: 0.3,
+                }}
+              >
+                {lastPos.bookName} {lastPos.chapterNumber}:{lastPos.verseNumber || 1}
+              </Text>
+            </View>
+          </View>
 
           {/* Progress Bar */}
           <View
@@ -379,7 +375,7 @@ export default function HomeScreen() {
               backgroundColor: colors.surfaceSubtle,
               borderRadius: 5,
               overflow: 'hidden',
-              marginBottom: 20,
+              marginBottom: 18,
             }}
           >
             <View
@@ -392,89 +388,75 @@ export default function HomeScreen() {
             />
           </View>
 
-          {/* Golden Radiant Button */}
-          <Pressable
-            onPress={() => {
-              const lastPos = getLastReadPosition();
-              router.push({
-                pathname: '/reader',
-                params: {
-                  book: lastPos.bookName,
-                  chapter: lastPos.chapterNumber.toString(),
-                  verse: (lastPos.verseNumber || 1).toString(),
-                },
-              } as any);
-            }}
-            style={{
-              width: '100%',
-              paddingVertical: 14,
-              borderRadius: 16,
-              backgroundColor: colors.accent,
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'row',
-            }}
-          >
-            <BookOpen size={18} color="#141413" style={{ marginRight: 8 }} />
-            <Text style={{ fontSize: 16, fontFamily: 'Inter_700Bold', color: '#141413' }}>
-              {timer.isGoalMet ? 'Continue in Scripture' : "Amen, Let's Read"}
-            </Text>
-          </Pressable>
+          {/* Dual Action Buttons: Read Chapter vs Visual Scroll */}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {/* Primary Action: Read Chapter */}
+            <Pressable
+              onPress={() => {
+                router.push({
+                  pathname: '/reader',
+                  params: {
+                    book: lastPos.bookName,
+                    chapter: lastPos.chapterNumber.toString(),
+                    verse: (lastPos.verseNumber || 1).toString(),
+                  },
+                } as any);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Read Chapter"
+              style={{
+                flex: 1.4,
+                paddingVertical: 14,
+                borderRadius: 16,
+                backgroundColor: colors.accent,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+                marginRight: 8,
+              }}
+            >
+              <BookOpen size={16} color="#141413" style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 15, fontFamily: 'Inter_700Bold', color: '#141413' }}>
+                {timer.isGoalMet ? 'Continue Word' : 'Read Chapter'}
+              </Text>
+            </Pressable>
+
+            {/* Secondary Action: Visual Scroll */}
+            <Pressable
+              onPress={() => router.push('/scroll' as any)}
+              accessibilityRole="button"
+              accessibilityLabel="Visual Scroll"
+              style={{
+                flex: 1,
+                paddingVertical: 14,
+                borderRadius: 16,
+                backgroundColor: colors.surfaceSubtle,
+                borderWidth: 1,
+                borderColor: colors.borderSubtle,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
+              }}
+            >
+              <Sparkles size={16} color={colors.accent} style={{ marginRight: 6 }} />
+              <Text style={{ fontSize: 14, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
+                Visual Scroll
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
-        {/* Daily Devotional Card with Refresh, Goto, Share */}
-        <View className="mb-4">
+        {/* Daily Devotional Card with Dual Scripture / Daily Prayer Modes */}
+        <View className="mb-2">
           <DailyDevotionalCard />
         </View>
 
-        {/* Streak & Pause Blocking Card */}
-        <View
-          style={{
-            marginBottom: 16,
-            padding: 20,
-            borderRadius: 24,
-            backgroundColor: colors.surface,
-            borderWidth: 1,
-            borderColor: colors.border,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <View className="flex-1 pr-3">
-            <View className="flex-row items-center mb-1">
-              <Flame size={22} color="#ff7b42" style={{ marginRight: 8 }} />
-              <Text style={{ fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
-                {timer.streak} {timer.streak === 1 ? 'Day' : 'Days'} Streak
-              </Text>
-            </View>
-            <Text style={{ fontSize: 12, color: colors.textSecondary }}>
-              Keep your daily spiritual flame burning
-            </Text>
-          </View>
-
-          <Pressable
-            onPress={() => setIsPauseModalVisible(true)}
-            style={{
-              paddingHorizontal: 14,
-              paddingVertical: 10,
-              borderRadius: 12,
-              backgroundColor: colors.surfaceSubtle,
-              borderWidth: 1,
-              borderColor: colors.border,
-              flexDirection: 'row',
-              alignItems: 'center',
-            }}
-          >
-            <Pause size={13} color={colors.accent} style={{ marginRight: 6 }} />
-            <Text style={{ fontSize: 12, fontFamily: 'Inter_700Bold', color: colors.accent }}>
-              {isPaused ? `Paused (${remainingMins}m)` : 'Pause Blocking'}
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* Weekly Activity Streak Tracker */}
-        <WeeklyStreakTracker history={history} />
+        {/* Unified Weekly Activity & Streak Tracker with Sanctuary Grace Day Status */}
+        <WeeklyStreakTracker
+          history={history}
+          streak={timer.streak}
+          isPremium={isPremium}
+        />
 
         {/* Your Impact Section */}
         <View className="my-3">
