@@ -213,6 +213,32 @@ export function addReadingSeconds(secondsDelta: number, dateKey: string = getTod
   return updated;
 }
 
+export function exportReadingProgressMap(): Record<string, number> {
+  const map: Record<string, number> = {};
+  const now = new Date();
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const sec = getReadingProgress(dateKey);
+    if (sec > 0) {
+      map[dateKey] = sec;
+    }
+  }
+  return map;
+}
+
+export function restoreReadingProgressMap(map: Record<string, number>): void {
+  _progressCache.clear();
+  _yearHistoryCache = null;
+  for (const [dateKey, seconds] of Object.entries(map)) {
+    if (typeof seconds === 'number' && seconds > 0) {
+      storage.set(`${STORAGE_KEYS.READING_PROGRESS_PREFIX}${dateKey}`, seconds);
+      _progressCache.set(dateKey, seconds);
+    }
+  }
+}
+
 const translationListeners = new Set<(tr: string) => void>();
 
 export function getBibleTranslation(): string {
@@ -768,6 +794,11 @@ export function saveCollection(collection: VerseCollection): void {
   storage.set(STORAGE_KEYS.COLLECTIONS, JSON.stringify(updated));
 }
 
+export function restoreCollections(collections: VerseCollection[]): void {
+  _collectionsCache = collections;
+  storage.set(STORAGE_KEYS.COLLECTIONS, JSON.stringify(collections));
+}
+
 export function deleteCollection(id: string): void {
   const list = getCollections();
   const filtered = list.filter((c) => c.id !== id);
@@ -837,6 +868,11 @@ export function saveBookmark(bookmark: Bookmark): void {
   const updated = [bookmark, ...filtered];
   _bookmarksCache = updated;
   storage.set(STORAGE_KEYS.BOOKMARKS, JSON.stringify(updated));
+}
+
+export function restoreBookmarks(bookmarks: Bookmark[]): void {
+  _bookmarksCache = bookmarks;
+  storage.set(STORAGE_KEYS.BOOKMARKS, JSON.stringify(bookmarks));
 }
 
 export function deleteBookmark(id: string): void {

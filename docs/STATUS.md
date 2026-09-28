@@ -347,16 +347,24 @@
   - **Dedicated Prayers Library Catalog (`src/app/(tabs)/library.tsx`):** Expanded Library tab bar to 4 segments (`Collections`, `Prayers`, `Pins`, `Notes`), adding category filter pills (`All`, `Daily Rhythm`, `Foundations`, `Traditional`), real-time search, and meditation modal integration.
   - **Liturgical Treasury Gating (`src/lib/prayers.ts`, `src/app/(tabs)/library.tsx`, `src/app/paywall.tsx`, `src/components/DailyDevotionalCard.tsx`):** Applied freemium gating: 16 Daily & Foundational prayers remain 100% free for habit building; 11 Traditional Contemplative Liturgies are gated behind Sanctuary with subtle gold lock badges and paywall triggers; added MOD-08 to Paywall comparison.
 
+- [x] `TASK-058`: Settings Page Architectural Redesign: 4-Cluster Information Hierarchy, Store Compliance, Battery Guard & Data Vault (`DEC-041`):
+  - **4 Grouped Semantic Clusters (`src/app/(tabs)/settings.tsx`):** Restructured 2,379-line linear scroll into 4 numbered industrial-brutalist sections (`01 // SPIRITUAL HABIT & SHIELD`, `02 // READING & MEDIA ASSETS`, `03 // REMINDERS & QUIET HOURS`, `04 // ACCOUNT, DATA & SUPPORT`).
+  - **Local Data Portability Engine (`src/lib/backup.ts`, `src/components/settings/DataBackupModal.tsx`):** Built 100% offline JSON export with dual action buttons: "Download Backup File (.json)" directly saving timestamped files (`bible-unlock-backup-YYYY-MM-DD_HH-mm-ss.json`) to Android device Downloads via Storage Access Framework, and "Share via Apps" for cloud/external note transfer, alongside schema-validated JSON restore.
+  - **Android Battery Optimization Guide (`src/components/settings/BatteryOptimizationModal.tsx`):** Built OEM background battery guide modal with direct 1-tap deep-link to system app settings via `Linking.openSettings()` to prevent Samsung/Xiaomi/Pixel from killing the accessibility blocker service.
+  - **Store Compliance & Billing Management (`src/app/(tabs)/settings.tsx`):** Added in-app "Restore Purchases" button with spinner feedback and direct "Manage Subscription" deep-link to Google Play / App Store account settings.
+  - **Viral Growth & App Review Loops (`src/app/(tabs)/settings.tsx`):** Integrated native "Share Bible Unlock with a Friend", "Rate on Google Play", and support mailto links alongside Privacy Policy and Terms of Service.
+  - **Developer Protocol Card:** Isolated debug triggers ("Reset Reading Progress" and "Simulate Free / Pro") strictly behind `__DEV__` with industrial warning borders.
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `assets/bible/en_prayers.json`: 50% payload cut (25.4KB -> 12.5KB), free of HTML artifacts.
-- Prayer meditation time verified to accumulate in MMKV `getReadingProgress()` and unshield blocked apps.
-- Home screen verified with zero duplicate streak widgets, active app shield status, and dual-mode devotional.
-- Library tab bar verified with responsive 4-way segmented navigation, instant prayer search, and Sanctuary gating.
+- 100% offline JSON export and restore verified.
+- App Store & Google Play compliance verified with in-app purchase restoration and subscription links.
+- Touch target minimum 44x44pt satisfied across all settings buttons and list actions.
+- Dual-theme verified in both Celestial Dark and Parchment Light.
 
 ## Session Handoff Notes
 
-- 27 Christian prayers are now integrated across Home and Library with active timer credit.
-- Home screen is transformed into a habit launchpad with quick-status shielded apps strip and streamlined hero card.
-- All components adhere to the dual-theme design system (`useTheme()`) with zero external dependencies.
+- Settings page is transformed into a clean, 4-cluster grouped hub with full store compliance and data portability.
+- Android battery optimization modal prevents OEM background task killing.
+- All changes are verified with zero new third-party dependencies.

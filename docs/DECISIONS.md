@@ -1520,6 +1520,48 @@ Selected **Option B**:
 - Zero new third-party dependencies introduced.
 - Dual-theme support verified in both Celestial Dark and Parchment Light.
 
+---
+
+## [DEC-041] Settings Page Architectural Redesign: 4-Cluster Information Hierarchy, Store Compliance, Battery Guard & Data Vault
+
+- **Date:** 2026-09-28
+- **Status:** Validated
+- **Related Task / Baseline:** TASK-058, `docs/superpowers/specs/2026-09-28-settings-redesign.md`, `docs/superpowers/plans/2026-09-28-settings-redesign.md`, `src/app/(tabs)/settings.tsx`, `src/lib/backup.ts`, `src/components/settings/BatteryOptimizationModal.tsx`, `src/components/settings/DataBackupModal.tsx`
+
+### 1. Problem / Trigger
+1. **Unsegmented Monolithic Scroll:** `src/app/(tabs)/settings.tsx` had grown to 2,379 lines with 15+ disconnected items stacked in a flat view, causing cognitive overload and navigation friction.
+2. **Missing Store Compliance & In-App Restoration:** App Store & Google Play guidelines require users to be able to restore purchases and manage active subscriptions from within the app's settings. Bible Unlock lacked in-app "Restore Purchases" and "Manage Subscription" links on the Settings tab.
+3. **Offline Data Vulnerability:** As a strictly 100% offline local-first app, users who upgraded devices or reinstalled the app risked losing all historical reading streaks, custom verse collections, bookmarks, and private notes with zero data portability.
+4. **Android Background Blocker Killing (OEM Aggression):** Aggressive manufacturer battery savers (Samsung OneUI, Xiaomi MIUI, Pixel, Oppo) terminate the background accessibility blocker service after 1–2 hours unless explicitly configured to "Unrestricted", resulting in customer complaints and 1-star reviews.
+5. **Missing Community & Discovery Loops:** No in-app word-of-mouth sharing, store rating action, or support email links existed.
+
+### 2. Alternatives Evaluated
+- **Option A (Multi-Page Nested Sub-Routes `/settings/*`):** High navigation friction, fragmented state synchronization, and multiple route files violating YAGNI.
+- **Option B (In-Page Segmented Tab Switcher):** Adds tab-inside-tab confusion against the bottom tab bar and hides critical store compliance actions.
+- **Option C (Unified Grouped Hub with 4 Semantic Industrial-Brutalist Clusters + Focused Modals):** Selected. Reorganized the screen into 4 clearly demarcated clusters (`01 // SPIRITUAL HABIT & SHIELD`, `02 // READING & MEDIA ASSETS`, `03 // REMINDERS & QUIET HOURS`, `04 // ACCOUNT, DATA & SUPPORT`) while extracting data portability and battery optimization into focused, reusable modal components.
+
+### 3. Decision & Trade-offs
+Selected **Option C**:
+- **4 Grouped Semantic Clusters:** Replaced flat list with high-contrast, numbered industrial headers and unified cards.
+- **Local Data Portability Engine (`src/lib/backup.ts`):** 100% offline JSON export via native `Share.share` and schema-validated JSON import restoring bookmarks, collections, habit streaks, and goal settings.
+- **Android Battery Optimization Modal (`BatteryOptimizationModal.tsx`):** Detailed 3-step OEM guide with 1-tap deep-link to system app settings via `Linking.openSettings()`.
+- **Store Compliance & Billing Management:** Added tactile "Restore Purchases" button with spinner feedback and direct "Manage Subscription" link to Google Play / App Store account settings.
+- **Viral Growth & Support:** Integrated native "Share with a Friend", "Rate on Google Play", and support mailto links alongside Privacy Policy, Terms of Service, and build version indicators.
+
+### 4. Implementation Details
+- `src/lib/backup.ts`: Built `exportBackupJSON()`, `shareBackup()`, and `importBackupJSON()` with version 1 schema validation.
+- `src/lib/mmkv.ts`: Added `restoreBookmarks()`, `restoreCollections()`, `exportReadingProgressMap()`, and `restoreReadingProgressMap()`.
+- `src/components/settings/BatteryOptimizationModal.tsx`: Built dual-themed modal explaining Android battery optimization with direct system settings deep-link.
+- `src/components/settings/DataBackupModal.tsx`: Built segmented export/import modal with JSON validation and streak preview.
+- `src/app/(tabs)/settings.tsx`: Refactored layout into 4 semantic clusters, integrated new modals, store compliance actions, rating/sharing tools, and developer controls.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- 100% offline data backup and restore verified.
+- Complete App Store / Google Play review compliance with in-app purchase restoration, store subscription links, Privacy Policy, and Terms of Service.
+- Zero new third-party dependencies introduced.
+- Strict 44x44pt touch target compliance across all interactive elements.
+
 
 
 

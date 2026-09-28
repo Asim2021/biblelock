@@ -9,24 +9,23 @@ import {
 	Modal,
 	TextInput,
 	ActivityIndicator,
-	Image,
 	AppState,
 	AppStateStatus,
 	KeyboardAvoidingView,
 	Keyboard,
 	Platform,
+	Linking,
+	Share,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import {
 	Crown,
 	Shield,
 	Clock,
-	BookOpen,
 	Smartphone,
-	Bell,
 	User,
-	LogOut,
 	Check,
 	Lock,
 	Plus,
@@ -43,11 +42,21 @@ import {
 	Globe,
 	Download,
 	Pencil,
+	BatteryCharging,
+	DownloadCloud,
+	RefreshCw,
+	CreditCard,
+	Share2,
+	Star,
+	MessageSquare,
+	FileText,
+	ShieldAlert,
 } from 'lucide-react-native';
 import { BibleTranslationModal } from '../../components/BibleTranslationModal';
+import { BatteryOptimizationModal } from '../../components/settings/BatteryOptimizationModal';
+import { DataBackupModal } from '../../components/settings/DataBackupModal';
 import {
 	getAvailableBackgroundCount,
-	isArtworkPackInstalled,
 	downloadSacredArtworkPack,
 } from '../../lib/scrollImageCache';
 import { usePurchases } from '../../lib/purchases';
@@ -61,10 +70,7 @@ import {
 	getBlockedApps,
 	setBlockedApps,
 	DEFAULT_BLOCKED_APPS,
-	getReadingProgress,
 	setReadingProgress,
-	getThemeMode,
-	setThemeMode as saveThemeMode,
 	ThemeMode,
 	getScheduledReadingTimes,
 	setScheduledReadingTimes,
@@ -93,69 +99,48 @@ function formatSlotTime(h: number, m: number): string {
 export default function SettingsScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
-	const { isPremium, toggleDevPremium } = usePurchases();
+	const { isPremium, toggleDevPremium, restorePurchases } = usePurchases();
 	const { requirePremium } = useFeatureGate();
 	const { themeMode, setThemeMode, colors, isDark } = useTheme();
 
+	// Habit & Shield State
 	const [dailyGoal, setDailyGoal] = useState(() => getDailyGoalMinutes());
 	const [showCustomGoalInput, setShowCustomGoalInput] = useState(false);
 	const [customGoalText, setCustomGoalText] = useState('');
-	const [translation, setTranslationState] = useBibleTranslation();
-	const [verseNotifsEnabled, setVerseNotifsEnabled] = useState(() => getDailyVerseNotificationsEnabled());
-	const [verseNotifCount, setVerseNotifCount] = useState(() => getDailyVerseNotificationCount());
 	const [blockedList, setBlockedListState] = useState<string[]>(() => getBlockedApps());
 	const [hasPermission, setHasPermission] = useState(false);
-	const [eveningReminder, setEveningReminder] = useState(true);
-	const [scheduledTimes, setScheduledTimes] = useState<string[]>(() => getScheduledReadingTimes());
-	const [showTimePickerModal, setShowTimePickerModal] = useState(false);
-	const [showTranslationModal, setShowTranslationModal] = useState(false);
+	const [showBatteryModal, setShowBatteryModal] = useState(false);
+	const [showBackupModal, setShowBackupModal] = useState(false);
+	const [isRestoringPurchases, setIsRestoringPurchases] = useState(false);
 
+	// Reading & Translations State
+	const [translation, setTranslationState] = useBibleTranslation();
+	const [showTranslationModal, setShowTranslationModal] = useState(false);
+	const [artworkCount, setArtworkCount] = useState(() => getAvailableBackgroundCount());
+	const [isDownloadingArtwork, setIsDownloadingArtwork] = useState(false);
+	const [downloadProgress, setDownloadProgress] = useState({ downloaded: 0, total: 20 });
+
+	// Reminders State
+	const [verseNotifsEnabled, setVerseNotifsEnabled] = useState(() =>
+		getDailyVerseNotificationsEnabled(),
+	);
+	const [verseNotifCount, setVerseNotifCount] = useState(() =>
+		getDailyVerseNotificationCount(),
+	);
+	const [eveningReminder, setEveningReminder] = useState(true);
+	const [scheduledTimes, setScheduledTimes] = useState<string[]>(() =>
+		getScheduledReadingTimes(),
+	);
+	const [showTimePickerModal, setShowTimePickerModal] = useState(false);
+
+	// Profile State
 	const [userName, setUserNameState] = useState(() => getUserName());
 	const [showEditNameModal, setShowEditNameModal] = useState(false);
 	const [editNameText, setEditNameText] = useState('');
 	const nameInputRef = useRef<TextInput>(null);
 	const [isNameInputFocused, setIsNameInputFocused] = useState(false);
 
-	const [artworkCount, setArtworkCount] = useState(() => getAvailableBackgroundCount());
-	const [isDownloadingArtwork, setIsDownloadingArtwork] = useState(false);
-	const [downloadProgress, setDownloadProgress] = useState({ downloaded: 0, total: 20 });
-
-	const handleDownloadArtwork = async () => {
-		if (!requirePremium('Sacred Artwork Expansion (20 HD)')) {
-			return;
-		}
-		setIsDownloadingArtwork(true);
-		const result = await downloadSacredArtworkPack((downloaded, total) => {
-			setDownloadProgress({ downloaded, total });
-		});
-		setIsDownloadingArtwork(false);
-		setArtworkCount(result.totalAvailable);
-	};
-
-	const handleAddReminderTime = (time: string) => {
-		if (scheduledTimes.includes(time)) {
-			return;
-		}
-		const updated = [...scheduledTimes, time];
-		setScheduledTimes(updated);
-		setScheduledReadingTimes(updated);
-	};
-
-	const handleOpenTimePicker = () => {
-		if (!isPremium && scheduledTimes.length >= 1) {
-			if (!requirePremium('Multiple daily reminders')) {
-				return;
-			}
-		}
-		setShowTimePickerModal(true);
-	};
-
-	const handleRemoveReminderTime = (timeToRemove: string) => {
-		const updated = scheduledTimes.filter((t) => t !== timeToRemove);
-		setScheduledTimes(updated);
-		setScheduledReadingTimes(updated);
-	};
-
+	// App Picker Modal State
 	const [showAppPickerModal, setShowAppPickerModal] = useState(false);
 	const [installedApps, setInstalledApps] = useState<InstalledApp[]>([]);
 	const [loadingApps, setLoadingApps] = useState(false);
@@ -188,22 +173,13 @@ export default function SettingsScreen() {
 		useCallback(() => {
 			refreshPermissions();
 			setUserNameState(getUserName());
+			setDailyGoal(getDailyGoalMinutes());
+			setBlockedListState(getBlockedApps());
+			setScheduledTimes(getScheduledReadingTimes());
 		}, [refreshPermissions]),
 	);
 
-	const handleOpenEditName = () => {
-		setEditNameText(userName);
-		setShowEditNameModal(true);
-	};
-
-	const handleSaveName = () => {
-		const trimmed = editNameText.trim();
-		const finalName = trimmed.length > 0 ? trimmed.slice(0, 30) : 'Disciple';
-		setUserName(finalName);
-		setUserNameState(finalName);
-		setShowEditNameModal(false);
-	};
-
+	// Goal Handlers
 	useEffect(() => {
 		if (!isPremium && dailyGoal > 15) {
 			setDailyGoal(15);
@@ -231,7 +207,10 @@ export default function SettingsScreen() {
 	const handleSaveCustomGoal = () => {
 		const mins = parseInt(customGoalText.trim(), 10);
 		if (isNaN(mins) || mins < 1 || mins > 120) {
-			Alert.alert('Invalid Duration', 'Please enter a reading duration between 1 and 120 minutes.');
+			Alert.alert(
+				'Invalid Duration',
+				'Please enter a reading duration between 1 and 120 minutes.',
+			);
 			return;
 		}
 		setDailyGoal(mins);
@@ -239,43 +218,7 @@ export default function SettingsScreen() {
 		setShowCustomGoalInput(false);
 	};
 
-	const handleSelectTranslation = async (tr: string) => {
-		setTranslationState(tr);
-		if (verseNotifsEnabled) {
-			await ScriptureShield.scheduleDailyVerseNotifications(verseNotifCount, tr);
-		}
-	};
-
-	const handleToggleVerseNotifications = async (val: boolean) => {
-		setVerseNotifsEnabled(val);
-		setDailyVerseNotificationsEnabled(val);
-		if (val) {
-			const success = await ScriptureShield.scheduleDailyVerseNotifications(verseNotifCount, translation);
-			if (!success) {
-				Alert.alert(
-					'Permission Needed',
-					'Please enable notifications so Bible Unlock can deliver your daily devotional verses.',
-				);
-			}
-		} else {
-			await ScriptureShield.cancelDailyVerseNotifications();
-		}
-	};
-
-	const handleUpdateVerseNotifCount = async (count: number) => {
-		if (count > 6 && !isPremium) {
-			if (!requirePremium('Receive up to 24 daily verses')) {
-				return;
-			}
-		}
-		const clamped = Math.max(1, Math.min(count, 24));
-		setVerseNotifCount(clamped);
-		setDailyVerseNotificationCount(clamped);
-		if (verseNotifsEnabled) {
-			await ScriptureShield.scheduleDailyVerseNotifications(clamped, translation);
-		}
-	};
-
+	// Blocked Apps Handlers
 	const handleToggleApp = (pkgName: string) => {
 		let next: string[];
 		if (blockedList.includes(pkgName)) {
@@ -286,40 +229,6 @@ export default function SettingsScreen() {
 		setBlockedListState(next);
 		setBlockedApps(next);
 		AppBlocker.shieldApps(next);
-	};
-
-	const handleRequestPermissions = async () => {
-		await AppBlocker.requestPermissions();
-	};
-
-	const handleCheckPermission = async () => {
-		const granted = await refreshPermissions();
-		if (granted) {
-			Alert.alert(
-				'Shield Active',
-				'Accessibility Shield permission is active. Your distracting apps are protected.',
-			);
-		} else {
-			Alert.alert(
-				'Permission Needed',
-				'Accessibility Shield permission is not granted. Tap "Open Settings" to enable Bible Unlock in system settings.',
-				[
-					{ text: 'Cancel', style: 'cancel' },
-					{ text: 'Open Settings', onPress: handleRequestPermissions },
-				],
-			);
-		}
-	};
-
-	const handleToggleSimulatePlan = () => {
-		const nextWillBeFree = isPremium;
-		toggleDevPremium();
-		Alert.alert(
-			'Developer Simulation',
-			nextWillBeFree
-				? 'Switched to Free Tier. Free limits and upgrade triggers are now active.'
-				: 'Switched to Pro Tier (Sanctuary Member). All features unlocked.',
-		);
 	};
 
 	const handleResetDefaultApps = () => {
@@ -359,7 +268,7 @@ export default function SettingsScreen() {
 					},
 					{
 						text: 'Upgrade',
-						onPress: () => router.push('/paywall'),
+						onPress: () => router.push('/paywall' as any),
 					},
 				],
 			);
@@ -377,6 +286,205 @@ export default function SettingsScreen() {
 		} finally {
 			setLoadingApps(false);
 		}
+	};
+
+	const handleRequestPermissions = async () => {
+		await AppBlocker.requestPermissions();
+	};
+
+	const handleCheckPermission = async () => {
+		const granted = await refreshPermissions();
+		if (granted) {
+			Alert.alert(
+				'Shield Active',
+				'Accessibility Shield permission is active. Your distracting apps are protected.',
+			);
+		} else {
+			Alert.alert(
+				'Permission Needed',
+				'Accessibility Shield permission is not granted. Tap "Open Settings" to enable Bible Unlock in system settings.',
+				[
+					{ text: 'Cancel', style: 'cancel' },
+					{ text: 'Open Settings', onPress: handleRequestPermissions },
+				],
+			);
+		}
+	};
+
+	// Artwork Download
+	const handleDownloadArtwork = async () => {
+		if (!requirePremium('Sacred Artwork Expansion (20 HD)')) {
+			return;
+		}
+		setIsDownloadingArtwork(true);
+		const result = await downloadSacredArtworkPack((downloaded, total) => {
+			setDownloadProgress({ downloaded, total });
+		});
+		setIsDownloadingArtwork(false);
+		setArtworkCount(result.totalAvailable);
+	};
+
+	// Reminders Handlers
+	const handleAddReminderTime = (time: string) => {
+		if (scheduledTimes.includes(time)) {
+			return;
+		}
+		const updated = [...scheduledTimes, time];
+		setScheduledTimes(updated);
+		setScheduledReadingTimes(updated);
+	};
+
+	const handleOpenTimePicker = () => {
+		if (!isPremium && scheduledTimes.length >= 1) {
+			if (!requirePremium('Multiple daily reminders')) {
+				return;
+			}
+		}
+		setShowTimePickerModal(true);
+	};
+
+	const handleRemoveReminderTime = (timeToRemove: string) => {
+		const updated = scheduledTimes.filter((t) => t !== timeToRemove);
+		setScheduledTimes(updated);
+		setScheduledReadingTimes(updated);
+	};
+
+	const handleToggleVerseNotifications = async (val: boolean) => {
+		setVerseNotifsEnabled(val);
+		setDailyVerseNotificationsEnabled(val);
+		if (val) {
+			const success = await ScriptureShield.scheduleDailyVerseNotifications(
+				verseNotifCount,
+				translation,
+			);
+			if (!success) {
+				Alert.alert(
+					'Permission Needed',
+					'Please enable notifications so Bible Unlock can deliver your daily devotional verses.',
+				);
+			}
+		} else {
+			await ScriptureShield.cancelDailyVerseNotifications();
+		}
+	};
+
+	const handleUpdateVerseNotifCount = async (count: number) => {
+		if (count > 6 && !isPremium) {
+			if (!requirePremium('Receive up to 24 daily verses')) {
+				return;
+			}
+		}
+		const clamped = Math.max(1, Math.min(count, 24));
+		setVerseNotifCount(clamped);
+		setDailyVerseNotificationCount(clamped);
+		if (verseNotifsEnabled) {
+			await ScriptureShield.scheduleDailyVerseNotifications(clamped, translation);
+		}
+	};
+
+	const handleSelectTranslation = async (tr: string) => {
+		setTranslationState(tr);
+		if (verseNotifsEnabled) {
+			await ScriptureShield.scheduleDailyVerseNotifications(verseNotifCount, tr);
+		}
+	};
+
+	// Name Profile Handlers
+	const handleOpenEditName = () => {
+		setEditNameText(userName);
+		setShowEditNameModal(true);
+	};
+
+	const handleSaveName = () => {
+		const trimmed = editNameText.trim();
+		const finalName = trimmed.length > 0 ? trimmed.slice(0, 30) : 'Disciple';
+		setUserName(finalName);
+		setUserNameState(finalName);
+		setShowEditNameModal(false);
+	};
+
+	// Account & Compliance Handlers
+	const handleRestorePurchases = async () => {
+		setIsRestoringPurchases(true);
+		try {
+			const success = await restorePurchases();
+			if (success) {
+				Alert.alert(
+					'Sanctuary Restored',
+					'Your Sanctuary membership is active! All disciplines and translations are unlocked.',
+				);
+			} else {
+				Alert.alert(
+					'Restore Complete',
+					'No active Sanctuary subscription was found for this app store account.',
+				);
+			}
+		} catch (e: any) {
+			Alert.alert('Restore Failed', e?.message || 'Unable to restore purchases at this time.');
+		} finally {
+			setIsRestoringPurchases(false);
+		}
+	};
+
+	const handleManageSubscription = () => {
+		const url =
+			Platform.OS === 'android'
+				? 'https://play.google.com/store/account/subscriptions?package=com.bibleunlock.app'
+				: 'https://apps.apple.com/account/subscriptions';
+		Linking.openURL(url).catch(() => {
+			Alert.alert('Error', 'Unable to open store subscription page.');
+		});
+	};
+
+	const handleShareApp = async () => {
+		try {
+			await Share.share({
+				title: 'Bible Unlock: Guard Your Peace',
+				message:
+					'Reclaim your screen time and draw closer to God every day with Bible Unlock: https://bibleunlock.app',
+			});
+		} catch (e) {
+			console.warn('[Share] App share error:', e);
+		}
+	};
+
+	const handleRateApp = () => {
+		const url =
+			Platform.OS === 'android'
+				? 'market://details?id=com.bibleunlock.app'
+				: 'https://apps.apple.com/app/id6470000000';
+		Linking.openURL(url).catch(() => {
+			Linking.openURL('https://bibleunlock.app');
+		});
+	};
+
+	const handleContactSupport = () => {
+		Linking.openURL('mailto:support@bibleunlock.app?subject=Bible%20Unlock%20Support%20%26%20Feedback');
+	};
+
+	const handleOpenPrivacy = () => {
+		Linking.openURL('https://bibleunlock.app/privacy');
+	};
+
+	const handleOpenTerms = () => {
+		Linking.openURL('https://bibleunlock.app/terms');
+	};
+
+	const handleToggleSimulatePlan = () => {
+		const nextWillBeFree = isPremium;
+		toggleDevPremium();
+		Alert.alert(
+			'Developer Simulation',
+			nextWillBeFree
+				? 'Switched to Free Tier. Free limits and upgrade triggers are now active.'
+				: 'Switched to Pro Tier (Sanctuary Member). All features unlocked.',
+		);
+	};
+
+	const handleResetProgress = () => {
+		setReadingProgress(0);
+		AppBlocker.shieldApps();
+		Alert.alert('Reset Complete', "Today's reading progress has been reset to 00:00.");
 	};
 
 	const KNOWN_LABELS: Record<string, string> = {
@@ -403,15 +511,44 @@ export default function SettingsScreen() {
 		};
 	};
 
-	const handleSelectTheme = (mode: ThemeMode) => {
-		setThemeMode(mode);
-	};
-
-	const handleResetProgress = () => {
-		setReadingProgress(0);
-		AppBlocker.shieldApps();
-		Alert.alert('Reset Complete', "Today's reading progress has been reset to 00:00.");
-	};
+	// Industrial Section Header Component
+	const SectionHeader = ({ index, title }: { index: string; title: string }) => (
+		<View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 16 }}>
+			<View
+				style={{
+					backgroundColor: colors.accentBg,
+					paddingHorizontal: 6,
+					paddingVertical: 2,
+					borderRadius: 4,
+					marginRight: 8,
+					borderWidth: 1,
+					borderColor: colors.accent,
+				}}
+			>
+				<Text
+					style={{
+						fontSize: 10,
+						fontFamily: 'Inter_700Bold',
+						color: colors.accent,
+						letterSpacing: 0.5,
+					}}
+				>
+					{index}
+				</Text>
+			</View>
+			<Text
+				style={{
+					fontSize: 11,
+					fontFamily: 'Inter_700Bold',
+					letterSpacing: 1.2,
+					textTransform: 'uppercase',
+					color: colors.textSecondary,
+				}}
+			>
+				{title}
+			</Text>
+		</View>
+	);
 
 	return (
 		<SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'left', 'right']}>
@@ -420,43 +557,73 @@ export default function SettingsScreen() {
 				className='px-5'
 				contentContainerStyle={{ paddingBottom: 60 + insets.bottom }}
 			>
-				<Text
-					style={{
-						fontSize: 24,
-						fontFamily: 'EBGaramond_700Bold',
-						color: colors.textPrimary,
-						paddingTop: 16,
-						paddingBottom: 16,
-					}}
-				>
-					Settings & Blocking
-				</Text>
+				{/* Screen Title */}
+				<View style={{ paddingTop: 16, paddingBottom: 8 }}>
+					<Text
+						style={{
+							fontSize: 11,
+							fontFamily: 'Inter_700Bold',
+							letterSpacing: 1.5,
+							textTransform: 'uppercase',
+							color: colors.accent,
+							marginBottom: 2,
+						}}
+					>
+						[ SYSTEM CONTROLS ]
+					</Text>
+					<Text
+						style={{
+							fontSize: 26,
+							fontFamily: 'EBGaramond_700Bold',
+							color: colors.textPrimary,
+						}}
+					>
+						Settings & Discipline
+					</Text>
+				</View>
 
-				{/* Premium Banner */}
+				{/* ============================================================== */}
+				{/* CLUSTER 01: SPIRITUAL HABIT & SHIELD */}
+				{/* ============================================================== */}
+				<SectionHeader index='01' title='Spiritual Habit & Shield' />
+
+				{/* Premium Sanctuary Banner */}
 				<Card
 					variant='dark'
 					style={{
 						padding: 16,
-						marginBottom: 20,
+						marginBottom: 14,
 						borderColor: colors.accent,
 						backgroundColor: colors.accentBg,
 					}}
 				>
 					<View className='flex-row items-center justify-between'>
-						<View className='flex-row items-center'>
+						<View className='flex-row items-center flex-1 mr-3'>
 							<View style={{ marginRight: 12 }}>
 								<Crown size={26} color={colors.accent} />
 							</View>
-							<View>
-								<Text
-									style={{
-										fontSize: 16,
-										fontFamily: 'Inter_700Bold',
-										color: colors.textPrimary,
-									}}
-								>
-									{isPremium ? 'Sanctuary Member' : 'Enter the Sanctuary'}
-								</Text>
+							<View style={{ flex: 1 }}>
+								<View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+									<Text
+										style={{
+											fontSize: 15,
+											fontFamily: 'Inter_700Bold',
+											color: colors.textPrimary,
+										}}
+									>
+										{isPremium ? 'Sanctuary Member' : 'Enter the Sanctuary'}
+									</Text>
+									<Text
+										style={{
+											fontSize: 9,
+											fontFamily: 'Inter_700Bold',
+											color: colors.accent,
+											letterSpacing: 0.5,
+										}}
+									>
+										{isPremium ? '[ ACTIVE ]' : '[ COVENANT ]'}
+									</Text>
+								</View>
 								<Text
 									style={{
 										fontSize: 12,
@@ -486,33 +653,37 @@ export default function SettingsScreen() {
 				<Card
 					variant='dark'
 					style={{
-						padding: 16,
-						marginBottom: 20,
+						padding: 14,
+						marginBottom: 14,
 						borderColor: colors.border,
 						backgroundColor: colors.surface,
 					}}
 				>
 					<Pressable
 						onPress={() => router.push('/stats-detail' as any)}
+						accessibilityRole='button'
+						accessibilityLabel='Open My Stats and Badges'
 						style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
 					>
 						<View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
 							<View
 								style={{
-									width: 42,
-									height: 42,
-									borderRadius: 12,
+									width: 40,
+									height: 40,
+									borderRadius: 10,
 									backgroundColor: 'rgba(245, 184, 0, 0.12)',
 									alignItems: 'center',
 									justifyContent: 'center',
+									borderWidth: 1,
+									borderColor: 'rgba(245, 184, 0, 0.3)',
 								}}
 							>
-								<BarChart2 size={22} color={colors.accent} />
+								<BarChart2 size={20} color={colors.accent} />
 							</View>
 							<View>
 								<Text
 									style={{
-										fontSize: 15,
+										fontSize: 14,
 										fontFamily: 'Inter_700Bold',
 										color: colors.textPrimary,
 									}}
@@ -535,8 +706,8 @@ export default function SettingsScreen() {
 					</Pressable>
 				</Card>
 
-				{/* System Permission Guard Status */}
-				<Card variant='dark' style={{ padding: 16, marginBottom: 20 }}>
+				{/* System Permission Guard Status with Battery Guard */}
+				<Card variant='dark' style={{ padding: 16, marginBottom: 14 }}>
 					<View className='flex-row items-center justify-between mb-3'>
 						<View style={{ flex: 1, marginRight: 12 }}>
 							<Text
@@ -581,6 +752,7 @@ export default function SettingsScreen() {
 							</Text>
 						</View>
 					</View>
+
 					<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
 						<Button
 							title={hasPermission ? 'Manage in Settings' : 'Grant Blocker Permission'}
@@ -589,216 +761,240 @@ export default function SettingsScreen() {
 							onPress={handleRequestPermissions}
 							style={{ flex: 1 }}
 						/>
-						<Button title='Verify Status' variant='ghost' size='sm' onPress={handleCheckPermission} />
+						<Button title='Verify' variant='ghost' size='sm' onPress={handleCheckPermission} />
+						{Platform.OS === 'android' && (
+							<Pressable
+								onPress={() => setShowBatteryModal(true)}
+								hitSlop={8}
+								accessibilityRole='button'
+								accessibilityLabel='Keep Shield Active Battery Settings'
+								style={{
+									flexDirection: 'row',
+									alignItems: 'center',
+									backgroundColor: colors.surfaceSubtle,
+									borderWidth: 1,
+									borderColor: colors.borderSubtle,
+									paddingHorizontal: 10,
+									height: 36,
+									borderRadius: 8,
+									gap: 4,
+								}}
+							>
+								<BatteryCharging size={14} color={colors.accent} />
+								<Text style={{ fontSize: 11, fontFamily: 'Inter_600SemiBold', color: colors.textPrimary }}>
+									Battery
+								</Text>
+							</Pressable>
+						)}
 					</View>
 				</Card>
 
-				{/* Daily Goal Configuration */}
-				<View className='mb-5'>
+				{/* Daily Scripture Goal */}
+				<Card variant='dark' style={{ padding: 16, marginBottom: 14 }}>
 					<Text
 						style={{
-							fontSize: 11,
-							fontFamily: 'Inter_600SemiBold',
-							textTransform: 'uppercase',
-							letterSpacing: 1,
-							color: colors.textSecondary,
-							marginBottom: 10,
-							paddingHorizontal: 4,
+							fontSize: 14,
+							fontFamily: 'Inter_700Bold',
+							color: colors.textPrimary,
+							marginBottom: 4,
 						}}
 					>
 						Daily Scripture Goal
 					</Text>
-					<Card variant='dark' style={{ padding: 16 }}>
-						<Text
-							style={{
-								fontSize: 14,
-								color: colors.textPrimary,
-								marginBottom: 12,
-							}}
-						>
-							How many minutes of reading to unlock your apps each day?
-						</Text>
-						<View className='flex-row justify-between'>
-							{GOAL_OPTIONS.map((mins) => {
-								const isSelected = dailyGoal === mins;
-								const isLocked = !isPremium && mins > 15;
-								return (
-									<Pressable
-										key={mins}
-										onPress={() => handleSelectGoal(mins)}
-										style={{
-											flex: 1,
-											marginHorizontal: 2,
-											paddingVertical: 10,
-											borderRadius: 10,
-											alignItems: 'center',
-											justifyContent: 'center',
-											borderWidth: 1,
-											borderColor: isSelected ? colors.accent : colors.border,
-											backgroundColor: isSelected ? colors.accent : colors.surfaceSubtle,
-										}}
-									>
-										<View className='flex-row items-center justify-center'>
-											<Text
-												style={{
-													fontSize: 13,
-													fontFamily: 'Inter_700Bold',
-													color: isSelected ? '#141413' : colors.textPrimary,
-												}}
-											>
-												{mins}m
-											</Text>
-											{isLocked && (
-												<Lock size={10} color={colors.textMuted} style={{ marginLeft: 3 }} />
-											)}
-										</View>
-									</Pressable>
-								);
-							})}
+					<Text
+						style={{
+							fontSize: 12,
+							color: colors.textSecondary,
+							marginBottom: 12,
+						}}
+					>
+						Minutes of reading to unlock your apps each day
+					</Text>
 
-							{/* Custom Goal Option */}
-							{(() => {
-								const isCustomSelected = !GOAL_OPTIONS.includes(dailyGoal);
-								return (
-									<Pressable
-										onPress={handleCustomGoalPress}
-										style={{
-											flex: 1.2,
-											marginHorizontal: 2,
-											paddingVertical: 10,
-											borderRadius: 10,
-											alignItems: 'center',
-											justifyContent: 'center',
-											borderWidth: 1,
-											borderColor: isCustomSelected
-												? colors.accent
-												: showCustomGoalInput
-													? colors.accent
-													: colors.border,
-											backgroundColor: isCustomSelected ? colors.accent : colors.surfaceSubtle,
-										}}
-									>
-										<View className='flex-row items-center justify-center'>
-											<Text
-												style={{
-													fontSize: 12,
-													fontFamily: 'Inter_700Bold',
-													color: isCustomSelected ? '#141413' : colors.textPrimary,
-												}}
-												numberOfLines={1}
-											>
-												{isCustomSelected ? `${dailyGoal}m` : 'Custom'}
-											</Text>
-											{!isPremium && (
-												<Lock size={10} color={colors.textMuted} style={{ marginLeft: 3 }} />
-											)}
-										</View>
-									</Pressable>
-								);
-							})()}
-						</View>
-
-						{/* Inline Custom Goal Input (Premium) */}
-						{showCustomGoalInput && (
-							<View
-								style={{
-									marginTop: 12,
-									paddingTop: 12,
-									borderTopWidth: 1,
-									borderTopColor: colors.border,
-								}}
-							>
-								<Text
+					<View className='flex-row justify-between'>
+						{GOAL_OPTIONS.map((mins) => {
+							const isSelected = dailyGoal === mins;
+							const isLocked = !isPremium && mins > 15;
+							return (
+								<Pressable
+									key={mins}
+									onPress={() => handleSelectGoal(mins)}
+									accessibilityRole='button'
+									accessibilityLabel={`${mins} minutes goal`}
 									style={{
-										fontSize: 12,
-										fontFamily: 'Inter_500Medium',
-										color: colors.textSecondary,
-										marginBottom: 8,
+										flex: 1,
+										marginHorizontal: 2,
+										paddingVertical: 10,
+										borderRadius: 10,
+										alignItems: 'center',
+										justifyContent: 'center',
+										borderWidth: 1,
+										borderColor: isSelected ? colors.accent : colors.border,
+										backgroundColor: isSelected ? colors.accent : colors.surfaceSubtle,
 									}}
 								>
-									Enter custom duration (1–120 minutes):
-								</Text>
-								<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-									<TextInput
-										style={{
-											flex: 1,
-											height: 40,
-											backgroundColor: colors.surfaceSubtle,
-											borderWidth: 1,
-											borderColor: colors.border,
-											borderRadius: 8,
-											paddingHorizontal: 12,
-											color: colors.textPrimary,
-											fontSize: 14,
-											fontFamily: 'Inter_600SemiBold',
-										}}
-										placeholder='Minutes (e.g. 45)'
-										placeholderTextColor={colors.textMuted}
-										keyboardType='number-pad'
-										value={customGoalText}
-										onChangeText={setCustomGoalText}
-										maxLength={3}
-										autoFocus
-									/>
-									<Pressable
-										onPress={handleSaveCustomGoal}
-										style={{
-											marginLeft: 8,
-											backgroundColor: colors.accent,
-											paddingHorizontal: 14,
-											height: 40,
-											borderRadius: 8,
-											alignItems: 'center',
-											justifyContent: 'center',
-										}}
-									>
+									<View className='flex-row items-center justify-center'>
 										<Text
 											style={{
 												fontSize: 13,
 												fontFamily: 'Inter_700Bold',
-												color: '#141413',
+												color: isSelected ? '#141413' : colors.textPrimary,
 											}}
 										>
-											Set
+											{mins}m
 										</Text>
-									</Pressable>
-									<Pressable
-										onPress={() => setShowCustomGoalInput(false)}
+										{isLocked && (
+											<Lock size={10} color={colors.textMuted} style={{ marginLeft: 3 }} />
+										)}
+									</View>
+								</Pressable>
+							);
+						})}
+
+						{/* Custom Goal */}
+						{(() => {
+							const isCustomSelected = !GOAL_OPTIONS.includes(dailyGoal);
+							return (
+								<Pressable
+									onPress={handleCustomGoalPress}
+									accessibilityRole='button'
+									accessibilityLabel='Custom goal duration'
+									style={{
+										flex: 1.2,
+										marginHorizontal: 2,
+										paddingVertical: 10,
+										borderRadius: 10,
+										alignItems: 'center',
+										justifyContent: 'center',
+										borderWidth: 1,
+										borderColor: isCustomSelected
+											? colors.accent
+											: showCustomGoalInput
+												? colors.accent
+												: colors.border,
+										backgroundColor: isCustomSelected ? colors.accent : colors.surfaceSubtle,
+									}}
+								>
+									<View className='flex-row items-center justify-center'>
+										<Text
+											style={{
+												fontSize: 12,
+												fontFamily: 'Inter_700Bold',
+												color: isCustomSelected ? '#141413' : colors.textPrimary,
+											}}
+											numberOfLines={1}
+										>
+											{isCustomSelected ? `${dailyGoal}m` : 'Custom'}
+										</Text>
+										{!isPremium && (
+											<Lock size={10} color={colors.textMuted} style={{ marginLeft: 3 }} />
+										)}
+									</View>
+								</Pressable>
+							);
+						})()}
+					</View>
+
+					{/* Inline Custom Goal Input */}
+					{showCustomGoalInput && (
+						<View
+							style={{
+								marginTop: 12,
+								paddingTop: 12,
+								borderTopWidth: 1,
+								borderTopColor: colors.border,
+							}}
+						>
+							<Text
+								style={{
+									fontSize: 12,
+									fontFamily: 'Inter_500Medium',
+									color: colors.textSecondary,
+									marginBottom: 8,
+								}}
+							>
+								Enter custom duration (1–120 minutes):
+							</Text>
+							<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+								<TextInput
+									style={{
+										flex: 1,
+										height: 40,
+										backgroundColor: colors.surfaceSubtle,
+										borderWidth: 1,
+										borderColor: colors.border,
+										borderRadius: 8,
+										paddingHorizontal: 12,
+										color: colors.textPrimary,
+										fontSize: 14,
+										fontFamily: 'Inter_600SemiBold',
+									}}
+									placeholder='Minutes (e.g. 45)'
+									placeholderTextColor={colors.textMuted}
+									keyboardType='number-pad'
+									value={customGoalText}
+									onChangeText={setCustomGoalText}
+									maxLength={3}
+									autoFocus
+								/>
+								<Pressable
+									onPress={handleSaveCustomGoal}
+									style={{
+										marginLeft: 8,
+										backgroundColor: colors.accent,
+										paddingHorizontal: 14,
+										height: 40,
+										borderRadius: 8,
+										alignItems: 'center',
+										justifyContent: 'center',
+									}}
+								>
+									<Text
 										style={{
-											marginLeft: 6,
-											padding: 8,
-											borderRadius: 8,
-											borderWidth: 1,
-											borderColor: colors.border,
+											fontSize: 13,
+											fontFamily: 'Inter_700Bold',
+											color: '#141413',
 										}}
 									>
-										<X size={16} color={colors.textSecondary} />
-									</Pressable>
-								</View>
+										Set
+									</Text>
+								</Pressable>
+								<Pressable
+									onPress={() => setShowCustomGoalInput(false)}
+									style={{
+										marginLeft: 6,
+										padding: 8,
+										borderRadius: 8,
+										borderWidth: 1,
+										borderColor: colors.border,
+									}}
+								>
+									<X size={16} color={colors.textSecondary} />
+								</Pressable>
 							</View>
-						)}
-					</Card>
-				</View>
+						</View>
+					)}
+				</Card>
 
-				{/* Blocked Apps Management */}
-				<View className='mb-5'>
+				{/* Shielded Applications */}
+				<View className='mb-2'>
 					<View className='flex-row items-center justify-between mb-2.5 px-1'>
 						<Text
 							style={{
-								fontSize: 11,
-								fontFamily: 'Inter_600SemiBold',
-								textTransform: 'uppercase',
-								letterSpacing: 1,
-								color: colors.textSecondary,
+								fontSize: 12,
+								fontFamily: 'Inter_700Bold',
+								color: colors.textPrimary,
 							}}
 						>
-							Shielded Applications ({blockedList.length}
+							Shielded Apps ({blockedList.length}
 							{!isPremium ? '/5' : ''})
 						</Text>
 						<View style={{ flexDirection: 'row', alignItems: 'center' }}>
 							{!isPremium && (
 								<Pressable
 									onPress={handleResetDefaultApps}
+									accessibilityRole='button'
+									accessibilityLabel='Reset default apps'
 									style={{
 										flexDirection: 'row',
 										alignItems: 'center',
@@ -825,6 +1021,8 @@ export default function SettingsScreen() {
 							)}
 							<Pressable
 								onPress={handleCustomApps}
+								accessibilityRole='button'
+								accessibilityLabel='Add apps to shield'
 								style={{
 									flexDirection: 'row',
 									alignItems: 'center',
@@ -848,7 +1046,7 @@ export default function SettingsScreen() {
 						</View>
 					</View>
 
-					<Card variant='dark' style={{ padding: 8 }}>
+					<Card variant='dark' style={{ padding: 8, marginBottom: 14 }}>
 						{blockedList.length === 0 ? (
 							<View className='items-center py-6 px-4'>
 								<View
@@ -900,18 +1098,14 @@ export default function SettingsScreen() {
 									{isPremium ? (
 										<>
 											<Plus size={14} color='#141413' style={{ marginRight: 6 }} />
-											<Text
-												style={{ fontSize: 12, fontFamily: 'Inter_700Bold', color: '#141413' }}
-											>
+											<Text style={{ fontSize: 12, fontFamily: 'Inter_700Bold', color: '#141413' }}>
 												Select Apps to Shield
 											</Text>
 										</>
 									) : (
 										<>
 											<RotateCcw size={14} color='#141413' style={{ marginRight: 6 }} />
-											<Text
-												style={{ fontSize: 12, fontFamily: 'Inter_700Bold', color: '#141413' }}
-											>
+											<Text style={{ fontSize: 12, fontFamily: 'Inter_700Bold', color: '#141413' }}>
 												Restore 5 Default Apps
 											</Text>
 										</>
@@ -1012,6 +1206,8 @@ export default function SettingsScreen() {
 												backgroundColor: colors.surfaceSubtle,
 											}}
 											hitSlop={8}
+											accessibilityRole='button'
+											accessibilityLabel={`Remove ${info.label} from shield`}
 										>
 											<Trash2 size={16} color={colors.danger} />
 										</Pressable>
@@ -1022,414 +1218,356 @@ export default function SettingsScreen() {
 					</Card>
 				</View>
 
-				{/* Appearance & Theme Setting */}
-				<View className='mb-5'>
+				{/* ============================================================== */}
+				{/* CLUSTER 02: READING & MEDIA ASSETS */}
+				{/* ============================================================== */}
+				<SectionHeader index='02' title='Reading & Media Assets' />
+
+				{/* Appearance & Theme */}
+				<Card variant='dark' style={{ padding: 14, marginBottom: 14 }}>
 					<Text
 						style={{
-							fontSize: 11,
-							fontFamily: 'Inter_600SemiBold',
-							textTransform: 'uppercase',
-							letterSpacing: 1,
-							color: colors.textSecondary,
+							fontSize: 13,
+							fontFamily: 'Inter_700Bold',
+							color: colors.textPrimary,
 							marginBottom: 10,
-							paddingHorizontal: 4,
 						}}
 					>
-						Appearance & Theme
+						Atmosphere & Theme
 					</Text>
-					<Card variant='dark' style={{ padding: 12 }}>
-						<View className='flex-row justify-between'>
-							<Pressable
-								onPress={() => handleSelectTheme('dark')}
-								style={{
-									flex: 1,
-									marginRight: 6,
-									padding: 12,
-									borderRadius: 12,
-									borderWidth: 1,
-									alignItems: 'center',
-									backgroundColor: themeMode === 'dark' ? colors.accentBg : colors.surfaceSubtle,
-									borderColor: themeMode === 'dark' ? colors.accent : colors.border,
-								}}
-							>
-								<Moon
-									size={20}
-									color={themeMode === 'dark' ? colors.accent : colors.textSecondary}
-									style={{ marginBottom: 6 }}
-								/>
-								<Text
-									style={{
-										fontSize: 12,
-										fontFamily: 'Inter_700Bold',
-										color: themeMode === 'dark' ? colors.accent : colors.textPrimary,
-									}}
-								>
-									Dark
-								</Text>
-								<Text
-									style={{
-										fontSize: 10,
-										color: colors.textSecondary,
-										textAlign: 'center',
-										marginTop: 2,
-									}}
-								>
-									Celestial
-								</Text>
-							</Pressable>
-
-							<Pressable
-								onPress={() => handleSelectTheme('light')}
-								style={{
-									flex: 1,
-									marginHorizontal: 6,
-									padding: 12,
-									borderRadius: 12,
-									borderWidth: 1,
-									alignItems: 'center',
-									backgroundColor: themeMode === 'light' ? colors.accentBg : colors.surfaceSubtle,
-									borderColor: themeMode === 'light' ? colors.accent : colors.border,
-								}}
-							>
-								<Sun
-									size={20}
-									color={themeMode === 'light' ? colors.accent : colors.textSecondary}
-									style={{ marginBottom: 6 }}
-								/>
-								<Text
-									style={{
-										fontSize: 12,
-										fontFamily: 'Inter_700Bold',
-										color: themeMode === 'light' ? colors.accent : colors.textPrimary,
-									}}
-								>
-									Light
-								</Text>
-								<Text
-									style={{
-										fontSize: 10,
-										color: colors.textSecondary,
-										textAlign: 'center',
-										marginTop: 2,
-									}}
-								>
-									Parchment
-								</Text>
-							</Pressable>
-
-							<Pressable
-								onPress={() => handleSelectTheme('system')}
-								style={{
-									flex: 1,
-									marginLeft: 6,
-									padding: 12,
-									borderRadius: 12,
-									borderWidth: 1,
-									alignItems: 'center',
-									backgroundColor: themeMode === 'system' ? colors.accentBg : colors.surfaceSubtle,
-									borderColor: themeMode === 'system' ? colors.accent : colors.border,
-								}}
-							>
-								<Smartphone
-									size={20}
-									color={themeMode === 'system' ? colors.accent : colors.textSecondary}
-									style={{ marginBottom: 6 }}
-								/>
-								<Text
-									style={{
-										fontSize: 12,
-										fontFamily: 'Inter_700Bold',
-										color: themeMode === 'system' ? colors.accent : colors.textPrimary,
-									}}
-								>
-									System
-								</Text>
-								<Text
-									style={{
-										fontSize: 10,
-										color: colors.textSecondary,
-										textAlign: 'center',
-										marginTop: 2,
-									}}
-								>
-									Auto
-								</Text>
-							</Pressable>
-						</View>
-					</Card>
-				</View>
-				{/* Bible Translation Section */}
-				<View className='mb-6'>
-					<View className='flex-row items-center justify-between mb-2.5 px-1'>
-						<Text
+					<View className='flex-row justify-between'>
+						<Pressable
+							onPress={() => setThemeMode('dark')}
+							accessibilityRole='button'
+							accessibilityLabel='Celestial Dark Theme'
 							style={{
-								fontSize: 11,
-								fontFamily: 'Inter_600SemiBold',
-								textTransform: 'uppercase',
-								letterSpacing: 1,
-								color: colors.textSecondary,
+								flex: 1,
+								marginRight: 6,
+								padding: 12,
+								borderRadius: 12,
+								borderWidth: 1,
+								alignItems: 'center',
+								backgroundColor: themeMode === 'dark' ? colors.accentBg : colors.surfaceSubtle,
+								borderColor: themeMode === 'dark' ? colors.accent : colors.border,
 							}}
 						>
-							Bible Translations & Languages
+							<Moon
+								size={20}
+								color={themeMode === 'dark' ? colors.accent : colors.textSecondary}
+								style={{ marginBottom: 6 }}
+							/>
+							<Text
+								style={{
+									fontSize: 12,
+									fontFamily: 'Inter_700Bold',
+									color: themeMode === 'dark' ? colors.accent : colors.textPrimary,
+								}}
+							>
+								Dark
+							</Text>
+							<Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 2 }}>
+								Celestial
+							</Text>
+						</Pressable>
+
+						<Pressable
+							onPress={() => setThemeMode('light')}
+							accessibilityRole='button'
+							accessibilityLabel='Parchment Light Theme'
+							style={{
+								flex: 1,
+								marginHorizontal: 6,
+								padding: 12,
+								borderRadius: 12,
+								borderWidth: 1,
+								alignItems: 'center',
+								backgroundColor: themeMode === 'light' ? colors.accentBg : colors.surfaceSubtle,
+								borderColor: themeMode === 'light' ? colors.accent : colors.border,
+							}}
+						>
+							<Sun
+								size={20}
+								color={themeMode === 'light' ? colors.accent : colors.textSecondary}
+								style={{ marginBottom: 6 }}
+							/>
+							<Text
+								style={{
+									fontSize: 12,
+									fontFamily: 'Inter_700Bold',
+									color: themeMode === 'light' ? colors.accent : colors.textPrimary,
+								}}
+							>
+								Light
+							</Text>
+							<Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 2 }}>
+								Parchment
+							</Text>
+						</Pressable>
+
+						<Pressable
+							onPress={() => setThemeMode('system')}
+							accessibilityRole='button'
+							accessibilityLabel='System Auto Theme'
+							style={{
+								flex: 1,
+								marginLeft: 6,
+								padding: 12,
+								borderRadius: 12,
+								borderWidth: 1,
+								alignItems: 'center',
+								backgroundColor: themeMode === 'system' ? colors.accentBg : colors.surfaceSubtle,
+								borderColor: themeMode === 'system' ? colors.accent : colors.border,
+							}}
+						>
+							<Smartphone
+								size={20}
+								color={themeMode === 'system' ? colors.accent : colors.textSecondary}
+								style={{ marginBottom: 6 }}
+							/>
+							<Text
+								style={{
+									fontSize: 12,
+									fontFamily: 'Inter_700Bold',
+									color: themeMode === 'system' ? colors.accent : colors.textPrimary,
+								}}
+							>
+								System
+							</Text>
+							<Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 2 }}>
+								Auto
+							</Text>
+						</Pressable>
+					</View>
+				</Card>
+
+				{/* Bible Translations & Languages */}
+				<Card variant='dark' style={{ padding: 14, marginBottom: 14 }}>
+					<View className='flex-row items-center justify-between mb-3'>
+						<Text
+							style={{
+								fontSize: 13,
+								fontFamily: 'Inter_700Bold',
+								color: colors.textPrimary,
+							}}
+						>
+							Bible Translations
 						</Text>
 						<Pressable
 							onPress={() => setShowTranslationModal(true)}
 							hitSlop={8}
 							accessibilityRole='button'
-							accessibilityLabel='Manage and download Bible translations'
+							accessibilityLabel='Browse and download translations'
 							style={{
 								flexDirection: 'row',
 								alignItems: 'center',
 								backgroundColor: colors.accentBg,
-								paddingHorizontal: 10,
-								paddingVertical: 6,
-								borderRadius: 8,
+								paddingHorizontal: 8,
+								paddingVertical: 4,
+								borderRadius: 6,
+								gap: 4,
 							}}
 						>
-							<Globe size={13} color={colors.accent} style={{ marginRight: 4 }} />
-							<Text
-								style={{
-									fontSize: 12,
-									color: colors.accent,
-									fontFamily: 'Inter_600SemiBold',
-								}}
-							>
-								Browse & Download
+							<Globe size={12} color={colors.accent} />
+							<Text style={{ fontSize: 11, color: colors.accent, fontFamily: 'Inter_700Bold' }}>
+								Browse All (50+)
 							</Text>
 						</Pressable>
 					</View>
 
-					<Card variant='dark' style={{ padding: 14 }}>
-						<View className='flex-row justify-between mb-3'>
-							<Pressable
-								onPress={() => handleSelectTranslation('WEB')}
+					<View className='flex-row justify-between mb-3'>
+						<Pressable
+							onPress={() => handleSelectTranslation('WEB')}
+							accessibilityRole='button'
+							accessibilityLabel='Select World English Bible'
+							style={{
+								flex: 1,
+								marginRight: 6,
+								padding: 12,
+								borderRadius: 10,
+								borderWidth: 1,
+								alignItems: 'center',
+								backgroundColor: translation === 'WEB' ? colors.accentBg : colors.surfaceSubtle,
+								borderColor: translation === 'WEB' ? colors.accent : colors.border,
+							}}
+						>
+							<Text
 								style={{
-									flex: 1,
-									marginRight: 8,
-									padding: 12,
-									borderRadius: 10,
-									borderWidth: 1,
-									alignItems: 'center',
-									backgroundColor: translation === 'WEB' ? colors.accentBg : colors.surfaceSubtle,
-									borderColor: translation === 'WEB' ? colors.accent : colors.border,
+									fontSize: 14,
+									fontFamily: 'Inter_700Bold',
+									color: colors.textPrimary,
+									marginBottom: 2,
 								}}
 							>
-								<Text
-									style={{
-										fontSize: 14,
-										fontFamily: 'Inter_700Bold',
-										color: colors.textPrimary,
-										marginBottom: 2,
-									}}
-								>
-									WEB
-								</Text>
-								<Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
-									World English Bible
-								</Text>
-							</Pressable>
-
-							<Pressable
-								onPress={() => handleSelectTranslation('KJV')}
-								style={{
-									flex: 1,
-									marginLeft: 8,
-									padding: 12,
-									borderRadius: 10,
-									borderWidth: 1,
-									alignItems: 'center',
-									backgroundColor: translation === 'KJV' ? colors.accentBg : colors.surfaceSubtle,
-									borderColor: translation === 'KJV' ? colors.accent : colors.border,
-								}}
-							>
-								<Text
-									style={{
-										fontSize: 14,
-										fontFamily: 'Inter_700Bold',
-										color: colors.textPrimary,
-										marginBottom: 2,
-									}}
-								>
-									KJV
-								</Text>
-								<Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
-									King James Version
-								</Text>
-							</Pressable>
-						</View>
-
-						{/* Custom / Downloaded Active Banner if not WEB or KJV */}
-						{translation !== 'WEB' && translation !== 'KJV' && (
-							<View
-								style={{
-									padding: 10,
-									borderRadius: 10,
-									backgroundColor: colors.accentBg,
-									borderWidth: 1,
-									borderColor: colors.accent,
-									marginBottom: 10,
-									flexDirection: 'row',
-									alignItems: 'center',
-									justifyContent: 'space-between',
-								}}
-							>
-								<View className='flex-row items-center'>
-									<Globe size={14} color={colors.accent} style={{ marginRight: 6 }} />
-									<Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: colors.accent }}>
-										Active: {translation}
-									</Text>
-								</View>
-								<Text style={{ fontSize: 11, color: colors.textSecondary }}>
-									Downloaded Translation
-								</Text>
-							</View>
-						)}
+								WEB
+							</Text>
+							<Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
+								World English Bible
+							</Text>
+						</Pressable>
 
 						<Pressable
-							onPress={() => setShowTranslationModal(true)}
+							onPress={() => handleSelectTranslation('KJV')}
+							accessibilityRole='button'
+							accessibilityLabel='Select King James Version'
+							style={{
+								flex: 1,
+								marginLeft: 6,
+								padding: 12,
+								borderRadius: 10,
+								borderWidth: 1,
+								alignItems: 'center',
+								backgroundColor: translation === 'KJV' ? colors.accentBg : colors.surfaceSubtle,
+								borderColor: translation === 'KJV' ? colors.accent : colors.border,
+							}}
+						>
+							<Text
+								style={{
+									fontSize: 14,
+									fontFamily: 'Inter_700Bold',
+									color: colors.textPrimary,
+									marginBottom: 2,
+								}}
+							>
+								KJV
+							</Text>
+							<Text style={{ fontSize: 11, color: colors.textSecondary, textAlign: 'center' }}>
+								King James Version
+							</Text>
+						</Pressable>
+					</View>
+
+					{translation !== 'WEB' && translation !== 'KJV' && (
+						<View
+							style={{
+								padding: 10,
+								borderRadius: 10,
+								backgroundColor: colors.accentBg,
+								borderWidth: 1,
+								borderColor: colors.accent,
+								marginBottom: 6,
+								flexDirection: 'row',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+							}}
+						>
+							<View className='flex-row items-center'>
+								<Globe size={14} color={colors.accent} style={{ marginRight: 6 }} />
+								<Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: colors.accent }}>
+									Active: {translation}
+								</Text>
+							</View>
+							<Text style={{ fontSize: 11, color: colors.textSecondary }}>Downloaded</Text>
+						</View>
+					)}
+				</Card>
+
+				{/* Bible Scroll Sacred Artwork */}
+				<Card variant='dark' style={{ padding: 14, marginBottom: 14 }}>
+					<View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+						<View
+							style={{
+								width: 40,
+								height: 40,
+								borderRadius: 10,
+								backgroundColor: colors.accentBg,
+								alignItems: 'center',
+								justifyContent: 'center',
+								marginRight: 12,
+								borderWidth: 1,
+								borderColor: colors.accent,
+							}}
+						>
+							<Sparkles size={20} color={colors.accent} />
+						</View>
+						<View style={{ flex: 1 }}>
+							<View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+								<Text style={{ fontSize: 14, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
+									Sacred Artwork Pack
+								</Text>
+								<Text style={{ fontSize: 11, fontFamily: 'Inter_700Bold', color: colors.accent }}>
+									[{artworkCount}/30]
+								</Text>
+							</View>
+							<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
+								{artworkCount >= 30
+									? 'All 30 sacred backgrounds active in Bible Scroll.'
+									: isPremium
+										? '10 bundled offline. Download 20 additional HD biblical backgrounds.'
+										: '10 bundled offline. Sanctuary members unlock 20 additional HD backgrounds.'}
+							</Text>
+						</View>
+					</View>
+
+					{artworkCount < 30 && (
+						<Pressable
+							onPress={handleDownloadArtwork}
+							disabled={isDownloadingArtwork}
+							accessibilityRole='button'
+							accessibilityLabel='Download HD Backgrounds'
 							style={{
 								width: '100%',
-								paddingVertical: 10,
+								paddingVertical: 12,
 								borderRadius: 10,
-								backgroundColor: colors.surfaceSubtle,
-								borderWidth: 1,
-								borderColor: colors.borderSubtle,
+								backgroundColor: colors.accent,
 								alignItems: 'center',
 								flexDirection: 'row',
 								justifyContent: 'center',
+								opacity: isDownloadingArtwork ? 0.7 : 1,
 							}}
 						>
-							<Globe size={14} color={colors.accent} style={{ marginRight: 6 }} />
-							<Text style={{ fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.accent }}>
-								Manage All Bibles & Download Languages (50+) →
-							</Text>
+							{isDownloadingArtwork ? (
+								<>
+									<ActivityIndicator size='small' color='#141413' style={{ marginRight: 8 }} />
+									<Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: '#141413' }}>
+										Downloading ({downloadProgress.downloaded}/{downloadProgress.total})...
+									</Text>
+								</>
+							) : !isPremium ? (
+								<>
+									<Lock size={15} color='#141413' style={{ marginRight: 6 }} />
+									<Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: '#141413' }}>
+										Unlock 20 HD Backgrounds (Sanctuary)
+									</Text>
+								</>
+							) : (
+								<>
+									<Download size={15} color='#141413' style={{ marginRight: 6 }} />
+									<Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: '#141413' }}>
+										Download 20 HD Backgrounds
+									</Text>
+								</>
+							)}
 						</Pressable>
-					</Card>
-				</View>
+					)}
+				</Card>
 
-				{/* Bible Scroll Sacred Artwork Section */}
-				<View className='mb-6'>
-					<View className='flex-row items-center justify-between mb-2.5 px-1'>
-						<Text
-							style={{
-								fontSize: 11,
-								fontFamily: 'Inter_600SemiBold',
-								textTransform: 'uppercase',
-								letterSpacing: 1,
-								color: colors.textSecondary,
-							}}
-						>
-							Bible Scroll Artwork ({artworkCount}/30)
-						</Text>
-						{artworkCount >= 30 ? (
-							<View
+				{/* ============================================================== */}
+				{/* CLUSTER 03: REMINDERS & QUIET HOURS */}
+				{/* ============================================================== */}
+				<SectionHeader index='03' title='Reminders & Quiet Hours' />
+
+				{/* Daily Reading Reminders */}
+				<Card variant='dark' style={{ padding: 16, marginBottom: 14 }}>
+					<View className='flex-row items-center justify-between mb-2'>
+						<View>
+							<Text
 								style={{
-									flexDirection: 'row',
-									alignItems: 'center',
-									backgroundColor: 'rgba(16, 185, 129, 0.15)',
-									paddingHorizontal: 8,
-									paddingVertical: 4,
-									borderRadius: 6,
+									fontSize: 14,
+									fontFamily: 'Inter_700Bold',
+									color: colors.textPrimary,
 								}}
 							>
-								<Check size={12} color='#10b981' style={{ marginRight: 4 }} />
-								<Text style={{ fontSize: 11, color: '#10b981', fontFamily: 'Inter_700Bold' }}>
-									Full Pack Ready
-								</Text>
-							</View>
-						) : null}
-					</View>
-
-					<Card variant='dark' style={{ padding: 14 }}>
-						<View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-							<View
-								style={{
-									width: 40,
-									height: 40,
-									borderRadius: 10,
-									backgroundColor: colors.accentBg,
-									alignItems: 'center',
-									justifyContent: 'center',
-									marginRight: 12,
-								}}
-							>
-								<Sparkles size={20} color={colors.accent} />
-							</View>
-							<View style={{ flex: 1 }}>
-								<Text style={{ fontSize: 14, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
-									Sacred Artwork Expansion (20 HD)
-								</Text>
-								<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
-									{artworkCount >= 30
-										? 'All 30 sacred backgrounds active in Bible Scroll.'
-										: isPremium
-											? '10 bundled offline. Download 20 additional HD biblical backgrounds.'
-											: '10 bundled offline. Sanctuary members unlock 20 additional HD backgrounds.'}
-								</Text>
-							</View>
+								Daily Reading Reminders
+							</Text>
+							<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 1 }}>
+								Notifications to keep your habit consistent
+							</Text>
 						</View>
-
-						{artworkCount < 30 && (
-							<Pressable
-								onPress={handleDownloadArtwork}
-								disabled={isDownloadingArtwork}
-								style={{
-									width: '100%',
-									paddingVertical: 12,
-									borderRadius: 10,
-									backgroundColor: colors.accent,
-									alignItems: 'center',
-									flexDirection: 'row',
-									justifyContent: 'center',
-									opacity: isDownloadingArtwork ? 0.7 : 1,
-								}}
-							>
-								{isDownloadingArtwork ? (
-									<>
-										<ActivityIndicator size='small' color='#141413' style={{ marginRight: 8 }} />
-										<Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: '#141413' }}>
-											Downloading ({downloadProgress.downloaded}/{downloadProgress.total})...
-										</Text>
-									</>
-								) : !isPremium ? (
-									<>
-										<Lock size={15} color='#141413' style={{ marginRight: 6 }} />
-										<Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: '#141413' }}>
-											Unlock 20 HD Backgrounds (Sanctuary)
-										</Text>
-									</>
-								) : (
-									<>
-										<Download size={15} color='#141413' style={{ marginRight: 6 }} />
-										<Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: '#141413' }}>
-											Download 20 HD Backgrounds
-										</Text>
-									</>
-								)}
-							</Pressable>
-						)}
-					</Card>
-				</View>
-
-				{/* Scripture Shield Reminders Section */}
-				<View className='mb-6'>
-					<View className='flex-row items-center justify-between mb-2.5 px-1'>
-						<Text
-							style={{
-								fontSize: 11,
-								fontFamily: 'Inter_600SemiBold',
-								textTransform: 'uppercase',
-								letterSpacing: 1,
-								color: colors.textSecondary,
-							}}
-						>
-							Daily Reading Reminders
-						</Text>
 						<Pressable
 							onPress={handleOpenTimePicker}
 							hitSlop={8}
 							accessibilityRole='button'
-							accessibilityLabel='Add reading reminder time'
+							accessibilityLabel='Add reminder time'
 							style={{
 								flexDirection: 'row',
 								alignItems: 'center',
@@ -1437,12 +1575,13 @@ export default function SettingsScreen() {
 								paddingHorizontal: 10,
 								paddingVertical: 6,
 								borderRadius: 8,
+								gap: 4,
 							}}
 						>
 							{!isPremium && scheduledTimes.length >= 1 ? (
-								<Lock size={12} color={colors.accent} style={{ marginRight: 4 }} />
+								<Lock size={12} color={colors.accent} />
 							) : (
-								<Plus size={13} color={colors.accent} style={{ marginRight: 4 }} />
+								<Plus size={13} color={colors.accent} />
 							)}
 							<Text
 								style={{
@@ -1456,533 +1595,641 @@ export default function SettingsScreen() {
 						</Pressable>
 					</View>
 
-					<Card variant='dark' style={{ padding: 16 }}>
-						{/* Scheduled Times List */}
-						<View className='mb-4'>
-							<Text
-								style={{
-									fontSize: 13,
-									fontFamily: 'Inter_600SemiBold',
-									color: colors.textPrimary,
-									marginBottom: 2,
-								}}
-							>
-								Scheduled Times
+					{scheduledTimes.length === 0 ? (
+						<View
+							style={{
+								padding: 12,
+								borderRadius: 12,
+								backgroundColor: colors.surfaceSubtle,
+								alignItems: 'center',
+								marginTop: 8,
+							}}
+						>
+							<Text style={{ fontSize: 12, color: colors.textSecondary }}>
+								No reminder times set. Tap "+ Add Time" above.
 							</Text>
-							<Text style={{ fontSize: 12, color: colors.textSecondary, marginBottom: 12 }}>
-								Notifications sent to keep you consistent with your daily goal.
-							</Text>
-
-							{scheduledTimes.length === 0 ? (
+						</View>
+					) : (
+						<View style={{ marginTop: 8 }}>
+							{scheduledTimes.map((timeStr) => (
 								<View
-									style={{
-										padding: 12,
-										borderRadius: 12,
-										backgroundColor: colors.surfaceSubtle,
-										alignItems: 'center',
-									}}
-								>
-									<Text style={{ fontSize: 12, color: colors.textSecondary }}>
-										No reminder times set. Tap "+ Add Time" above.
-									</Text>
-								</View>
-							) : (
-								<View>
-									{scheduledTimes.map((timeStr) => (
-										<View
-											key={timeStr}
-											style={{
-												flexDirection: 'row',
-												alignItems: 'center',
-												justifyContent: 'space-between',
-												paddingHorizontal: 14,
-												paddingVertical: 10,
-												borderRadius: 12,
-												backgroundColor: colors.surfaceSubtle,
-												borderWidth: 1,
-												borderColor: colors.borderSubtle,
-												marginBottom: 6,
-											}}
-										>
-											<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-												<View
-													style={{
-														width: 28,
-														height: 28,
-														borderRadius: 14,
-														backgroundColor: colors.accentBg,
-														alignItems: 'center',
-														justifyContent: 'center',
-														marginRight: 10,
-													}}
-												>
-													<Clock size={14} color={colors.accent} />
-												</View>
-												<Text
-													style={{
-														fontSize: 14,
-														fontFamily: 'Inter_600SemiBold',
-														color: colors.textPrimary,
-													}}
-												>
-													{timeStr}
-												</Text>
-											</View>
-
-											<Pressable
-												onPress={() => handleRemoveReminderTime(timeStr)}
-												hitSlop={10}
-												accessibilityRole='button'
-												accessibilityLabel={`Delete reminder ${timeStr}`}
-												style={{
-													width: 36,
-													height: 36,
-													borderRadius: 18,
-													backgroundColor: colors.dangerBg,
-													alignItems: 'center',
-													justifyContent: 'center',
-												}}
-											>
-												<Trash2 size={14} color={colors.danger} />
-											</Pressable>
-										</View>
-									))}
-								</View>
-							)}
-
-							{!isPremium && scheduledTimes.length >= 1 && (
-								<View
+									key={timeStr}
 									style={{
 										flexDirection: 'row',
 										alignItems: 'center',
-										marginTop: 6,
-										paddingHorizontal: 2,
+										justifyContent: 'space-between',
+										paddingHorizontal: 12,
+										paddingVertical: 10,
+										borderRadius: 10,
+										backgroundColor: colors.surfaceSubtle,
+										borderWidth: 1,
+										borderColor: colors.borderSubtle,
+										marginBottom: 6,
 									}}
 								>
-									<Lock size={11} color={colors.accent} style={{ marginRight: 4 }} />
-									<Text style={{ fontSize: 11, color: colors.accent, fontFamily: 'Inter_500Medium' }}>
-										Sanctuary unlocks unlimited reminder times.
-									</Text>
-								</View>
-							)}
-						</View>
-
-						{/* Divider */}
-						<View
-							style={{
-								height: 1,
-								backgroundColor: colors.borderSubtle,
-								marginBottom: 14,
-							}}
-						/>
-
-						{/* Evening Reflection Prompt Toggle */}
-						<View className='flex-row items-center justify-between'>
-							<View className='flex-1 mr-4'>
-								<Text
-									style={{
-										fontSize: 14,
-										fontFamily: 'Inter_500Medium',
-										color: colors.textPrimary,
-									}}
-								>
-									Evening Reflection Prompt
-								</Text>
-								<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
-									Sends a gentle reminder at 8:00 PM if today's reading goal is unmet.
-								</Text>
-							</View>
-							<Switch
-								value={eveningReminder}
-								onValueChange={setEveningReminder}
-								trackColor={{ false: colors.surfaceSubtle, true: colors.accent }}
-								thumbColor={eveningReminder ? '#ffffff' : colors.textMuted}
-							/>
-						</View>
-					</Card>
-				</View>
-
-				{/* Daily Devotional Verse Notifications */}
-				<View className='mb-5'>
-					<View className='flex-row items-center justify-between mb-2 px-1'>
-						<Text
-							style={{
-								fontSize: 11,
-								fontFamily: 'Inter_600SemiBold',
-								textTransform: 'uppercase',
-								letterSpacing: 1,
-								color: colors.textSecondary,
-							}}
-						>
-							Daily Verse Notifications
-						</Text>
-						{isPremium && (
-							<View
-								style={{
-									flexDirection: 'row',
-									alignItems: 'center',
-									backgroundColor: colors.accentBg,
-									paddingHorizontal: 8,
-									paddingVertical: 2,
-									borderRadius: 6,
-								}}
-							>
-								<Crown size={10} color={colors.accent} style={{ marginRight: 4 }} />
-								<Text style={{ fontSize: 10, fontFamily: 'Inter_700Bold', color: colors.accent }}>
-									SANCTUARY
-								</Text>
-							</View>
-						)}
-					</View>
-
-					<Card variant='dark' style={{ padding: 16 }}>
-						{/* Master Toggle */}
-						<View className='flex-row items-center justify-between'>
-							<View className='flex-1 mr-3'>
-								<View className='flex-row items-center'>
-									<Sparkles size={16} color={colors.accent} style={{ marginRight: 6 }} />
-									<Text
-										style={{
-											fontSize: 15,
-											fontFamily: 'Inter_600SemiBold',
-											color: colors.textPrimary,
-										}}
-									>
-										Devotional Verses to Phone
-									</Text>
-								</View>
-								<Text
-									style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4, lineHeight: 17 }}
-								>
-									Receive inspiring Scripture notifications spaced through your day. Tap any
-									notification to read in context.
-								</Text>
-							</View>
-							<Switch
-								value={verseNotifsEnabled}
-								onValueChange={handleToggleVerseNotifications}
-								trackColor={{ false: colors.surfaceSubtle, true: colors.accent }}
-								thumbColor={verseNotifsEnabled ? '#ffffff' : colors.textMuted}
-							/>
-						</View>
-
-						{/* Quiet Hours Guarantee Banner */}
-						<View
-							style={{
-								flexDirection: 'row',
-								alignItems: 'center',
-								backgroundColor: colors.surfaceSubtle,
-								padding: 10,
-								borderRadius: 10,
-								marginTop: 14,
-								borderWidth: 1,
-								borderColor: colors.borderSubtle,
-							}}
-						>
-							<Moon size={14} color={colors.accent} style={{ marginRight: 8 }} />
-							<View style={{ flex: 1 }}>
-								<Text
-									style={{ fontSize: 11, fontFamily: 'Inter_600SemiBold', color: colors.textPrimary }}
-								>
-									Daytime Delivery Only (7:00 AM – 10:00 PM)
-								</Text>
-								<Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 1 }}>
-									Automatically adapts to your local timezone. 10:00 PM to 7:00 AM is 100% quiet.
-								</Text>
-							</View>
-						</View>
-
-						{verseNotifsEnabled && (
-							<View style={{ marginTop: 16 }}>
-								{/* Frequency Header & Stepper */}
-								<View className='flex-row items-center justify-between mb-3'>
-									<View>
+									<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+										<View
+											style={{
+												width: 26,
+												height: 26,
+												borderRadius: 13,
+												backgroundColor: colors.accentBg,
+												alignItems: 'center',
+												justifyContent: 'center',
+												marginRight: 10,
+											}}
+										>
+											<Clock size={13} color={colors.accent} />
+										</View>
 										<Text
 											style={{
-												fontSize: 13,
+												fontSize: 14,
 												fontFamily: 'Inter_600SemiBold',
 												color: colors.textPrimary,
 											}}
 										>
-											Verses Per Day
-										</Text>
-										<Text style={{ fontSize: 11, color: colors.textSecondary }}>
-											{!isPremium
-												? '1 to 6 on Free • Up to 24 on Sanctuary'
-												: 'Up to 24 on Sanctuary'}
+											{timeStr}
 										</Text>
 									</View>
 
-									{/* Stepper Controls */}
-									<View
+									<Pressable
+										onPress={() => handleRemoveReminderTime(timeStr)}
+										hitSlop={10}
+										accessibilityRole='button'
+										accessibilityLabel={`Delete reminder ${timeStr}`}
 										style={{
-											flexDirection: 'row',
+											width: 32,
+											height: 32,
+											borderRadius: 16,
+											backgroundColor: colors.dangerBg,
 											alignItems: 'center',
-											backgroundColor: colors.surfaceSubtle,
-											borderRadius: 10,
-											borderWidth: 1,
-											borderColor: colors.border,
-											padding: 2,
+											justifyContent: 'center',
 										}}
 									>
-										<Pressable
-											onPress={() => handleUpdateVerseNotifCount(verseNotifCount - 1)}
-											disabled={verseNotifCount <= 1}
-											hitSlop={6}
-											accessibilityRole='button'
-											accessibilityLabel='Decrease verse notifications'
-											style={{
-												width: 32,
-												height: 32,
-												borderRadius: 8,
-												alignItems: 'center',
-												justifyContent: 'center',
-												opacity: verseNotifCount <= 1 ? 0.3 : 1,
-											}}
-										>
-											<Minus size={15} color={colors.textPrimary} />
-										</Pressable>
-
-										<View
-											style={{
-												minWidth: 36,
-												alignItems: 'center',
-												justifyContent: 'center',
-												paddingHorizontal: 4,
-											}}
-										>
-											<Text
-												style={{
-													fontSize: 15,
-													fontFamily: 'Inter_700Bold',
-													color: colors.accent,
-												}}
-											>
-												{verseNotifCount}
-											</Text>
-										</View>
-
-										<Pressable
-											onPress={() => handleUpdateVerseNotifCount(verseNotifCount + 1)}
-											hitSlop={6}
-											accessibilityRole='button'
-											accessibilityLabel='Increase verse notifications'
-											style={{
-												width: 32,
-												height: 32,
-												borderRadius: 8,
-												alignItems: 'center',
-												justifyContent: 'center',
-											}}
-										>
-											{!isPremium && verseNotifCount >= 6 ? (
-												<Lock size={13} color={colors.accent} />
-											) : (
-												<Plus size={15} color={colors.textPrimary} />
-											)}
-										</Pressable>
-									</View>
+										<Trash2 size={13} color={colors.danger} />
+									</Pressable>
 								</View>
+							))}
+						</View>
+					)}
 
-								{/* Quick Presets Chips */}
-								<View className='flex-row justify-between mb-3'>
-									{[1, 2, 3, 6, 12, 24].map((n) => {
-										const isLocked = !isPremium && n > 6;
-										const isSelected = verseNotifCount === n;
-										return (
-											<Pressable
-												key={n}
-												onPress={() => handleUpdateVerseNotifCount(n)}
-												style={{
-													flex: 1,
-													marginHorizontal: 2,
-													paddingVertical: 8,
-													borderRadius: 8,
-													alignItems: 'center',
-													justifyContent: 'center',
-													backgroundColor: isSelected
-														? colors.accentBg
-														: colors.surfaceSubtle,
-													borderWidth: 1,
-													borderColor: isSelected ? colors.accent : colors.borderSubtle,
-												}}
-											>
-												<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-													<Text
-														style={{
-															fontSize: 12,
-															fontFamily: isSelected
-																? 'Inter_700Bold'
-																: 'Inter_500Medium',
-															color: isSelected ? colors.accent : colors.textPrimary,
-														}}
-													>
-														{n}x
-													</Text>
-													{isLocked && (
-														<Lock
-															size={9}
-															color={colors.accent}
-															style={{ marginLeft: 2 }}
-														/>
-													)}
-												</View>
-											</Pressable>
-										);
-									})}
-								</View>
+					{!isPremium && scheduledTimes.length >= 1 && (
+						<View
+							style={{
+								flexDirection: 'row',
+								alignItems: 'center',
+								marginTop: 8,
+								paddingHorizontal: 2,
+							}}
+						>
+							<Lock size={11} color={colors.accent} style={{ marginRight: 4 }} />
+							<Text style={{ fontSize: 11, color: colors.accent, fontFamily: 'Inter_500Medium' }}>
+								Sanctuary unlocks unlimited custom reminder times.
+							</Text>
+						</View>
+					)}
 
-								{/* Schedule Preview */}
-								<View
-									style={{
-										backgroundColor: colors.surfaceSubtle,
-										borderRadius: 10,
-										padding: 10,
-										borderWidth: 1,
-										borderColor: colors.borderSubtle,
-									}}
-								>
-									<Text
-										style={{
-											fontSize: 11,
-											fontFamily: 'Inter_600SemiBold',
-											color: colors.textSecondary,
-											marginBottom: 4,
-										}}
-									>
-										Today's Daytime Schedule ({translation}):
-									</Text>
-									<Text
-										style={{
-											fontSize: 12,
-											color: colors.textPrimary,
-											fontFamily: 'Inter_500Medium',
-											lineHeight: 18,
-										}}
-									>
-										{calculateDaytimeHours(verseNotifCount)
-											.map((s) => formatSlotTime(s.hour, s.minute))
-											.join(' • ')}
-									</Text>
-								</View>
-							</View>
-						)}
-					</Card>
-				</View>
-
-				{/* Your Profile Section */}
-				<View className='mb-6'>
-					<Text
+					{/* Divider */}
+					<View
 						style={{
-							fontSize: 11,
-							fontFamily: 'Inter_600SemiBold',
-							textTransform: 'uppercase',
-							letterSpacing: 1,
-							color: colors.textSecondary,
-							marginBottom: 10,
-							paddingHorizontal: 4,
+							height: 1,
+							backgroundColor: colors.borderSubtle,
+							marginVertical: 14,
 						}}
-					>
-						Your Profile
-					</Text>
-					<Card variant='dark' style={{ padding: 16 }}>
-						<View className='mb-4'>
-							<Text style={{ fontSize: 11, color: colors.textSecondary }}>Privacy</Text>
+					/>
+
+					{/* Evening Reflection Prompt */}
+					<View className='flex-row items-center justify-between'>
+						<View className='flex-1 mr-4'>
 							<Text
 								style={{
 									fontSize: 14,
-									fontFamily: 'Inter_500Medium',
+									fontFamily: 'Inter_600SemiBold',
 									color: colors.textPrimary,
-									marginTop: 2,
 								}}
 							>
-								All data stays on this device
+								Evening Reflection (8:00 PM)
+							</Text>
+							<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
+								Gentle reminder if your daily goal is unmet by sunset.
 							</Text>
 						</View>
+						<Switch
+							value={eveningReminder}
+							onValueChange={setEveningReminder}
+							trackColor={{ false: colors.surfaceSubtle, true: colors.accent }}
+							thumbColor={eveningReminder ? '#ffffff' : colors.textMuted}
+						/>
+					</View>
+				</Card>
 
-						<View className='flex-row items-center justify-between'>
-							<View className='flex-1 mr-3'>
-								<Text style={{ fontSize: 11, color: colors.textSecondary }}>Reader Profile</Text>
+				{/* Daily Devotional Verse Notifications */}
+				<Card variant='dark' style={{ padding: 16, marginBottom: 14 }}>
+					<View className='flex-row items-center justify-between mb-1'>
+						<View className='flex-1 mr-3'>
+							<View className='flex-row items-center'>
+								<Sparkles size={16} color={colors.accent} style={{ marginRight: 6 }} />
 								<Text
 									style={{
-										fontSize: 15,
-										fontFamily: 'Inter_500Medium',
+										fontSize: 14,
+										fontFamily: 'Inter_700Bold',
 										color: colors.textPrimary,
-										marginTop: 2,
 									}}
 								>
-									{userName}
+									Daytime Verse Notifications
 								</Text>
 							</View>
-							<Pressable
-								onPress={handleOpenEditName}
-								accessibilityRole='button'
-								accessibilityLabel='Edit Reader Name'
-								style={{
-									flexDirection: 'row',
-									alignItems: 'center',
-									paddingHorizontal: 12,
-									paddingVertical: 6,
-									borderRadius: 8,
-									backgroundColor: isDark ? '#1a241e' : '#e6e3da',
-									borderWidth: 1,
-									borderColor: colors.borderSubtle,
-								}}
+							<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
+								Receive inspiring verses spaced throughout your day.
+							</Text>
+						</View>
+						<Switch
+							value={verseNotifsEnabled}
+							onValueChange={handleToggleVerseNotifications}
+							trackColor={{ false: colors.surfaceSubtle, true: colors.accent }}
+							thumbColor={verseNotifsEnabled ? '#ffffff' : colors.textMuted}
+						/>
+					</View>
+
+					{/* Quiet Hours Guarantee Banner */}
+					<View
+						style={{
+							flexDirection: 'row',
+							alignItems: 'center',
+							backgroundColor: colors.surfaceSubtle,
+							padding: 10,
+							borderRadius: 10,
+							marginTop: 12,
+							borderWidth: 1,
+							borderColor: colors.borderSubtle,
+						}}
+					>
+						<Moon size={14} color={colors.accent} style={{ marginRight: 8 }} />
+						<View style={{ flex: 1 }}>
+							<Text
+								style={{ fontSize: 11, fontFamily: 'Inter_600SemiBold', color: colors.textPrimary }}
 							>
-								<Pencil size={13} color={colors.accent} style={{ marginRight: 6 }} />
-								<Text
+								Daytime Delivery Only (7:00 AM – 10:00 PM)
+							</Text>
+							<Text style={{ fontSize: 10, color: colors.textSecondary, marginTop: 1 }}>
+								Adapts to your timezone. Night hours are 100% silent.
+							</Text>
+						</View>
+					</View>
+
+					{verseNotifsEnabled && (
+						<View style={{ marginTop: 14 }}>
+							<View className='flex-row items-center justify-between mb-3'>
+								<View>
+									<Text
+										style={{
+											fontSize: 13,
+											fontFamily: 'Inter_600SemiBold',
+											color: colors.textPrimary,
+										}}
+									>
+										Verses Per Day
+									</Text>
+									<Text style={{ fontSize: 11, color: colors.textSecondary }}>
+										{!isPremium ? '1 to 6 on Free • Up to 24 on Sanctuary' : 'Up to 24 on Sanctuary'}
+									</Text>
+								</View>
+
+								{/* Stepper Controls */}
+								<View
 									style={{
-										fontSize: 12,
-										fontFamily: 'Inter_600SemiBold',
-										color: colors.accent,
+										flexDirection: 'row',
+										alignItems: 'center',
+										backgroundColor: colors.surfaceSubtle,
+										borderRadius: 10,
+										borderWidth: 1,
+										borderColor: colors.border,
+										padding: 2,
 									}}
 								>
-									Edit
-								</Text>
-							</Pressable>
-						</View>
+									<Pressable
+										onPress={() => handleUpdateVerseNotifCount(verseNotifCount - 1)}
+										disabled={verseNotifCount <= 1}
+										hitSlop={6}
+										accessibilityRole='button'
+										accessibilityLabel='Decrease notifications'
+										style={{
+											width: 32,
+											height: 32,
+											borderRadius: 8,
+											alignItems: 'center',
+											justifyContent: 'center',
+											opacity: verseNotifCount <= 1 ? 0.3 : 1,
+										}}
+									>
+										<Minus size={15} color={colors.textPrimary} />
+									</Pressable>
 
-						{__DEV__ && (
+									<View style={{ minWidth: 36, alignItems: 'center', paddingHorizontal: 4 }}>
+										<Text style={{ fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.accent }}>
+											{verseNotifCount}
+										</Text>
+									</View>
+
+									<Pressable
+										onPress={() => handleUpdateVerseNotifCount(verseNotifCount + 1)}
+										hitSlop={6}
+										accessibilityRole='button'
+										accessibilityLabel='Increase notifications'
+										style={{
+											width: 32,
+											height: 32,
+											borderRadius: 8,
+											alignItems: 'center',
+											justifyContent: 'center',
+										}}
+									>
+										{!isPremium && verseNotifCount >= 6 ? (
+											<Lock size={13} color={colors.accent} />
+										) : (
+											<Plus size={15} color={colors.textPrimary} />
+										)}
+									</Pressable>
+								</View>
+							</View>
+
+							{/* Quick Presets */}
+							<View className='flex-row justify-between mb-3'>
+								{[1, 2, 3, 6, 12, 24].map((n) => {
+									const isLocked = !isPremium && n > 6;
+									const isSelected = verseNotifCount === n;
+									return (
+										<Pressable
+											key={n}
+											onPress={() => handleUpdateVerseNotifCount(n)}
+											accessibilityRole='button'
+											accessibilityLabel={`${n} verses daily`}
+											style={{
+												flex: 1,
+												marginHorizontal: 2,
+												paddingVertical: 8,
+												borderRadius: 8,
+												alignItems: 'center',
+												justifyContent: 'center',
+												backgroundColor: isSelected ? colors.accentBg : colors.surfaceSubtle,
+												borderWidth: 1,
+												borderColor: isSelected ? colors.accent : colors.borderSubtle,
+											}}
+										>
+											<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+												<Text
+													style={{
+														fontSize: 12,
+														fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_500Medium',
+														color: isSelected ? colors.accent : colors.textPrimary,
+													}}
+												>
+													{n}x
+												</Text>
+												{isLocked && (
+													<Lock size={9} color={colors.accent} style={{ marginLeft: 2 }} />
+												)}
+											</View>
+										</Pressable>
+									);
+								})}
+							</View>
+
+							{/* Schedule Preview */}
 							<View
 								style={{
-									paddingTop: 16,
-									marginTop: 16,
-									borderTopWidth: 1,
-									borderTopColor: colors.borderSubtle,
+									backgroundColor: colors.surfaceSubtle,
+									borderRadius: 10,
+									padding: 10,
+									borderWidth: 1,
+									borderColor: colors.borderSubtle,
 								}}
 							>
 								<Text
 									style={{
 										fontSize: 11,
 										fontFamily: 'Inter_600SemiBold',
-										textTransform: 'uppercase',
 										color: colors.textSecondary,
-										marginBottom: 8,
+										marginBottom: 4,
 									}}
 								>
-									Developer Controls
+									Today's Daytime Schedule ({translation}):
 								</Text>
-								<View style={{ flexDirection: 'row', gap: 8 }}>
-									<Button
-										title='Reset Reading Progress'
-										variant='ghost'
-										size='sm'
-										onPress={handleResetProgress}
-										style={{ flex: 1 }}
-									/>
-									<Button
-										title={isPremium ? 'Simulate Free' : 'Simulate Pro'}
-										variant='ghost'
-										size='sm'
-										onPress={handleToggleSimulatePlan}
-										style={{ flex: 1 }}
-									/>
-								</View>
+								<Text
+									style={{
+										fontSize: 12,
+										color: colors.textPrimary,
+										fontFamily: 'Inter_500Medium',
+										lineHeight: 18,
+									}}
+								>
+									{calculateDaytimeHours(verseNotifCount)
+										.map((s) => formatSlotTime(s.hour, s.minute))
+										.join(' • ')}
+								</Text>
 							</View>
+						</View>
+					)}
+				</Card>
+
+				{/* ============================================================== */}
+				{/* CLUSTER 04: ACCOUNT, DATA & SUPPORT */}
+				{/* ============================================================== */}
+				<SectionHeader index='04' title='Account, Data & Support' />
+
+				{/* Reader Profile & Offline Privacy */}
+				<Card variant='dark' style={{ padding: 16, marginBottom: 14 }}>
+					<View className='flex-row items-center justify-between'>
+						<View className='flex-1 mr-3'>
+							<Text style={{ fontSize: 11, color: colors.textSecondary }}>Reader Profile</Text>
+							<Text
+								style={{
+									fontSize: 16,
+									fontFamily: 'Inter_700Bold',
+									color: colors.textPrimary,
+									marginTop: 2,
+								}}
+							>
+								{userName}
+							</Text>
+							<Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 4 }}>
+								Used in daily greetings, streak celebrations, and badges.
+							</Text>
+						</View>
+						<Pressable
+							onPress={handleOpenEditName}
+							accessibilityRole='button'
+							accessibilityLabel='Edit Reader Name'
+							style={{
+								flexDirection: 'row',
+								alignItems: 'center',
+								paddingHorizontal: 12,
+								paddingVertical: 7,
+								borderRadius: 8,
+								backgroundColor: colors.accentBg,
+								borderWidth: 1,
+								borderColor: colors.accent,
+								gap: 4,
+							}}
+						>
+							<Pencil size={13} color={colors.accent} />
+							<Text
+								style={{
+									fontSize: 12,
+									fontFamily: 'Inter_600SemiBold',
+									color: colors.accent,
+								}}
+							>
+								Edit
+							</Text>
+						</Pressable>
+					</View>
+				</Card>
+
+				{/* Data Portability & Backup */}
+				<Card variant='dark' style={{ padding: 16, marginBottom: 14 }}>
+					<View className='flex-row items-center justify-between mb-3'>
+						<View className='flex-1 mr-3'>
+							<View className='flex-row items-center'>
+								<DownloadCloud size={16} color={colors.accent} style={{ marginRight: 6 }} />
+								<Text
+									style={{
+										fontSize: 14,
+										fontFamily: 'Inter_700Bold',
+										color: colors.textPrimary,
+									}}
+								>
+									Local Data Backup & Restore
+								</Text>
+							</View>
+							<Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 4 }}>
+								Export your streaks, bookmarks, and notes to a private JSON file or restore them anytime.
+							</Text>
+						</View>
+						<Button
+							title='Backup'
+							variant='outline'
+							size='sm'
+							onPress={() => setShowBackupModal(true)}
+						/>
+					</View>
+				</Card>
+
+				{/* Subscription & Purchases */}
+				<Card variant='dark' style={{ padding: 16, marginBottom: 14 }}>
+					<Text
+						style={{
+							fontSize: 14,
+							fontFamily: 'Inter_700Bold',
+							color: colors.textPrimary,
+							marginBottom: 10,
+						}}
+					>
+						Subscription & Purchases
+					</Text>
+
+					{/* Restore Purchases Button */}
+					<Pressable
+						onPress={handleRestorePurchases}
+						disabled={isRestoringPurchases}
+						accessibilityRole='button'
+						accessibilityLabel='Restore App Purchases'
+						style={{
+							flexDirection: 'row',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							paddingVertical: 12,
+							borderBottomWidth: 1,
+							borderBottomColor: colors.borderSubtle,
+						}}
+					>
+						<View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+							<RefreshCw size={16} color={colors.accent} />
+							<Text style={{ fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.textPrimary }}>
+								Restore Purchases
+							</Text>
+						</View>
+						{isRestoringPurchases ? (
+							<ActivityIndicator size='small' color={colors.accent} />
+						) : (
+							<ChevronRight size={16} color={colors.textSecondary} />
 						)}
+					</Pressable>
+
+					{/* Manage Subscription Button */}
+					<Pressable
+						onPress={handleManageSubscription}
+						accessibilityRole='button'
+						accessibilityLabel='Manage Subscriptions'
+						style={{
+							flexDirection: 'row',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							paddingVertical: 12,
+						}}
+					>
+						<View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+							<CreditCard size={16} color={colors.accent} />
+							<Text style={{ fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.textPrimary }}>
+								Manage Subscription (Store)
+							</Text>
+						</View>
+						<ChevronRight size={16} color={colors.textSecondary} />
+					</Pressable>
+				</Card>
+
+				{/* Community & Growth */}
+				<Card variant='dark' style={{ padding: 16, marginBottom: 14 }}>
+					<Text
+						style={{
+							fontSize: 14,
+							fontFamily: 'Inter_700Bold',
+							color: colors.textPrimary,
+							marginBottom: 10,
+						}}
+					>
+						Community & Support
+					</Text>
+
+					{/* Share App */}
+					<Pressable
+						onPress={handleShareApp}
+						accessibilityRole='button'
+						accessibilityLabel='Share Bible Unlock with Friends'
+						style={{
+							flexDirection: 'row',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							paddingVertical: 12,
+							borderBottomWidth: 1,
+							borderBottomColor: colors.borderSubtle,
+						}}
+					>
+						<View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+							<Share2 size={16} color={colors.accent} />
+							<Text style={{ fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.textPrimary }}>
+								Share Bible Unlock with a Friend
+							</Text>
+						</View>
+						<ChevronRight size={16} color={colors.textSecondary} />
+					</Pressable>
+
+					{/* Rate App */}
+					<Pressable
+						onPress={handleRateApp}
+						accessibilityRole='button'
+						accessibilityLabel='Rate Bible Unlock on Google Play'
+						style={{
+							flexDirection: 'row',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							paddingVertical: 12,
+							borderBottomWidth: 1,
+							borderBottomColor: colors.borderSubtle,
+						}}
+					>
+						<View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+							<Star size={16} color={colors.accent} />
+							<Text style={{ fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.textPrimary }}>
+								Rate on Google Play
+							</Text>
+						</View>
+						<ChevronRight size={16} color={colors.textSecondary} />
+					</Pressable>
+
+					{/* Contact Support */}
+					<Pressable
+						onPress={handleContactSupport}
+						accessibilityRole='button'
+						accessibilityLabel='Send Feedback and Support'
+						style={{
+							flexDirection: 'row',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							paddingVertical: 12,
+						}}
+					>
+						<View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+							<MessageSquare size={16} color={colors.accent} />
+							<Text style={{ fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.textPrimary }}>
+								Help & Feature Feedback
+							</Text>
+						</View>
+						<ChevronRight size={16} color={colors.textSecondary} />
+					</Pressable>
+				</Card>
+
+				{/* Legal & App Version Info */}
+				<Card variant='dark' style={{ padding: 14, marginBottom: 14 }}>
+					<View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', marginBottom: 10 }}>
+						<Pressable onPress={handleOpenPrivacy} hitSlop={10}>
+							<Text style={{ fontSize: 12, color: colors.textSecondary, fontFamily: 'Inter_500Medium' }}>
+								Privacy Policy
+							</Text>
+						</Pressable>
+						<Text style={{ color: colors.border }}>•</Text>
+						<Pressable onPress={handleOpenTerms} hitSlop={10}>
+							<Text style={{ fontSize: 12, color: colors.textSecondary, fontFamily: 'Inter_500Medium' }}>
+								Terms of Service
+							</Text>
+						</Pressable>
+					</View>
+
+					<View style={{ alignItems: 'center', paddingTop: 6, borderTopWidth: 1, borderTopColor: colors.borderSubtle }}>
+						<Text style={{ fontSize: 11, fontFamily: 'Inter_600SemiBold', color: colors.textMuted }}>
+							Bible Unlock v1.0.0 (Build 1) • 100% Local-First
+						</Text>
+					</View>
+				</Card>
+
+				{/* Developer Controls (when __DEV__) */}
+				{__DEV__ && (
+					<Card
+						variant='dark'
+						style={{
+							padding: 16,
+							marginBottom: 20,
+							borderColor: '#ef4444',
+							backgroundColor: isDark ? 'rgba(239, 68, 68, 0.08)' : 'rgba(239, 68, 68, 0.04)',
+						}}
+					>
+						<View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+							<ShieldAlert size={14} color='#ef4444' />
+							<Text
+								style={{
+									fontSize: 11,
+									fontFamily: 'Inter_700Bold',
+									letterSpacing: 1,
+									textTransform: 'uppercase',
+									color: '#ef4444',
+								}}
+							>
+								[ DEV // PROTOCOLS ]
+							</Text>
+						</View>
+						<View style={{ flexDirection: 'row', gap: 8 }}>
+							<Button
+								title='Reset Reading Progress'
+								variant='ghost'
+								size='sm'
+								onPress={handleResetProgress}
+								style={{ flex: 1 }}
+							/>
+							<Button
+								title={isPremium ? 'Simulate Free' : 'Simulate Pro'}
+								variant='ghost'
+								size='sm'
+								onPress={handleToggleSimulatePlan}
+								style={{ flex: 1 }}
+							/>
+						</View>
 					</Card>
-				</View>
+				)}
 			</ScrollView>
+
+			{/* ============================================================== */}
+			{/* MODALS */}
+			{/* ============================================================== */}
 
 			{/* Interactive App Picker Modal */}
 			<Modal
@@ -2033,6 +2280,8 @@ export default function SettingsScreen() {
 								</View>
 								<Pressable
 									onPress={() => setShowAppPickerModal(false)}
+									accessibilityRole='button'
+									accessibilityLabel='Close app picker'
 									style={{
 										width: 32,
 										height: 32,
@@ -2202,6 +2451,24 @@ export default function SettingsScreen() {
 
 			{/* Bible Translation & Download Modal */}
 			<BibleTranslationModal visible={showTranslationModal} onClose={() => setShowTranslationModal(false)} />
+
+			{/* Android Battery Optimization Guide Modal */}
+			<BatteryOptimizationModal
+				visible={showBatteryModal}
+				onClose={() => setShowBatteryModal(false)}
+			/>
+
+			{/* Local Data Backup & Restore Modal */}
+			<DataBackupModal
+				visible={showBackupModal}
+				onClose={() => setShowBackupModal(false)}
+				onRestoreSuccess={() => {
+					setUserNameState(getUserName());
+					setDailyGoal(getDailyGoalMinutes());
+					setBlockedListState(getBlockedApps());
+					setScheduledTimes(getScheduledReadingTimes());
+				}}
+			/>
 
 			{/* Edit Reader Name Modal */}
 			<Modal

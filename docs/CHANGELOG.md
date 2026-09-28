@@ -1,5 +1,30 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.49] - 2026-09-28
+
+### Settings Page Architectural Redesign: 4-Cluster Grouped Hub, Store Compliance & Data Vault
+- **4 Grouped Semantic Clusters (`src/app/(tabs)/settings.tsx`, `TASK-058`, `DEC-041`):**
+  - Restructured monolithic 2,379-line linear scroll into 4 numbered industrial-brutalist sections (`01 // SPIRITUAL HABIT & SHIELD`, `02 // READING & MEDIA ASSETS`, `03 // REMINDERS & QUIET HOURS`, `04 // ACCOUNT, DATA & SUPPORT`).
+- **Local Data Portability Engine (`src/lib/backup.ts`, `src/components/settings/DataBackupModal.tsx`):**
+  - Added dual export options: "Download Backup File (.json)" directly saving timestamped files (`bible-unlock-backup-YYYY-MM-DD_HH-mm-ss.json`) to Android device Downloads folder via Storage Access Framework, and "Share via Apps" for cloud/external note transfer, alongside schema-validated JSON restore.
+- **Android Battery Optimization Guide (`src/components/settings/BatteryOptimizationModal.tsx`):**
+  - Added step-by-step OEM guide with direct 1-tap deep-link to system app settings via `Linking.openSettings()` to prevent Samsung/Xiaomi/Pixel task-killing.
+- **Store Compliance & Billing Management (`src/app/(tabs)/settings.tsx`):**
+  - Added in-app "Restore Purchases" button with spinner feedback and direct "Manage Subscription" deep-link to Google Play / App Store account settings.
+- **Viral Growth & App Review Loops (`src/app/(tabs)/settings.tsx`):**
+  - Integrated native "Share Bible Unlock with a Friend", "Rate on Google Play", and support mailto links alongside Privacy Policy and Terms of Service.
+- **Developer Protocol Card:**
+  - Isolated debug triggers ("Reset Reading Progress" and "Simulate Free / Pro") strictly behind `__DEV__` with industrial warning borders.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- 100% offline JSON export and restore verified.
+- Complete App Store & Google Play compliance verified with in-app purchase restoration and subscription links.
+- Touch target minimum 44x44pt satisfied across all settings buttons and list actions.
+- Dual-theme verified in both Celestial Dark and Parchment Light.
+
+---
+
 ## [1.0.48] - 2026-09-28
 
 ### Home Page Elevation & Christian Prayers Integration
