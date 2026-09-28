@@ -1,0 +1,137 @@
+[
+  {
+    "id": "1",
+    "title": "Our Father",
+    "prayerText": "Our Father, who art in heaven,\nhallowed be thy name;\nthy kingdom come,\nthy will be done\non earth as it is in heaven.\nGive us this day our daily bread,\nand forgive us our trespasses,\nas we forgive those who trespass against us;\nand lead us not into temptation,\nbut deliver us from evil.\n\nAmen."
+  },
+  {
+    "id": "2",
+    "title": "Hail Mary",
+    "prayerText": "Hail, Mary, full of grace,\nthe Lord is with thee.\nBlessed art thou among women\nand blessed is the fruit of thy womb, Jesus.\nHoly Mary, Mother of God,\npray for us sinners,\nnow and at the hour of our death.\n\nAmen."
+  },
+  {
+    "id": "3",
+    "title": "Sign of the Cross",
+    "prayerText": "In the name of the Father\nand of the Son\nand of the Holy Spirit. \n\nAmen."
+  },
+  {
+    "id": "4",
+    "title": "Glory Be (Doxology)",
+    "prayerText": "Glory be to the Father\nand to the Son\nand to the Holy Spirit,\nas it was in the beginning\nis now, and ever shall be\nworld without end.\n\nAmen."
+  },
+  {
+    "id": "5",
+    "title": "Prayer to Your Guardian Angel",
+    "prayerText": "Angel of God, my guardian dear,\nto whom God's love commits me here,\never this day be at my side,\nto light and guard, to rule and guide.\n\nAmen."
+  },
+  {
+    "id": "6",
+    "title": "Morning Offering",
+    "prayerText": "O Jesus, through the Immaculate Heart of Mary,\nI offer you my prayers, works, joys and sufferings of this day\nfor all the intentions of your Sacred Heart,\nin union with the Holy Sacrifice of the Mass throughout the world,\nfor the salvation of souls, the reparation for sins, the reunion of all Christians,\nand in particular for the intentions of the Holy Father this month.\n\nAmen"
+  },
+  {
+    "id": "7",
+    "title": "Nicene Creed",
+    "prayerText": "I believe in one God,\nthe Father almighty,\nmaker of heaven and earth,\nof all things visible and invisible.\n\nI believe in one Lord Jesus Christ,\nthe Only Begotten Son of God,\nborn of the Father before all ages.\nGod from God, Light from Light,\ntrue God from true God,\nbegotten, not made, consubstantial with the Father;\nthrough him all things were made.\nFor us men and for our salvation\nhe came down from heaven,\nand by the Holy Spirit was incarnate of the Virgin Mary,\nand became man.\nFor our sake he was crucified under Pontius Pilate,\nhe suffered death and was buried,\nand rose again on the third day\nin accordance with the Scriptures.\nHe ascended into heaven\nand is seated at the right hand of the Father.\nHe will come again in glory\nto judge the living and the dead\nand his kingdom will have no end.\n\nI believe in the Holy Spirit, the Lord, the giver of life,\nwho proceeds from the Father and the Son,\nwho with the Father and the Son is adored and glorified,\nwho has spoken through the prophets.\n\nI believe in one, holy, catholic and apostolic Church.\nI confess one Baptism for the forgiveness of sins\nand I look forward to the resurrection of the dead\nand the life of the world to come.\n\nAmen."
+  },
+  {
+    "id": "8",
+    "title": "Gloria",
+    "prayerText": "Glory to God in the highest,\nand on earth peace to people of good will.\nWe praise you,\nwe bless you,\nwe adore you,\nwe glorify you,\nwe give you thanks for your great glory,\nLord God, heavenly King,\nO God, almighty Father.\n\nLord Jesus Christ, Only Begotten Son,\nLord God, Lamb of God, Son of the Father,\nyou take away the sins of the world,\n     have mercy on us;\nyou take away the sins of the world,\n     receive our prayer;\nyou are seated at the right hand of the Father,\n     have mercy on us.\n\nFor you alone are the Holy One,\nyou alone are the Lord,\nyou alone are the Most High,\nJesus Christ,\nwith the Holy Spirit,\nin the glory of God the Father.\nAmen."
+  },
+  {
+    "id": "9",
+    "title": "Apostles' Creed",
+    "prayerText": "I believe in God,\nthe Father almighty,\nCreator of heaven and earth,\nand in Jesus Christ, his only Son, our Lord,\nwho was conceived by the Holy Spirit,\nborn of the Virgin Mary,\nsuffered under Pontius Pilate,\nwas crucified, died and was buried;\nhe descended into hell;\non the third day he rose again from the dead;\nhe ascended into heaven,\nand is seated at the right hand of God the Father almighty;\nfrom there he will come to judge the living and the dead.\n\nI believe in the Holy Spirit,\nthe holy catholic Church,\nthe communion of saints,\nthe forgiveness of sins,\nthe resurrection of the body,\nand life everlasting.\n\nAmen."
+  },
+  {
+    "id": "10",
+    "title": "Act of Contrition",
+    "prayerText": "O my God, I am heartily sorry for having offended Thee, and I detest all my sins because of thy just punishments, but most of all because they offend Thee, my God, who art all good and deserving of all my love. I firmly resolve with the help of Thy grace to sin no more and to avoid the near occasion of sin. Amen.\n\n(A traditional version)"
+  },
+  {
+    "id": "11",
+    "title": "Act of Contrition",
+    "prayerText": "My God,\nI am sorry for my sins with all my heart.\nIn choosing to do wrong\nand failing to do good,\nI have sinned against you\nwhom I should love above all things.\nI firmly intend, with your help,\nto do penance,\nto sin no more,\nand to avoid whatever leads me to sin.\nOur Savior Jesus Christ suffered and died for us.\nIn his name, my God, have mercy.\n\n(from the Rite of Penance)"
+  },
+  {
+    "id": "12",
+    "title": "Act of Contrition",
+    "prayerText": "Lord Jesus, Son of God,\nhave mercy on me, a sinner.\n\n(from the Rite of Penance)"
+  },
+  {
+    "id": "13",
+    "title": "Act of Faith",
+    "prayerText": "O my God, I firmly believe that you are one God in three divine Persons, Father, Son, and Holy Spirit. I believe that your divine Son became man and died for our sins and that he will come to judge the living and the dead. I believe these and all the truths which the Holy Catholic Church teaches because you have revealed them who are eternal truth and wisdom, who can neither deceive nor be deceived. In this faith I intend to live and die. Amen."
+  },
+  {
+    "id": "14",
+    "title": "Act of Hope",
+    "prayerText": "O Lord God, I hope by your grace for the pardon of all my sins and after life here to gain eternal happiness because you have promised it who are infinitely powerful, faithful, kind, and merciful. In this hope I intend to live and die. Amen."
+  },
+  {
+    "id": "15",
+    "title": "Act of Love",
+    "prayerText": "O Lord God, I love you above all things and I love my neighbor for your sake because you are the highest, infinite and perfect good, worthy of all my love. In this love I intend to live and die. Amen."
+  },
+  {
+    "id": "16",
+    "title": "Angelus",
+    "prayerText": "V. The Angel of the Lord declared unto Mary.\n\nR. And she conceived of the Holy Spirit.\n\nHail, Mary, full of grace,\nthe Lord is with thee.\nBlessed art thou among women\nand blessed is the fruit of thy womb, Jesus.\nHoly Mary, Mother of God,\npray for us sinners,\nnow and at the hour of our death. \nAmen.\n\nV. Behold the handmaid of the Lord.\n\nR. Be it done unto me according to thy word.\n\nHail Mary...\n\nV. And the Word was made flesh.\n\nR. And dwelt among us.\n\nHail Mary...\n\nLet us pray:\nPour forth, we beseech thee, O Lord, thy grace into our hearts; that we, to whom the Incarnation of Christ, thy Son, was made known by the message of an angel, may by his Passion and Cross be brought to the glory of his Resurrection. Through the same Christ, our Lord.\n\nAmen."
+  },
+  {
+    "id": "17",
+    "title": "Anima Christi",
+    "prayerText": "Soul of Christ, be my sanctification.\nBody of Christ, be my salvation.\nBlood of Christ, fill all my veins.\nWater of Christ's side, wash out my stains.\nPassion of Christ, my comfort be.\nO good Jesu, listen to me.\nIn Thy wounds I fain would hide,\nNe'er to be parted from Thy side,\nGuard me, should the foe assail me.\nCall me when my life shall fail me.\nBid me come to Thee above,\nWith Thy saints to sing Thy love,\nWorld without end.\n\nAmen."
+  },
+  {
+    "id": "18",
+    "title": "Divine Praises",
+    "prayerText": "Blessed be God.\nBlessed be his holy Name. \nBlessed be Jesus Christ, true God and true Man.\nBlessed be the name of Jesus.\nBlessed be his most Sacred Heart.\nBlessed be his most Precious Blood.\nBlessed be Jesus in the most holy Sacrament of the altar.\nBlessed be the Holy Spirit, the Paraclete.\nBlessed be the great Mother of God, Mary most holy.\nBlessed be her holy and Immaculate Conception.\nBlessed be her glorious Assumption.\nBlessed be the name of Mary, Virgin and Mother.\nBlessed be Saint Joseph, her most chaste spouse. \nBlessed be God in his angels and in his saints."
+  },
+  {
+    "id": "19",
+    "title": "Hail, Holy Queen (The Salve Regina)",
+    "prayerText": "Hail, Holy Queen, Mother of Mercy,\nour life, our sweetness and our hope.\nTo thee do we cry, \npoor banished children of Eve.\nTo thee do we send up our sighs,\nmourning and weeping in this valley of tears.\nTurn then, most gracious advocate,\nthine eyes of mercy toward us,\nand after this our exile\nshow unto us the blessed fruit of thy womb, Jesus.\nO clement, O loving,\nO sweet Virgin Mary."
+  },
+  {
+    "id": "20",
+    "title": "Memorare",
+    "prayerText": "Remember, O most gracious Virgin Mary, that never was it known that anyone who fled to thy protection, implored thy help, or sought thy intercession, was left unaided.\n\nInspired by this confidence I fly unto thee, O Virgin of virgins, my Mother.\n\nTo thee do I come, before thee I stand, sinful and sorrowful. \n\nO Mother of the Word Incarnate, despise not my petitions, but in thy mercy hear and answer me.\n\nAmen."
+  },
+  {
+    "id": "21",
+    "title": "O Sacrum Convivium",
+    "prayerText": "O sacred banquet,\n\nin which Christ is received,\n\nthe memory of his Passion is renewed,\n\nthe mind is filled with grace,\n\nand a pledge of future glory is given to us."
+  },
+  {
+    "id": "22",
+    "title": "Tantum Ergo",
+    "prayerText": "Down in adoration falling,\nLo! the sacred Host we hail;\nLo! o'er ancient forms departing,\nNewer rites of grace prevail;\nFaith for all defects supplying,\nWhere the feeble senses fail.\nTo the everlasting Father,\nAnd the Son who reigns on high,\nWith the Holy Spirit proceeding\nForth from each eternally,\nBe salvation, honor, blessing,\nMight and endless majesty. Amen.\n\nV. You have given them bread from heaven,\n\nR. Having all delight within it.\n\nLet us pray.\n\nO God, who in this wonderful Sacrament\nleft us a memorial of your Passion:\ngrant, we implore you,\nthat we may so venerate\nthe sacred mysteries of your Body and Blood,\nas always to be conscious of the fruit of your Redemption.\nYou who live and reign forever and ever. Amen."
+  },
+  {
+    "id": "23",
+    "title": "Oh My Jesus",
+    "prayerText": "O my Jesus, forgive us our sins. Save us from the fires of hell. Lead all souls into heaven, especially those in most need of thy mercy. Amen."
+  },
+  {
+    "id": "24",
+    "title": "Vocation Prayer",
+    "prayerText": "Lord, let me know clearly\nthe work which you are calling me to do in life.\nAnd grant me every grace I need to answer your call\nwith courage and love and lasting dedication to your will.\nAmen."
+  },
+  {
+    "id": "25",
+    "title": "Morning Prayer",
+    "prayerText": "God, our Father, I offer you today\nall that I think and do and say.\nI offer it with what was done\non earth\nby Jesus Christ, your Son.\nAmen."
+  },
+  {
+    "id": "26",
+    "title": "Evening Prayer",
+    "prayerText": "God, our Father, this day is done.\nWe ask you and Jesus Christ,\nyour Son,\nthat with the Spirit, our welcome\nguest,\nyou guard our sleep and bless \nour rest.\nAmen."
+  },
+  {
+    "id": "27",
+    "title": "Afternoon Prayer",
+    "prayerText": "Most glorious God,\n\nAs I pause in the midst of this day,\nI invite You into this moment of prayer.\n\nI ask Your pardon for any way that I have failed to love today.\nFor my pride, envy, gluttony, greed, lust, sloth and anger,\nI beg for Your forgiveness.\n\nOnce again, I dedicate this day to You.\nI pray for humility, kindness, temperance, charity, chastity, diligence and patience.\n\nHelp me, Lord, to listen to Your gentle voice\nAnd to trust in Your guidance and grace.\n\nMy life is Yours, dear Lord.\nMy life is Yours.\n\nMay I hold nothing back from You.\nMay I fulfill my duties this day in accord with Your perfect will.\n\nI love You, dear Lord.\nI love You with all my heart.\nHelp me to love You and others with all my might.\n\nAmen."
+  }
+]
