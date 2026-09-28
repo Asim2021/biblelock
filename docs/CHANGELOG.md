@@ -1,5 +1,36 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.50] - 2026-09-28
+
+### Library Screen Architectural Redesign & Spiritual Treasury
+- **3 Semantic Pillars (`src/app/(tabs)/library.tsx`, `TASK-059`, `DEC-042`):**
+  - Replaced legacy 4 tabs with 3 unified spiritual pillars (`01 SCRIPTURE`, `02 PRAYERS`, `03 JOURNAL`).
+- **Telemetry Header & Sanctuary Vault Strip (`src/app/(tabs)/library.tsx`):**
+  - Added brutalist `[ SANCTUARY VAULT ]` tag and real-time counter metrics (`SAVED`, `COLLECTIONS`, `PRAYERS`, `ANSWERED`).
+- **Unconditional Top Resume Reading Hero Card (`src/app/(tabs)/library.tsx`):**
+  - Extracted Last Read auto-marker above all tabs for instant 1-tap reading resumption following Byron Sharp mental availability laws.
+- **Personal Prayer Journal & Sutherland Praise Ritual (`src/lib/mmkv.ts`, `src/components/library/PersonalPrayerModal.tsx`):**
+  - Added `UserPrayer` model with local MMKV storage and modal supporting petition creation, editing, and an emotional praise reflection flow when prayers are answered.
+- **Sacred Verse Art Card Generator (`src/components/library/VerseCardShareModal.tsx`):**
+  - Integrated 4:5 social verse art generator using bundled sacred WebP artwork, EB Garamond italics, and Seth Godin understated attribution (`BIBLE UNLOCK • bibleunlock.app`).
+- **Hormozi Value Gating Calibration (`src/components/BookmarkPickerSheet.tsx`, `src/app/(tabs)/library.tsx`):**
+  - Calibrated free-tier quotas to 10 bookmarks and 5 active personal prayers to foster high switching costs and habit formation before prompting Sanctuary paywall.
+- **Local Data Portability (`src/lib/backup.ts`):**
+  - Extended offline JSON backup schema and restore engine with personal prayer data.
+- **Keyboard Occlusion Elimination Across Modals (`src/components/library/PersonalPrayerModal.tsx`, `src/app/(tabs)/library.tsx`):**
+  - Eliminated form inputs and submit buttons hiding behind on-screen keyboard by implementing dynamic keyboard height tracking (`keyboardDidShow`/`keyboardDidHide`), `statusBarTranslucent`, constrained modal max-heights, and scrollable containers.
+
+### Verified Impact
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- 100% offline personal prayer journaling with MMKV Nitro storage.
+- Full backup export and restore compatibility including prayer items.
+- Byron Sharp Top Resume Reading Hero verified above all tabs.
+- Rory Sutherland Answered Prayers celebration flow verified.
+- Touch target minimum 44x44pt satisfied across all buttons and actions.
+- Dual-theme verified in Celestial Dark (`#0d120f`) and Parchment Light (`#f8f6f0`).
+
+---
+
 ## [1.0.49] - 2026-09-28
 
 ### Settings Page Architectural Redesign: 4-Cluster Grouped Hub, Store Compliance & Data Vault

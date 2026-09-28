@@ -1562,6 +1562,48 @@ Selected **Option C**:
 - Zero new third-party dependencies introduced.
 - Strict 44x44pt touch target compliance across all interactive elements.
 
+---
+
+## [DEC-042] Library Architectural Redesign & Spiritual Treasury
+
+- **Date:** 2026-09-28
+- **Status:** Validated
+- **Related Task / Baseline:** TASK-059, `docs/superpowers/specs/2026-09-28-library-spiritual-treasury-design.md`, `docs/superpowers/plans/2026-09-28-library-spiritual-treasury.md`, `src/app/(tabs)/library.tsx`, `src/components/library/PersonalPrayerModal.tsx`, `src/components/library/VerseCardShareModal.tsx`, `src/components/BookmarkPickerSheet.tsx`, `src/lib/mmkv.ts`, `src/lib/backup.ts`
+
+### 1. Problem / Trigger
+1. **Utility Dump vs Spiritual Identity:** The legacy Library tab felt like a mechanical database list (Collections, Pins, Notes, Liturgies) rather than a sacred, personal sanctuary for spiritual reflection.
+2. **Missing Personal Petition & Answered Prayers Flow:** While curated liturgical prayers existed, users could not record personal prayer petitions or document how God answered them. In psychology (Rory Sutherland), unanswered prayer records create anxiety; an "Answered Prayers" ritual with celebratory praise notes provides emotional catharsis and deep habit retention.
+3. **Friction for Light Users (Byron Sharp Law):** The auto-bookmark "Last Read" was buried inside Collections, creating navigational clicks for casual readers (80% of audience) who simply want to resume where they left off.
+4. **Sub-optimal Free-Tier Gating Friction:** Capping free users at 5 bookmarks and 3 prayers triggered paywall resistance before users formed a strong data-investment habit and switching barrier.
+5. **No Sacred Social Sharing:** Verses could only be shared as plain unstyled text, missing high-aesthetic visual engagement.
+
+### 2. Alternatives Evaluated
+- **Option A (Incremental 4-tab UI Tweaks):** Retain legacy tabs, add minor petition fields. Rejected because it preserves disjointed hierarchy and cognitive fragmentation.
+- **Option B (3-Pillar Spiritual Treasury + Sutherland Ritual + Byron Sharp Hero):** Selected. Reorganizes the entire vault into 3 semantic pillars (`01 SCRIPTURE`, `02 PRAYERS`, `03 JOURNAL`), extracts an unconditional "Resume Reading" Hero at the top above all tabs, creates a dedicated Personal Prayer Journal with celebratory praise flow for answered prayers, and adds a 4:5 sacred verse art card generator with understated attribution.
+
+### 3. Decision & Trade-offs
+Selected **Option B**:
+- **3 Semantic Pillars:** Structured into `01 SCRIPTURE` (Collections & All Verses with OT/NT filters), `02 PRAYERS` (Personal petitions, Answered archive, and 27 Liturgies), and `03 JOURNAL` (Chronological timeline of verse notes).
+- **Unconditional Top Resume Reading Hero:** Positions the Last Read auto-marker persistently above all tabs for instant 1-tap reading resumption.
+- **Sutherland Answered Prayers Flow:** Interactive modal prompting testimony/praise notes when marking a prayer answered, styled in radiant gold.
+- **Godin Sacred Verse Art Cards:** 4:5 social generator with bundled WebP sacred artwork and subtle `BIBLE UNLOCK • bibleunlock.app` watermark.
+- **Hormozi Value Gating Calibration:** Relaxed free-tier limits to 10 bookmarks and 5 active personal prayers to foster high switching costs before prompting Sanctuary upgrade.
+
+### 4. Implementation Details
+- `src/lib/mmkv.ts`: Added `UserPrayer` model, `STORAGE_KEYS.USER_PRAYERS`, in-memory cache, and CRUD methods (`getUserPrayers`, `saveUserPrayer`, `deleteUserPrayer`, `markPrayerAnswered`, `restoreUserPrayers`).
+- `src/lib/backup.ts`: Added `prayers` export and import with version 1 schema validation.
+- `src/components/library/PersonalPrayerModal.tsx`: Built multi-mode modal (`create`, `edit`, `mark_answered`) with 44x44pt touch targets and dual-theme tokens.
+- `src/components/library/VerseCardShareModal.tsx`: Built 4:5 social verse art generator using `react-native-view-shot` and bundled WebP backgrounds.
+- `src/components/BookmarkPickerSheet.tsx`: Updated Free quota limit to 10 bookmarks.
+- `src/app/(tabs)/library.tsx`: Refactored into 3 pillars, telemetry header `[ SANCTUARY VAULT ]`, top resume hero, and verse card sharing integration.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit`: 0 errors across entire workspace.
+- Zero new third-party dependencies introduced.
+- Strict 44x44pt touch targets and full dual-theme adaptation verified.
+- 100% offline data persistence and backup portability for personal prayers.
+
+
 
 
 

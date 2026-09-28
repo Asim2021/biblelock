@@ -98,6 +98,7 @@ export const storage: StorageInterface = {
     _scrollModeCache = null;
     _scrollFontCache = null;
     _scrollMoodCache = null;
+    _userPrayersCache = null;
     _progressCache.clear();
     _yearHistoryCache = null;
     getInstance().clearAll?.();
@@ -123,6 +124,7 @@ export const STORAGE_KEYS = {
   LAST_READ_POSITION: 'last_read_position',
   BOOKMARKS: 'user_bookmarks',
   COLLECTIONS: 'user_collections',
+  USER_PRAYERS: 'user_prayers',
   THEME_MODE: 'theme_mode',
   DAILY_VERSE_NOTIFICATIONS_ENABLED: 'daily_verse_notifications_enabled',
   DAILY_VERSE_NOTIFICATION_COUNT: 'daily_verse_notification_count',
@@ -151,6 +153,7 @@ let _scheduledTimesCache: string[] | null = null;
 let _lastReadPositionCache: LastReadPosition | null = null;
 let _bookmarksCache: Bookmark[] | null = null;
 let _collectionsCache: VerseCollection[] | null = null;
+let _userPrayersCache: UserPrayer[] | null = null;
 let _scrollPositionCache: ScrollPosition | null = null;
 let _scrollModeCache: 'sequential' | 'random' | null = null;
 let _scrollFontCache: ScrollFont | null = null;
@@ -975,6 +978,73 @@ export function formatRelativeTime(timestamp: number): string {
     day: 'numeric',
     year: 'numeric',
   });
+}
+
+// User Personal Prayers & Answered Prayers Tracking
+export interface UserPrayer {
+  id: string; // Format: prayer_${Date.now()}
+  title: string;
+  request: string;
+  createdAt: number;
+  isAnswered: boolean;
+  answeredAt?: number;
+  answerReflection?: string;
+}
+
+export function getUserPrayers(): UserPrayer[] {
+  if (_userPrayersCache !== null) {
+    return _userPrayersCache;
+  }
+  const json = storage.getString(STORAGE_KEYS.USER_PRAYERS);
+  if (!json) {
+    _userPrayersCache = [];
+    return _userPrayersCache;
+  }
+  try {
+    const list = JSON.parse(json);
+    if (!Array.isArray(list)) {
+      _userPrayersCache = [];
+      return _userPrayersCache;
+    }
+    _userPrayersCache = list;
+    return _userPrayersCache;
+  } catch {
+    _userPrayersCache = [];
+    return _userPrayersCache;
+  }
+}
+
+export function saveUserPrayer(prayer: UserPrayer): void {
+  const list = getUserPrayers();
+  const filtered = list.filter((p) => p.id !== prayer.id);
+  const updated = [prayer, ...filtered];
+  _userPrayersCache = updated;
+  storage.set(STORAGE_KEYS.USER_PRAYERS, JSON.stringify(updated));
+}
+
+export function deleteUserPrayer(id: string): void {
+  const list = getUserPrayers();
+  const filtered = list.filter((p) => p.id !== id);
+  _userPrayersCache = filtered;
+  storage.set(STORAGE_KEYS.USER_PRAYERS, JSON.stringify(filtered));
+}
+
+export function markPrayerAnswered(id: string, reflection?: string): void {
+  const list = getUserPrayers();
+  const target = list.find((p) => p.id === id);
+  if (!target) return;
+  const updated: UserPrayer = {
+    ...target,
+    isAnswered: true,
+    answeredAt: Date.now(),
+    answerReflection: reflection?.trim() || undefined,
+  };
+  saveUserPrayer(updated);
+}
+
+export function restoreUserPrayers(prayers: UserPrayer[]): void {
+  _userPrayersCache = prayers;
+  storage.set(STORAGE_KEYS.USER_PRAYERS, JSON.stringify(prayers));
 }
 
 // Theme Settings

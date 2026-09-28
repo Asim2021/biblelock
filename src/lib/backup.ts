@@ -16,8 +16,11 @@ import {
 	setScheduledReadingTimes,
 	exportReadingProgressMap,
 	restoreReadingProgressMap,
+	getUserPrayers,
+	restoreUserPrayers,
 	Bookmark,
 	VerseCollection,
+	UserPrayer,
 } from './mmkv';
 
 export interface AppBackupData {
@@ -30,6 +33,7 @@ export interface AppBackupData {
 	bookmarks: Bookmark[];
 	collections: VerseCollection[];
 	readingProgressMap: Record<string, number>;
+	prayers?: UserPrayer[];
 }
 
 export function getBackupTimestamp(): string {
@@ -51,6 +55,7 @@ export function exportBackupJSON(): string {
 		bookmarks: getBookmarks(),
 		collections: getCollections(),
 		readingProgressMap: exportReadingProgressMap(),
+		prayers: getUserPrayers(),
 	};
 	return JSON.stringify(backup, null, 2);
 }
@@ -162,7 +167,7 @@ export async function pickAndReadBackupFile(): Promise<{
 
 export function importBackupJSON(jsonString: string): {
 	success: boolean;
-	stats?: { bookmarks: number; collections: number; historyDays: number };
+	stats?: { bookmarks: number; collections: number; historyDays: number; prayers?: number };
 	error?: string;
 } {
 	try {
@@ -209,12 +214,19 @@ export function importBackupJSON(jsonString: string): {
 			historyDaysCount = Object.keys(data.readingProgressMap).length;
 		}
 
+		let prayersCount = 0;
+		if (Array.isArray(data.prayers)) {
+			restoreUserPrayers(data.prayers);
+			prayersCount = data.prayers.length;
+		}
+
 		return {
 			success: true,
 			stats: {
 				bookmarks: data.bookmarks.length,
 				collections: data.collections.length,
 				historyDays: historyDaysCount,
+				prayers: prayersCount,
 			},
 		};
 	} catch (err: any) {

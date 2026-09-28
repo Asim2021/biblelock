@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
 	View,
 	Text,
@@ -9,13 +9,12 @@ import {
 	Alert,
 	Share,
 	Platform,
-	KeyboardAvoidingView,
+	Keyboard,
+	useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
 import {
-	Menu,
-	RotateCw,
 	Bookmark as BookmarkIcon,
 	BookmarkCheck,
 	MoreHorizontal,
@@ -26,7 +25,6 @@ import {
 	Search,
 	BookOpen,
 	FileText,
-	Pin,
 	ArrowLeft,
 	ChevronsUpDown,
 	ChevronsDownUp,
@@ -35,6 +33,9 @@ import {
 	Copy,
 	CircleMinus,
 	Lock,
+	Sparkles,
+	HeartHandshake,
+	Clock,
 } from 'lucide-react-native';
 import {
 	getLastReadPosition,
@@ -45,11 +46,12 @@ import {
 	deleteCollection,
 	removeVerseFromCollection,
 	updateBookmarkNote,
-	getBookmarksForCollection,
+	getUserPrayers,
 	formatRelativeTime,
 	LastReadPosition,
 	Bookmark,
 	VerseCollection,
+	UserPrayer,
 	COLLECTION_COLORS,
 } from '../../lib/mmkv';
 import { BookmarkPickerSheet } from '../../components/BookmarkPickerSheet';
@@ -61,32 +63,67 @@ import {
 	PrayerCategory,
 } from '../../lib/prayers';
 import { PrayerMeditationModal } from '../../components/PrayerMeditationModal';
+import { PersonalPrayerModal } from '../../components/library/PersonalPrayerModal';
+import { VerseCardShareModal } from '../../components/library/VerseCardShareModal';
 import { useTheme } from '../../lib/themeContext';
 import { useFeatureGate } from '../../lib/useFeatureGate';
 
-type TabType = 'collections' | 'prayers' | 'pins' | 'notes';
+type TabType = 'scripture' | 'prayers' | 'journal';
+type ScriptureSubTab = 'collections' | 'all_verses';
+type ScriptureFilter = 'all' | 'ot' | 'nt' | 'has_notes';
+type PrayersSubTab = 'my_prayers' | 'liturgies';
 
 export default function LibraryScreen() {
 	const router = useRouter();
 	const insets = useSafeAreaInsets();
+	const { height: windowHeight } = useWindowDimensions();
 	const { colors, isDark } = useTheme();
 	const { isPremium, requirePremium } = useFeatureGate();
 
-	const [activeTab, setActiveTab] = useState<TabType>('collections');
-	const [showHelperBanner, setShowHelperBanner] = useState(true);
+	// Dynamic keyboard offset for modals on Android & iOS
+	const [keyboardHeight, setKeyboardHeight] = useState(0);
+	const navBarInset = Platform.OS === 'android' ? Math.max(insets.bottom, 48) : insets.bottom;
+	const effectiveKeyboardOffset = keyboardHeight > 0 ? keyboardHeight + navBarInset : 0;
+
+	useEffect(() => {
+		const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+		const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+		const showSub = Keyboard.addListener(showEvent, (e) => {
+			setKeyboardHeight(e.endCoordinates.height);
+		});
+		const hideSub = Keyboard.addListener(hideEvent, () => {
+			setKeyboardHeight(0);
+		});
+
+		return () => {
+			showSub.remove();
+			hideSub.remove();
+		};
+	}, []);
+
+	// Primary 3 Pillars
+	const [activeTab, setActiveTab] = useState<TabType>('scripture');
 	const [searchQuery, setSearchQuery] = useState('');
 
+	// Sub-segment states
+	const [scriptureSubTab, setScriptureSubTab] = useState<ScriptureSubTab>('collections');
+	const [scriptureFilter, setScriptureFilter] = useState<ScriptureFilter>('all');
+	const [prayersSubTab, setPrayersSubTab] = useState<PrayersSubTab>('my_prayers');
+
+	// Local State Data
 	const [lastRead, setLastRead] = useState<LastReadPosition>(() => getLastReadPosition());
 	const [collections, setCollections] = useState<VerseCollection[]>([]);
 	const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+	const [userPrayers, setUserPrayers] = useState<UserPrayer[]>([]);
 
-	// Modal State for New / Edit Collection
+	// Collection New / Edit Modal
 	const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 	const [editingCollection, setEditingCollection] = useState<VerseCollection | null>(null);
 	const [collectionName, setCollectionName] = useState('');
 	const [selectedColor, setSelectedColor] = useState(COLLECTION_COLORS[4]);
 
-	// Selected Collection to View Inside (Full-Screen Detail Takeover)
+	// Full-screen Collection Detail View
 	const [viewingCollection, setViewingCollection] = useState<VerseCollection | null>(null);
 	const [isAllExpanded, setIsAllExpanded] = useState(false);
 	const [expandedVerseIds, setExpandedVerseIds] = useState<Set<string>>(new Set());
@@ -104,15 +141,25 @@ export default function LibraryScreen() {
 	const [pickerVerseData, setPickerVerseData] = useState<Bookmark | null>(null);
 	const [isPickerVisible, setIsPickerVisible] = useState(false);
 
-	// Prayers State
+	// Sacred Verse Card Share Modal
+	const [cardShareVerse, setCardShareVerse] = useState<Bookmark | null>(null);
+	const [isCardShareVisible, setIsCardShareVisible] = useState(false);
+
+	// Personal Prayer Modal
+	const [isPersonalPrayerModalVisible, setIsPersonalPrayerModalVisible] = useState(false);
+	const [personalPrayerModalMode, setPersonalPrayerModalMode] = useState<'create' | 'edit' | 'mark_answered'>('create');
+	const [selectedPersonalPrayer, setSelectedPersonalPrayer] = useState<UserPrayer | null>(null);
+
+	// Liturgies State
 	const [selectedPrayerCategory, setSelectedPrayerCategory] = useState<'all' | PrayerCategory>('all');
 	const [selectedPrayerForModal, setSelectedPrayerForModal] = useState<PrayerItem | null>(null);
-	const [isPrayerModalVisible, setIsPrayerModalVisible] = useState(false);
+	const [isLiturgiesModalVisible, setIsLiturgiesModalVisible] = useState(false);
 
 	const loadData = useCallback(() => {
 		setLastRead(getLastReadPosition());
 		setCollections(getCollections());
 		setBookmarks(getBookmarks());
+		setUserPrayers(getUserPrayers());
 	}, []);
 
 	useFocusEffect(
@@ -132,6 +179,7 @@ export default function LibraryScreen() {
 		} as any);
 	};
 
+	// Collection CRUD
 	const handleOpenNewCollection = () => {
 		if (!isPremium && collections.length >= 1) {
 			requirePremium('Unlimited collections');
@@ -276,6 +324,56 @@ export default function LibraryScreen() {
 		});
 	};
 
+	// Personal Prayer Handlers
+	const handleOpenCreatePrayer = () => {
+		const activeCount = userPrayers.filter((p) => !p.isAnswered).length;
+		if (!isPremium && activeCount >= 5) {
+			requirePremium('Unlimited personal prayers');
+			return;
+		}
+		setSelectedPersonalPrayer(null);
+		setPersonalPrayerModalMode('create');
+		setIsPersonalPrayerModalVisible(true);
+	};
+
+	const handleOpenEditPrayer = (prayer: UserPrayer) => {
+		setSelectedPersonalPrayer(prayer);
+		setPersonalPrayerModalMode('edit');
+		setIsPersonalPrayerModalVisible(true);
+	};
+
+	const handleOpenMarkAnswered = (prayer: UserPrayer) => {
+		setSelectedPersonalPrayer(prayer);
+		setPersonalPrayerModalMode('mark_answered');
+		setIsPersonalPrayerModalVisible(true);
+	};
+
+	// Copy all reflections in Journal
+	const handleCopyAllReflections = async () => {
+		const notesList = bookmarks.filter((b) => b.note && b.note.trim().length > 0);
+		if (notesList.length === 0) {
+			Alert.alert('No Notes', 'You do not have any saved verse reflections yet.');
+			return;
+		}
+		const compiled = notesList
+			.map(
+				(b) =>
+					`[${b.bookName} ${b.chapterNumber}:${b.verseNumber}]\n"${b.verseText}"\nReflection: ${b.note}\n`
+			)
+			.join('\n---\n\n');
+
+		try {
+			await Share.share({
+				title: 'Bible Unlock Spiritual Reflections',
+				message: compiled,
+			});
+		} catch {}
+	};
+
+	// Computed counts for telemetry
+	const activePrayers = useMemo(() => userPrayers.filter((p) => !p.isAnswered), [userPrayers]);
+	const answeredPrayers = useMemo(() => userPrayers.filter((p) => p.isAnswered), [userPrayers]);
+
 	// Filtered collections
 	const filteredCollections = useMemo(() => {
 		if (!searchQuery.trim()) return collections;
@@ -283,10 +381,13 @@ export default function LibraryScreen() {
 		return collections.filter((c) => c.name.toLowerCase().includes(q));
 	}, [collections, searchQuery]);
 
-	// Filtered pins
-	const filteredPins = useMemo(() => {
+	// Filtered all verses
+	const filteredAllVerses = useMemo(() => {
 		const q = searchQuery.toLowerCase().trim();
 		return bookmarks.filter((b) => {
+			if (scriptureFilter === 'ot' && b.bookIndex >= 39) return false;
+			if (scriptureFilter === 'nt' && b.bookIndex < 39) return false;
+			if (scriptureFilter === 'has_notes' && (!b.note || !b.note.trim())) return false;
 			if (!q) return true;
 			return (
 				b.bookName.toLowerCase().includes(q) ||
@@ -294,9 +395,9 @@ export default function LibraryScreen() {
 				b.verseText?.toLowerCase().includes(q)
 			);
 		});
-	}, [bookmarks, searchQuery]);
+	}, [bookmarks, searchQuery, scriptureFilter]);
 
-	// Filtered notes
+	// Filtered notes (Journal)
 	const filteredNotes = useMemo(() => {
 		const q = searchQuery.toLowerCase().trim();
 		return bookmarks
@@ -311,8 +412,8 @@ export default function LibraryScreen() {
 			});
 	}, [bookmarks, searchQuery]);
 
-	// Filtered prayers
-	const filteredPrayers = useMemo(() => {
+	// Filtered liturgies
+	const filteredLiturgies = useMemo(() => {
 		const baseList =
 			selectedPrayerCategory === 'all'
 				? getAllPrayers()
@@ -326,7 +427,7 @@ export default function LibraryScreen() {
 		);
 	}, [selectedPrayerCategory, searchQuery]);
 
-	// Memoized verse counts per collection computed directly in memory from bookmarks state
+	// Memoized verse counts per collection
 	const collectionVerseCountMap = useMemo(() => {
 		const map: Record<string, number> = {};
 		for (const b of bookmarks) {
@@ -339,7 +440,7 @@ export default function LibraryScreen() {
 		return map;
 	}, [bookmarks]);
 
-	// Verses for currently viewed collection (computed directly from in-memory bookmarks)
+	// Verses for currently viewed collection
 	const collectionBookmarks = useMemo(() => {
 		if (!viewingCollection) return [];
 		return bookmarks.filter((b) => (b.collectionIds || []).includes(viewingCollection.id));
@@ -358,7 +459,7 @@ export default function LibraryScreen() {
 	return (
 		<SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'left', 'right']}>
 			{viewingCollection ? (
-				/* Full-Screen Collection Detail View */
+				/* Full-Screen Collection Detail Takeover */
 				<View style={{ flex: 1 }}>
 					{/* Top Bar: Back button, Title, More options */}
 					<View
@@ -387,7 +488,7 @@ export default function LibraryScreen() {
 									marginLeft: 8,
 								}}
 							>
-								Back
+								Back to Vault
 							</Text>
 						</Pressable>
 
@@ -400,7 +501,7 @@ export default function LibraryScreen() {
 						</Pressable>
 					</View>
 
-					{/* Sub-header Toolbar: Color Dot, Collection Name, Verse Count, ↕ Expand, ⚙ Sort */}
+					{/* Sub-header Toolbar */}
 					<View
 						style={{
 							flexDirection: 'row',
@@ -410,7 +511,7 @@ export default function LibraryScreen() {
 							paddingVertical: 12,
 							backgroundColor: colors.surface,
 							borderBottomWidth: 1,
-							borderBottomColor: colors.borderSubtle,
+							borderBottomColor: colors.borderSubtle || colors.border,
 						}}
 					>
 						<View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
@@ -419,7 +520,7 @@ export default function LibraryScreen() {
 									width: 12,
 									height: 12,
 									borderRadius: 6,
-									backgroundColor: viewingCollection.color || '#f59e0b',
+									backgroundColor: viewingCollection.color || colors.accent,
 									marginRight: 10,
 								}}
 							/>
@@ -688,45 +789,171 @@ export default function LibraryScreen() {
 					</ScrollView>
 				</View>
 			) : (
+				/* Primary Vault View */
 				<View style={{ flex: 1 }}>
-					{/* 1. Top Header Bar matching Al Quran */}
-					<View
-						style={{
-							flexDirection: 'row',
-							alignItems: 'center',
-							justifyContent: 'space-between',
-							paddingHorizontal: 20,
-							paddingTop: 8,
-							paddingBottom: 10,
-						}}
-					>
-						<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-							<Pressable
-								onPress={() => router.push('/settings' as any)}
-								hitSlop={8}
-								style={{ marginRight: 14 }}
-							>
-								<Menu size={22} color={colors.textPrimary} />
-							</Pressable>
-							<Text
+					{/* 1. Industrial Telemetry Header */}
+					<View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 6 }}>
+						<View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+							<View
 								style={{
-									fontSize: 22,
-									fontFamily: 'EBGaramond_700Bold',
-									color: colors.textPrimary,
+									backgroundColor: colors.accentBg,
+									paddingHorizontal: 6,
+									paddingVertical: 2,
+									borderRadius: 4,
+									borderWidth: 1,
+									borderColor: colors.accent,
+									marginRight: 8,
 								}}
 							>
-								Library
-							</Text>
+								<Text
+									style={{
+										fontSize: 9,
+										fontFamily: 'Inter_700Bold',
+										color: colors.accent,
+										letterSpacing: 0.8,
+										textTransform: 'uppercase',
+									}}
+								>
+									[ SANCTUARY VAULT ]
+								</Text>
+							</View>
 						</View>
+						<Text
+							style={{
+								fontSize: 24,
+								fontFamily: 'EBGaramond_700Bold',
+								color: colors.textPrimary,
+								marginBottom: 6,
+							}}
+						>
+							Library & Treasury
+						</Text>
 
-						<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-							<Pressable onPress={loadData} hitSlop={8}>
-								<RotateCw size={18} color={colors.textSecondary} />
-							</Pressable>
+						{/* Telemetry Numbers Strip */}
+						<View
+							style={{
+								flexDirection: 'row',
+								alignItems: 'center',
+								gap: 12,
+								paddingVertical: 6,
+								borderBottomWidth: 1,
+								borderBottomColor: colors.border,
+							}}
+						>
+							<Text style={{ fontSize: 11, fontFamily: 'Inter_500Medium', color: colors.textSecondary }}>
+								SAVED: <Text style={{ fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>{bookmarks.length}</Text>
+							</Text>
+							<Text style={{ fontSize: 11, color: colors.border }}>•</Text>
+							<Text style={{ fontSize: 11, fontFamily: 'Inter_500Medium', color: colors.textSecondary }}>
+								COLLECTIONS: <Text style={{ fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>{collections.length}</Text>
+							</Text>
+							<Text style={{ fontSize: 11, color: colors.border }}>•</Text>
+							<Text style={{ fontSize: 11, fontFamily: 'Inter_500Medium', color: colors.textSecondary }}>
+								PRAYERS: <Text style={{ fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>{activePrayers.length}</Text>
+							</Text>
+							{answeredPrayers.length > 0 && (
+								<>
+									<Text style={{ fontSize: 11, color: colors.border }}>•</Text>
+									<Text style={{ fontSize: 11, fontFamily: 'Inter_500Medium', color: colors.accent }}>
+										ANSWERED: <Text style={{ fontFamily: 'Inter_700Bold', color: colors.accent }}>{answeredPrayers.length} ✨</Text>
+									</Text>
+								</>
+							)}
 						</View>
 					</View>
 
-					{/* 2. Sub-header Segmented Tabs matching Al Quran */}
+					{/* 2. Byron Sharp Usability: Unconditional Top "Resume Reading" Hero Card */}
+					<View style={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 10 }}>
+						<Pressable
+							onPress={() =>
+								handleOpenScripture(lastRead.bookName, lastRead.chapterNumber, lastRead.verseNumber)
+							}
+							style={{
+								flexDirection: 'row',
+								alignItems: 'center',
+								justifyContent: 'space-between',
+								backgroundColor: colors.surface,
+								borderRadius: 14,
+								paddingHorizontal: 14,
+								paddingVertical: 12,
+								borderWidth: 1,
+								borderColor: colors.border,
+								borderLeftWidth: 4,
+								borderLeftColor: '#38bdf8',
+							}}
+						>
+							<View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 10 }}>
+								<View
+									style={{
+										width: 32,
+										height: 32,
+										borderRadius: 8,
+										backgroundColor: isDark ? '#122533' : '#e0f2fe',
+										alignItems: 'center',
+										justifyContent: 'center',
+										marginRight: 10,
+									}}
+								>
+									<BookOpen size={16} color='#38bdf8' />
+								</View>
+								<View style={{ flex: 1 }}>
+									<View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+										<Text
+											style={{
+												fontSize: 14,
+												fontFamily: 'Inter_700Bold',
+												color: colors.textPrimary,
+											}}
+										>
+											{lastRead.bookName} {lastRead.chapterNumber}:{lastRead.verseNumber || 1}
+										</Text>
+										<Text
+											style={{
+												fontSize: 10,
+												fontFamily: 'Inter_600SemiBold',
+												color: '#38bdf8',
+												textTransform: 'uppercase',
+											}}
+										>
+											[ AUTO ]
+										</Text>
+									</View>
+									<Text
+										style={{
+											fontSize: 11,
+											fontFamily: 'Inter_400Regular',
+											color: colors.textMuted,
+										}}
+									>
+										Read {formatRelativeTime(lastRead.updatedAt)}
+									</Text>
+								</View>
+							</View>
+
+							<View
+								style={{
+									backgroundColor: colors.accentBg,
+									paddingHorizontal: 10,
+									paddingVertical: 6,
+									borderRadius: 8,
+									borderWidth: 1,
+									borderColor: colors.accent,
+								}}
+							>
+								<Text
+									style={{
+										fontSize: 11,
+										fontFamily: 'Inter_700Bold',
+										color: colors.accent,
+									}}
+								>
+									Resume →
+								</Text>
+							</View>
+						</Pressable>
+					</View>
+
+					{/* 3. 3-Pillar Master Segmented Switcher */}
 					<View
 						style={{
 							flexDirection: 'row',
@@ -737,22 +964,20 @@ export default function LibraryScreen() {
 							padding: 4,
 						}}
 					>
-						{(['collections', 'prayers', 'pins', 'notes'] as TabType[]).map((tab) => {
+						{(['scripture', 'prayers', 'journal'] as TabType[]).map((tab) => {
 							const isActive = activeTab === tab;
 							const label =
-								tab === 'collections'
-									? 'Collections'
+								tab === 'scripture'
+									? '01 Scripture'
 									: tab === 'prayers'
-									? 'Prayers'
-									: tab === 'pins'
-									? 'Pins'
-									: 'Notes';
+									? '02 Prayers'
+									: '03 Journal';
 							return (
 								<Pressable
 									key={tab}
 									onPress={() => {
 										setActiveTab(tab);
-										setViewingCollection(null);
+										setSearchQuery('');
 									}}
 									style={{
 										flex: 1,
@@ -765,7 +990,7 @@ export default function LibraryScreen() {
 									<Text
 										style={{
 											fontSize: 13,
-											fontFamily: isActive ? 'Inter_600SemiBold' : 'Inter_500Medium',
+											fontFamily: isActive ? 'Inter_700Bold' : 'Inter_500Medium',
 											color: isActive ? colors.textPrimary : colors.textSecondary,
 										}}
 									>
@@ -776,546 +1001,1121 @@ export default function LibraryScreen() {
 						})}
 					</View>
 
+					{/* Scrollable Pillar Content */}
 					<ScrollView
 						style={{ flex: 1 }}
 						contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 60 + insets.bottom }}
 						showsVerticalScrollIndicator={false}
 					>
-						{/* 3. Dismissable Informational Banner matching Al Quran */}
-						{showHelperBanner && (
-							<View
-								style={{
-									flexDirection: 'row',
-									alignItems: 'flex-start',
-									backgroundColor: isDark ? '#2e2616' : '#fef7e6',
-									borderWidth: 1,
-									borderColor: isDark ? '#5e4a23' : '#f0d696',
-									borderRadius: 16,
-									padding: 14,
-									marginBottom: 14,
-								}}
-							>
-								<View style={{ flex: 1, paddingRight: 10 }}>
-									<Text
+						{/* ============================================================== */}
+						{/* PILLAR 01: SCRIPTURE VAULT */}
+						{/* ============================================================== */}
+						{activeTab === 'scripture' && (
+							<View>
+								{/* Scripture Sub-segment Switch */}
+								<View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+									<Pressable
+										onPress={() => setScriptureSubTab('collections')}
 										style={{
-											fontSize: 12,
-											fontFamily: 'Inter_400Regular',
-											color: isDark ? '#e6c885' : '#855d0a',
-											lineHeight: 18,
+											paddingVertical: 6,
+											paddingHorizontal: 14,
+											borderRadius: 12,
+											backgroundColor:
+												scriptureSubTab === 'collections'
+													? colors.accent
+													: isDark
+													? '#141d24'
+													: '#ebe7de',
 										}}
 									>
-										Create collections of saved verses, pin your favorites, and write notes — access
-										everything from Library.{' '}
-										<Text
-											style={{
-												fontFamily: 'Inter_600SemiBold',
-												textDecorationLine: 'underline',
-											}}
-										>
-											Learn More
-										</Text>
-									</Text>
-								</View>
-								<Pressable onPress={() => setShowHelperBanner(false)} hitSlop={8}>
-									<X size={16} color={isDark ? '#e6c885' : '#855d0a'} />
-								</Pressable>
-							</View>
-						)}
-
-						{/* 4. Search Input Bar matching Al Quran */}
-						<View
-							style={{
-								flexDirection: 'row',
-								alignItems: 'center',
-								backgroundColor: isDark ? '#141d24' : '#ffffff',
-								borderWidth: 1,
-								borderColor: isDark ? '#202e38' : '#e4dfd3',
-								borderRadius: 16,
-								paddingHorizontal: 14,
-								paddingVertical: 10,
-								marginBottom: 16,
-							}}
-						>
-							<Search size={16} color={colors.textMuted} style={{ marginRight: 10 }} />
-							<TextInput
-								value={searchQuery}
-								onChangeText={setSearchQuery}
-								placeholder='Search'
-								placeholderTextColor={colors.textMuted}
-								style={{
-									flex: 1,
-									color: colors.textPrimary,
-									fontSize: 14,
-									fontFamily: 'Inter_400Regular',
-									padding: 0,
-								}}
-							/>
-						</View>
-
-						{/* TAB 1: COLLECTIONS */}
-						{activeTab === 'collections' && (
-							<View>
-								{/* Last Read Row (Always Top Item) */}
-								<Pressable
-									onPress={() =>
-										handleOpenScripture(
-											lastRead.bookName,
-											lastRead.chapterNumber,
-											lastRead.verseNumber,
-										)
-									}
-									style={{
-										flexDirection: 'row',
-										alignItems: 'center',
-										paddingVertical: 14,
-										paddingHorizontal: 4,
-										borderBottomWidth: 1,
-										borderBottomColor: isDark ? '#1a242c' : '#eeeae1',
-									}}
-								>
-									<View style={{ marginRight: 14 }}>
-										<BookmarkCheck size={22} color='#38bdf8' />
-									</View>
-									<View style={{ flex: 1 }}>
-										<Text
-											style={{
-												fontSize: 15,
-												fontFamily: 'Inter_600SemiBold',
-												color: colors.textPrimary,
-												marginBottom: 2,
-											}}
-										>
-											Last Read
-										</Text>
 										<Text
 											style={{
 												fontSize: 12,
-												fontFamily: 'Inter_400Regular',
-												color: colors.textSecondary,
+												fontFamily:
+													scriptureSubTab === 'collections'
+														? 'Inter_700Bold'
+														: 'Inter_500Medium',
+												color:
+													scriptureSubTab === 'collections'
+														? (colors.accentText || '#000000')
+														: colors.textSecondary,
 											}}
 										>
-											{lastRead.bookName} {lastRead.chapterNumber}:{lastRead.verseNumber || 1}{' '}
-											(Auto)
+											Collections ({collections.length})
 										</Text>
-									</View>
-								</Pressable>
+									</Pressable>
 
-								{/* List of Collections */}
-								{filteredCollections.map((col) => {
-									const count = collectionVerseCountMap[col.id] || 0;
-									return (
-										<Pressable
-											key={col.id}
-											onPress={() => {
-												setViewingCollection(col);
-												setIsAllExpanded(false);
-											}}
+									<Pressable
+										onPress={() => setScriptureSubTab('all_verses')}
+										style={{
+											paddingVertical: 6,
+											paddingHorizontal: 14,
+											borderRadius: 12,
+											backgroundColor:
+												scriptureSubTab === 'all_verses'
+													? colors.accent
+													: isDark
+													? '#141d24'
+													: '#ebe7de',
+										}}
+									>
+										<Text
 											style={{
-												flexDirection: 'row',
-												alignItems: 'center',
-												paddingVertical: 14,
-												paddingHorizontal: 4,
-												borderBottomWidth: 1,
-												borderBottomColor: isDark ? '#1a242c' : '#eeeae1',
+												fontSize: 12,
+												fontFamily:
+													scriptureSubTab === 'all_verses'
+														? 'Inter_700Bold'
+														: 'Inter_500Medium',
+												color:
+													scriptureSubTab === 'all_verses'
+														? (colors.accentText || '#000000')
+														: colors.textSecondary,
 											}}
 										>
-											<View style={{ marginRight: 14 }}>
-												<BookmarkIcon
-													size={22}
-													color={col.color || '#f59e0b'}
-													fill={col.color || '#f59e0b'}
-												/>
-											</View>
+											All Verses ({bookmarks.length})
+										</Text>
+									</Pressable>
+								</View>
 
-											<View style={{ flex: 1 }}>
+								{/* Search Bar */}
+								<View
+									style={{
+										flexDirection: 'row',
+										alignItems: 'center',
+										backgroundColor: isDark ? '#141d24' : '#ffffff',
+										borderWidth: 1,
+										borderColor: isDark ? '#202e38' : '#e4dfd3',
+										borderRadius: 14,
+										paddingHorizontal: 12,
+										paddingVertical: 8,
+										marginBottom: 12,
+									}}
+								>
+									<Search size={16} color={colors.textMuted} style={{ marginRight: 8 }} />
+									<TextInput
+										value={searchQuery}
+										onChangeText={setSearchQuery}
+										placeholder={
+											scriptureSubTab === 'collections'
+												? 'Search collections...'
+												: 'Search verses or citations...'
+										}
+										placeholderTextColor={colors.textMuted}
+										style={{
+											flex: 1,
+											color: colors.textPrimary,
+											fontSize: 13,
+											fontFamily: 'Inter_400Regular',
+											padding: 0,
+										}}
+									/>
+									{searchQuery.length > 0 && (
+										<Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
+											<X size={15} color={colors.textMuted} />
+										</Pressable>
+									)}
+								</View>
+
+								{/* SUB-VIEW A: COLLECTIONS */}
+								{scriptureSubTab === 'collections' && (
+									<View>
+										{filteredCollections.length === 0 ? (
+											<View
+												style={{
+													alignItems: 'center',
+													paddingVertical: 36,
+													backgroundColor: colors.surface,
+													borderRadius: 16,
+													borderWidth: 1,
+													borderColor: colors.border,
+													paddingHorizontal: 20,
+													marginTop: 4,
+												}}
+											>
+												<BookmarkIcon size={32} color={colors.accent} style={{ marginBottom: 10 }} />
+												<Text
+													style={{
+														fontSize: 16,
+														fontFamily: 'Inter_700Bold',
+														color: colors.textPrimary,
+														marginBottom: 4,
+													}}
+												>
+													No Collections Yet
+												</Text>
+												<Text
+													style={{
+														fontSize: 12,
+														fontFamily: 'Inter_400Regular',
+														color: colors.textSecondary,
+														textAlign: 'center',
+														lineHeight: 18,
+														marginBottom: 16,
+													}}
+												>
+													Organize your favorite Scriptures by topic (e.g. Peace, Strength, Morning Prayers).
+												</Text>
+												<Pressable
+													onPress={handleOpenNewCollection}
+													style={{
+														backgroundColor: colors.accent,
+														paddingHorizontal: 16,
+														paddingVertical: 10,
+														borderRadius: 12,
+													}}
+												>
+													<Text
+														style={{
+															fontSize: 13,
+															fontFamily: 'Inter_700Bold',
+															color: colors.accentText || '#000000',
+														}}
+													>
+														+ Create First Collection
+													</Text>
+												</Pressable>
+											</View>
+										) : (
+											filteredCollections.map((col) => {
+												const count = collectionVerseCountMap[col.id] || 0;
+												return (
+													<Pressable
+														key={col.id}
+														onPress={() => {
+															setViewingCollection(col);
+															setIsAllExpanded(false);
+														}}
+														style={{
+															flexDirection: 'row',
+															alignItems: 'center',
+															paddingVertical: 14,
+															paddingHorizontal: 4,
+															borderBottomWidth: 1,
+															borderBottomColor: colors.border,
+														}}
+													>
+														<View style={{ marginRight: 14 }}>
+															<BookmarkIcon
+																size={22}
+																color={col.color || colors.accent}
+																fill={col.color || colors.accent}
+															/>
+														</View>
+
+														<View style={{ flex: 1 }}>
+															<Text
+																style={{
+																	fontSize: 15,
+																	fontFamily: 'Inter_600SemiBold',
+																	color: colors.textPrimary,
+																	marginBottom: 2,
+																}}
+															>
+																{col.name}
+															</Text>
+															<Text
+																style={{
+																	fontSize: 12,
+																	fontFamily: 'Inter_400Regular',
+																	color: colors.textSecondary,
+																}}
+															>
+																{count} {count === 1 ? 'verse' : 'verses'}
+															</Text>
+														</View>
+
+														<Pressable
+															onPress={(e) => {
+																e.stopPropagation();
+																handleOpenEditCollection(col);
+															}}
+															hitSlop={8}
+															style={{ padding: 4 }}
+														>
+															<MoreHorizontal size={20} color={colors.textSecondary} />
+														</Pressable>
+													</Pressable>
+												);
+											})
+										)}
+
+										{filteredCollections.length > 0 && (
+											<Pressable
+												onPress={handleOpenNewCollection}
+												style={{
+													flexDirection: 'row',
+													alignItems: 'center',
+													justifyContent: 'center',
+													marginTop: 18,
+													paddingVertical: 12,
+													borderRadius: 14,
+													backgroundColor: isDark ? '#18231c' : '#f0ece2',
+													borderWidth: 1,
+													borderColor: isDark ? '#273d30' : '#e0dbcf',
+												}}
+											>
+												<Plus size={16} color={colors.accent} style={{ marginRight: 6 }} />
+												<Text
+													style={{
+														fontSize: 13,
+														fontFamily: 'Inter_700Bold',
+														color: colors.accent,
+													}}
+												>
+													New Collection
+												</Text>
+											</Pressable>
+										)}
+									</View>
+								)}
+
+								{/* SUB-VIEW B: ALL VERSES (Flat List with OT / NT Filters) */}
+								{scriptureSubTab === 'all_verses' && (
+									<View>
+										{/* Filter Chips */}
+										<ScrollView
+											horizontal
+											showsHorizontalScrollIndicator={false}
+											contentContainerStyle={{ gap: 6, paddingBottom: 10 }}
+										>
+											{(
+												[
+													{ key: 'all', label: `All (${bookmarks.length})` },
+													{
+														key: 'ot',
+														label: `Old Testament (${
+															bookmarks.filter((b) => b.bookIndex < 39).length
+														})`,
+													},
+													{
+														key: 'nt',
+														label: `New Testament (${
+															bookmarks.filter((b) => b.bookIndex >= 39).length
+														})`,
+													},
+													{
+														key: 'has_notes',
+														label: `With Notes (${
+															bookmarks.filter((b) => b.note && b.note.trim()).length
+														})`,
+													},
+												] as const
+											).map((chip) => {
+												const isSelected = scriptureFilter === chip.key;
+												return (
+													<Pressable
+														key={chip.key}
+														onPress={() => setScriptureFilter(chip.key)}
+														style={{
+															paddingHorizontal: 12,
+															paddingVertical: 5,
+															borderRadius: 10,
+															backgroundColor: isSelected
+																? colors.accentBg
+																: isDark
+																? '#141d24'
+																: '#f0ece2',
+															borderWidth: 1,
+															borderColor: isSelected ? colors.accent : colors.border,
+														}}
+													>
+														<Text
+															style={{
+																fontSize: 11,
+																fontFamily: isSelected
+																	? 'Inter_700Bold'
+																	: 'Inter_500Medium',
+																color: isSelected ? colors.accent : colors.textSecondary,
+															}}
+														>
+															{chip.label}
+														</Text>
+													</Pressable>
+												);
+											})}
+										</ScrollView>
+
+										{/* Verses List */}
+										{filteredAllVerses.length === 0 ? (
+											<View style={{ alignItems: 'center', paddingVertical: 40 }}>
 												<Text
 													style={{
 														fontSize: 15,
 														fontFamily: 'Inter_600SemiBold',
 														color: colors.textPrimary,
-														marginBottom: 2,
+														marginBottom: 4,
 													}}
 												>
-													{col.name}
+													No saved verses found
 												</Text>
 												<Text
 													style={{
 														fontSize: 12,
 														fontFamily: 'Inter_400Regular',
 														color: colors.textSecondary,
+														textAlign: 'center',
 													}}
 												>
-													{count} {count === 1 ? 'verse' : 'verses'}
+													Tap the bookmark icon in the Reader while studying Scripture.
 												</Text>
 											</View>
-
-											<Pressable
-												onPress={(e) => {
-													e.stopPropagation();
-													handleOpenEditCollection(col);
-												}}
-												hitSlop={8}
-												style={{ padding: 4 }}
-											>
-												<MoreHorizontal size={20} color={colors.textSecondary} />
-											</Pressable>
-										</Pressable>
-									);
-								})}
-
-								{/* + New Collection Button */}
-								<Pressable
-									onPress={handleOpenNewCollection}
-									style={{
-										flexDirection: 'row',
-										alignItems: 'center',
-										justifyContent: 'center',
-										marginTop: 20,
-										paddingVertical: 12,
-										borderRadius: 16,
-										backgroundColor: isDark ? '#18231c' : '#f0ece2',
-										borderWidth: 1,
-										borderColor: isDark ? '#273d30' : '#e0dbcf',
-									}}
-								>
-									<Plus size={16} color={colors.accent} style={{ marginRight: 6 }} />
-									<Text
-										style={{
-											fontSize: 14,
-											fontFamily: 'Inter_600SemiBold',
-											color: colors.accent,
-										}}
-									>
-										New Collection
-									</Text>
-								</Pressable>
-							</View>
-						)}
-
-						{/* TAB: PRAYERS */}
-						{activeTab === 'prayers' && (
-							<View>
-								{/* Category Filter Pills */}
-								<ScrollView
-									horizontal
-									showsHorizontalScrollIndicator={false}
-									contentContainerStyle={{ gap: 8, paddingBottom: 14 }}
-								>
-									{(
-										[
-											{ key: 'all', label: `All (${getAllPrayers().length})` },
-											{ key: 'daily', label: `Daily (${getPrayersByCategory('daily').length})` },
-											{ key: 'foundations', label: `Foundations (${getPrayersByCategory('foundations').length})` },
-											{ key: 'traditional', label: `Traditional (${getPrayersByCategory('traditional').length})` },
-										] as const
-									).map((cat) => {
-										const isSelected = selectedPrayerCategory === cat.key;
-										const isCatGated = cat.key === 'traditional' && !isPremium;
-										return (
-											<Pressable
-												key={cat.key}
-												onPress={() => setSelectedPrayerCategory(cat.key)}
-												style={{
-													flexDirection: 'row',
-													alignItems: 'center',
-													gap: 5,
-													paddingVertical: 6,
-													paddingHorizontal: 14,
-													borderRadius: 16,
-													backgroundColor: isSelected
-														? colors.accent
-														: isDark
-														? '#141d24'
-														: '#ebe7de',
-												}}
-											>
-												{isCatGated && (
-													<Lock
-														size={10}
-														color={
-															isSelected
-																? (colors.accentText || '#000000')
-																: colors.textSecondary
-														}
-													/>
-												)}
-												<Text
-													style={{
-														fontSize: 12,
-														fontFamily: isSelected ? 'Inter_600SemiBold' : 'Inter_500Medium',
-														color: isSelected
-															? (colors.accentText || '#000000')
-															: colors.textSecondary,
-													}}
-												>
-													{cat.label}
-												</Text>
-											</Pressable>
-										);
-									})}
-								</ScrollView>
-
-								{/* Prayers List */}
-								{filteredPrayers.length === 0 ? (
-									<View style={{ alignItems: 'center', paddingVertical: 40 }}>
-										<Text
-											style={{
-												fontSize: 15,
-												fontFamily: 'Inter_600SemiBold',
-												color: colors.textPrimary,
-												marginBottom: 4,
-											}}
-										>
-											No prayers found
-										</Text>
-										<Text
-											style={{
-												fontSize: 12,
-												fontFamily: 'Inter_400Regular',
-												color: colors.textSecondary,
-												textAlign: 'center',
-											}}
-										>
-											Try searching with a different keyword.
-										</Text>
-									</View>
-								) : (
-									filteredPrayers.map((prayer) => {
-										const isLocked = isPrayerGated(prayer) && !isPremium;
-										const categoryLabel =
-											prayer.category === 'daily'
-												? 'Daily Rhythm'
-												: prayer.category === 'foundations'
-												? 'Foundations & Creeds'
-												: 'Traditional Liturgy';
-										const previewText = prayer.prayerText
-											.replace(/\n+/g, ' ')
-											.trim();
-
-										return (
-											<Pressable
-												key={prayer.id}
-												onPress={() => {
-													if (isLocked) {
-														requirePremium('Traditional Liturgies & Historical Devotions');
-														return;
+										) : (
+											filteredAllVerses.map((bm) => (
+												<Pressable
+													key={bm.id}
+													onPress={() =>
+														handleOpenScripture(bm.bookName, bm.chapterNumber, bm.verseNumber)
 													}
-													setSelectedPrayerForModal(prayer);
-													setIsPrayerModalVisible(true);
-												}}
-												style={{
-													paddingVertical: 14,
-													paddingHorizontal: 4,
-													borderBottomWidth: 1,
-													borderBottomColor: colors.border,
-												}}
-											>
-												<View
 													style={{
-														flexDirection: 'row',
-														alignItems: 'center',
-														justifyContent: 'space-between',
-														marginBottom: 4,
+														paddingVertical: 14,
+														paddingHorizontal: 4,
+														borderBottomWidth: 1,
+														borderBottomColor: colors.border,
 													}}
 												>
-													<Text
-														style={{
-															fontSize: 16,
-															fontFamily: 'EBGaramond_700Bold',
-															color: colors.textPrimary,
-															flex: 1,
-															marginRight: 8,
-														}}
-														numberOfLines={1}
-													>
-														{prayer.title}
-													</Text>
 													<View
 														style={{
 															flexDirection: 'row',
 															alignItems: 'center',
-															gap: 4,
-															paddingHorizontal: 8,
-															paddingVertical: 2,
-															borderRadius: 6,
-															backgroundColor: isLocked
-																? (isDark ? '#2e2415' : '#fef3c7')
-																: (isDark ? '#1a2730' : '#eef2f6'),
-															borderWidth: isLocked ? 1 : 0,
-															borderColor: isLocked
-																? (isDark ? '#5e4a23' : '#fde68a')
-																: 'transparent',
+															justifyContent: 'space-between',
+															marginBottom: 4,
 														}}
 													>
-														{isLocked && (
-															<Lock size={9} color={isDark ? '#f59e0b' : '#b45309'} />
-														)}
+														<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+															<BookmarkIcon
+																size={16}
+																color={bm.color || colors.accent}
+																fill={bm.color || colors.accent}
+																style={{ marginRight: 8 }}
+															/>
+															<Text
+																style={{
+																	fontSize: 15,
+																	fontFamily: 'Inter_700Bold',
+																	color: colors.textPrimary,
+																}}
+															>
+																{bm.bookName} {bm.chapterNumber}:{bm.verseNumber}
+															</Text>
+															{bm.note && (
+																<View
+																	style={{
+																		marginLeft: 8,
+																		paddingHorizontal: 6,
+																		paddingVertical: 2,
+																		borderRadius: 6,
+																		backgroundColor: colors.accentBg,
+																	}}
+																>
+																	<FileText size={11} color={colors.accent} />
+																</View>
+															)}
+														</View>
+
+														<Pressable
+															onPress={(e) => {
+																e.stopPropagation();
+																setSelectedVerseOptions(bm);
+															}}
+															hitSlop={8}
+															style={{ padding: 4 }}
+														>
+															<MoreHorizontal size={18} color={colors.textSecondary} />
+														</Pressable>
+													</View>
+
+													{bm.verseText && (
 														<Text
+															numberOfLines={2}
 															style={{
-																fontSize: 10,
-																fontFamily: 'Inter_600SemiBold',
-																color: isLocked
-																	? (isDark ? '#f59e0b' : '#b45309')
-																	: colors.textMuted,
-																textTransform: 'uppercase',
-																letterSpacing: 0.5,
+																fontSize: 13,
+																fontFamily: 'EBGaramond_400Regular_Italic',
+																color: colors.textSecondary,
+																lineHeight: 18,
 															}}
 														>
-															{isLocked ? 'Sanctuary' : categoryLabel}
+															"{bm.verseText}"
 														</Text>
-													</View>
-												</View>
-
-												<Text
-													numberOfLines={2}
-													style={{
-														fontSize: 13,
-														fontFamily: 'Inter_400Regular',
-														color: colors.textSecondary,
-														lineHeight: 18,
-														marginBottom: 6,
-													}}
-												>
-													{previewText}
-												</Text>
-
-												<View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-													{isLocked && (
-														<Lock size={12} color={isDark ? '#f59e0b' : '#b45309'} />
 													)}
-													<Text
-														style={{
-															fontSize: 12,
-															fontFamily: 'Inter_600SemiBold',
-															color: isLocked
-																? (isDark ? '#f59e0b' : '#b45309')
-																: colors.accent,
-														}}
-													>
-														{isLocked ? 'Unlock with Sanctuary' : 'Pray & Meditate →'}
-													</Text>
-												</View>
-											</Pressable>
-										);
-									})
+												</Pressable>
+											))
+										)}
+									</View>
 								)}
 							</View>
 						)}
 
-						{/* TAB 2: PINS (All bookmarked verses) */}
-						{activeTab === 'pins' && (
+						{/* ============================================================== */}
+						{/* PILLAR 02: PRAYER TREASURY */}
+						{/* ============================================================== */}
+						{activeTab === 'prayers' && (
 							<View>
-								{filteredPins.length === 0 ? (
-									<View style={{ alignItems: 'center', paddingVertical: 40 }}>
-										<Pin size={32} color={colors.textMuted} style={{ marginBottom: 10 }} />
-										<Text
-											style={{
-												fontSize: 15,
-												fontFamily: 'Inter_600SemiBold',
-												color: colors.textPrimary,
-												marginBottom: 4,
-											}}
-										>
-											No pinned verses
-										</Text>
+								{/* Prayers Sub-segment Switch */}
+								<View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+									<Pressable
+										onPress={() => setPrayersSubTab('my_prayers')}
+										style={{
+											paddingVertical: 6,
+											paddingHorizontal: 14,
+											borderRadius: 12,
+											backgroundColor:
+												prayersSubTab === 'my_prayers'
+													? colors.accent
+													: isDark
+													? '#141d24'
+													: '#ebe7de',
+										}}
+									>
 										<Text
 											style={{
 												fontSize: 12,
-												fontFamily: 'Inter_400Regular',
-												color: colors.textSecondary,
-												textAlign: 'center',
-												paddingHorizontal: 24,
+												fontFamily:
+													prayersSubTab === 'my_prayers' ? 'Inter_700Bold' : 'Inter_500Medium',
+												color:
+													prayersSubTab === 'my_prayers'
+														? (colors.accentText || '#000000')
+														: colors.textSecondary,
 											}}
 										>
-											While reading in the Scripture Reader, tap the bookmark icon next to any
-											verse to pin it here.
+											My Prayers ({userPrayers.length})
 										</Text>
-									</View>
-								) : (
-									filteredPins.map((bm) => (
-										<Pressable
-											key={bm.id}
-											onPress={() =>
-												handleOpenScripture(bm.bookName, bm.chapterNumber, bm.verseNumber)
-											}
+									</Pressable>
+
+									<Pressable
+										onPress={() => setPrayersSubTab('liturgies')}
+										style={{
+											paddingVertical: 6,
+											paddingHorizontal: 14,
+											borderRadius: 12,
+											backgroundColor:
+												prayersSubTab === 'liturgies'
+													? colors.accent
+													: isDark
+													? '#141d24'
+													: '#ebe7de',
+										}}
+									>
+										<Text
 											style={{
-												paddingVertical: 14,
-												paddingHorizontal: 4,
-												borderBottomWidth: 1,
-												borderBottomColor: colors.border,
+												fontSize: 12,
+												fontFamily:
+													prayersSubTab === 'liturgies' ? 'Inter_700Bold' : 'Inter_500Medium',
+												color:
+													prayersSubTab === 'liturgies'
+														? (colors.accentText || '#000000')
+														: colors.textSecondary,
 											}}
 										>
-											<View
+											Liturgies ({getAllPrayers().length})
+										</Text>
+									</Pressable>
+								</View>
+
+								{/* SUB-VIEW A: MY PERSONAL PRAYERS & ANSWERED PRAYERS */}
+								{prayersSubTab === 'my_prayers' && (
+									<View>
+										{/* Action Header Row */}
+										<View
+											style={{
+												flexDirection: 'row',
+												alignItems: 'center',
+												justifyContent: 'space-between',
+												marginBottom: 12,
+											}}
+										>
+											<Text
+												style={{
+													fontSize: 12,
+													fontFamily: 'Inter_700Bold',
+													color: colors.textSecondary,
+													letterSpacing: 0.8,
+													textTransform: 'uppercase',
+												}}
+											>
+												Active Petitions ({activePrayers.length})
+											</Text>
+
+											<Pressable
+												onPress={handleOpenCreatePrayer}
 												style={{
 													flexDirection: 'row',
 													alignItems: 'center',
-													justifyContent: 'space-between',
-													marginBottom: 4,
+													backgroundColor: colors.accent,
+													paddingHorizontal: 12,
+													paddingVertical: 6,
+													borderRadius: 10,
+													gap: 4,
 												}}
 											>
-												<View style={{ flexDirection: 'row', alignItems: 'center' }}>
-													<BookmarkIcon
-														size={16}
-														color={bm.color || colors.accent}
-														fill={bm.color || colors.accent}
-														style={{ marginRight: 8 }}
-													/>
-													<Text
-														style={{
-															fontSize: 15,
-															fontFamily: 'Inter_600SemiBold',
-															color: colors.textPrimary,
-														}}
-													>
-														{bm.bookName} {bm.chapterNumber}:{bm.verseNumber}
-													</Text>
-												</View>
-
-												<Pressable
-													onPress={(e) => {
-														e.stopPropagation();
-														handleDeleteBookmark(bm);
-													}}
-													hitSlop={8}
-												>
-													<Trash2 size={15} color={colors.danger} />
-												</Pressable>
-											</View>
-
-											{bm.verseText && (
+												<Plus size={14} color={colors.accentText || '#000000'} />
 												<Text
-													numberOfLines={3}
 													style={{
-														fontSize: 13,
-														fontFamily: 'EBGaramond_400Regular_Italic',
+														fontSize: 12,
+														fontFamily: 'Inter_700Bold',
+														color: colors.accentText || '#000000',
+													}}
+												>
+													New Petition
+												</Text>
+											</Pressable>
+										</View>
+
+										{/* Active Prayers List */}
+										{activePrayers.length === 0 ? (
+											<View
+												style={{
+													alignItems: 'center',
+													paddingVertical: 28,
+													backgroundColor: colors.surface,
+													borderRadius: 14,
+													borderWidth: 1,
+													borderColor: colors.border,
+													paddingHorizontal: 20,
+													marginBottom: 16,
+												}}
+											>
+												<HeartHandshake size={28} color={colors.accent} style={{ marginBottom: 8 }} />
+												<Text
+													style={{
+														fontSize: 15,
+														fontFamily: 'Inter_700Bold',
+														color: colors.textPrimary,
+														marginBottom: 4,
+													}}
+												>
+													No Active Prayer Requests
+												</Text>
+												<Text
+													style={{
+														fontSize: 12,
+														fontFamily: 'Inter_400Regular',
 														color: colors.textSecondary,
+														textAlign: 'center',
 														lineHeight: 18,
 													}}
 												>
-													"{bm.verseText}"
+													Commit your burdens to the Lord in prayer. When He answers, mark them as answered to celebrate His faithfulness.
 												</Text>
-											)}
-										</Pressable>
-									))
+											</View>
+										) : (
+											activePrayers.map((p) => (
+												<View
+													key={p.id}
+													style={{
+														backgroundColor: colors.surface,
+														borderRadius: 14,
+														borderWidth: 1,
+														borderColor: colors.border,
+														padding: 14,
+														marginBottom: 10,
+													}}
+												>
+													<View
+														style={{
+															flexDirection: 'row',
+															alignItems: 'center',
+															justifyContent: 'space-between',
+															marginBottom: 4,
+														}}
+													>
+														<Text
+															style={{
+																fontSize: 15,
+																fontFamily: 'Inter_700Bold',
+																color: colors.textPrimary,
+																flex: 1,
+																marginRight: 8,
+															}}
+														>
+															{p.title}
+														</Text>
+														<Pressable onPress={() => handleOpenEditPrayer(p)} hitSlop={8}>
+															<MoreHorizontal size={18} color={colors.textSecondary} />
+														</Pressable>
+													</View>
+
+													<Text
+														style={{
+															fontSize: 13,
+															fontFamily: 'Inter_400Regular',
+															color: colors.textSecondary,
+															lineHeight: 18,
+															marginBottom: 10,
+														}}
+													>
+														{p.request}
+													</Text>
+
+													<View
+														style={{
+															flexDirection: 'row',
+															alignItems: 'center',
+															justifyContent: 'space-between',
+															paddingTop: 8,
+															borderTopWidth: 1,
+															borderTopColor: colors.borderSubtle || colors.border,
+														}}
+													>
+														<View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+															<Clock size={12} color={colors.textMuted} />
+															<Text style={{ fontSize: 11, color: colors.textMuted }}>
+																{formatRelativeTime(p.createdAt)}
+															</Text>
+														</View>
+
+														{/* Sutherland Psycho-Logic Mark Answered CTA */}
+														<Pressable
+															onPress={() => handleOpenMarkAnswered(p)}
+															style={{
+																flexDirection: 'row',
+																alignItems: 'center',
+																gap: 4,
+																backgroundColor: colors.accentBg,
+																paddingHorizontal: 10,
+																paddingVertical: 5,
+																borderRadius: 8,
+																borderWidth: 1,
+																borderColor: colors.accent,
+															}}
+														>
+															<Sparkles size={13} color={colors.accent} />
+															<Text
+																style={{
+																	fontSize: 12,
+																	fontFamily: 'Inter_700Bold',
+																	color: colors.accent,
+																}}
+															>
+																Mark Answered ✨
+															</Text>
+														</Pressable>
+													</View>
+												</View>
+											))
+										)}
+
+										{/* Answered Prayers Archive */}
+										{answeredPrayers.length > 0 && (
+											<View style={{ marginTop: 14 }}>
+												<View
+													style={{
+														flexDirection: 'row',
+														alignItems: 'center',
+														gap: 6,
+														marginBottom: 10,
+													}}
+												>
+													<Sparkles size={14} color={colors.accent} />
+													<Text
+														style={{
+															fontSize: 12,
+															fontFamily: 'Inter_700Bold',
+															color: colors.accent,
+															letterSpacing: 0.8,
+															textTransform: 'uppercase',
+														}}
+													>
+														Answered Prayers Archive ({answeredPrayers.length})
+													</Text>
+												</View>
+
+												{answeredPrayers.map((p) => (
+													<View
+														key={p.id}
+														style={{
+															backgroundColor: isDark ? '#1a2318' : '#f4f9f2',
+															borderRadius: 14,
+															borderWidth: 1,
+															borderColor: isDark ? '#2e452c' : '#cde4cb',
+															borderLeftWidth: 4,
+															borderLeftColor: colors.accent,
+															padding: 14,
+															marginBottom: 10,
+														}}
+													>
+														<View
+															style={{
+																flexDirection: 'row',
+																alignItems: 'center',
+																justifyContent: 'space-between',
+																marginBottom: 4,
+															}}
+														>
+															<Text
+																style={{
+																	fontSize: 15,
+																	fontFamily: 'Inter_700Bold',
+																	color: colors.textPrimary,
+																	flex: 1,
+																	marginRight: 8,
+																}}
+															>
+																{p.title}
+															</Text>
+															<Pressable onPress={() => handleOpenEditPrayer(p)} hitSlop={8}>
+																<MoreHorizontal size={18} color={colors.textSecondary} />
+															</Pressable>
+														</View>
+
+														<Text
+															style={{
+																fontSize: 12,
+																fontFamily: 'Inter_400Regular',
+																color: colors.textSecondary,
+																marginBottom: 8,
+															}}
+														>
+															Original: "{p.request}"
+														</Text>
+
+														{/* Praise Testimony */}
+														{p.answerReflection && (
+															<View
+																style={{
+																	backgroundColor: isDark ? '#131b12' : '#ffffff',
+																	borderRadius: 10,
+																	padding: 10,
+																	borderWidth: 1,
+																	borderColor: isDark ? '#253823' : '#d7e7d6',
+																	marginTop: 2,
+																}}
+															>
+																<Text
+																	style={{
+																		fontSize: 11,
+																		fontFamily: 'Inter_700Bold',
+																		color: colors.accent,
+																		marginBottom: 2,
+																		textTransform: 'uppercase',
+																	}}
+																>
+																	✨ God's Faithfulness
+																</Text>
+																<Text
+																	style={{
+																		fontSize: 13,
+																		fontFamily: 'EBGaramond_400Regular_Italic',
+																		color: colors.textPrimary,
+																		lineHeight: 18,
+																	}}
+																>
+																	"{p.answerReflection}"
+																</Text>
+															</View>
+														)}
+
+														<Text
+															style={{
+																fontSize: 10,
+																fontFamily: 'Inter_400Regular',
+																color: colors.textMuted,
+																marginTop: 8,
+															}}
+														>
+															Answered {formatRelativeTime(p.answeredAt || p.createdAt)}
+														</Text>
+													</View>
+												))}
+											</View>
+										)}
+									</View>
+								)}
+
+								{/* SUB-VIEW B: LITURGIES */}
+								{prayersSubTab === 'liturgies' && (
+									<View>
+										{/* Category Filter Pills */}
+										<ScrollView
+											horizontal
+											showsHorizontalScrollIndicator={false}
+											contentContainerStyle={{ gap: 6, paddingBottom: 12 }}
+										>
+											{(
+												[
+													{ key: 'all', label: `All (${getAllPrayers().length})` },
+													{ key: 'daily', label: `Daily (${getPrayersByCategory('daily').length})` },
+													{
+														key: 'foundations',
+														label: `Foundations (${getPrayersByCategory('foundations').length})`,
+													},
+													{
+														key: 'traditional',
+														label: `Traditional (${getPrayersByCategory('traditional').length})`,
+													},
+												] as const
+											).map((cat) => {
+												const isSelected = selectedPrayerCategory === cat.key;
+												const isCatGated = cat.key === 'traditional' && !isPremium;
+												return (
+													<Pressable
+														key={cat.key}
+														onPress={() => setSelectedPrayerCategory(cat.key)}
+														style={{
+															flexDirection: 'row',
+															alignItems: 'center',
+															gap: 4,
+															paddingVertical: 5,
+															paddingHorizontal: 12,
+															borderRadius: 12,
+															backgroundColor: isSelected
+																? colors.accent
+																: isDark
+																? '#141d24'
+																: '#ebe7de',
+														}}
+													>
+														{isCatGated && (
+															<Lock
+																size={10}
+																color={
+																	isSelected
+																		? (colors.accentText || '#000000')
+																		: colors.textSecondary
+																}
+															/>
+														)}
+														<Text
+															style={{
+																fontSize: 11,
+																fontFamily: isSelected ? 'Inter_700Bold' : 'Inter_500Medium',
+																color: isSelected
+																	? (colors.accentText || '#000000')
+																	: colors.textSecondary,
+															}}
+														>
+															{cat.label}
+														</Text>
+													</Pressable>
+												);
+											})}
+										</ScrollView>
+
+										{/* Liturgies List */}
+										{filteredLiturgies.map((prayer) => {
+											const isLocked = isPrayerGated(prayer) && !isPremium;
+											const categoryLabel =
+												prayer.category === 'daily'
+													? 'Daily Rhythm'
+													: prayer.category === 'foundations'
+													? 'Foundations & Creeds'
+													: 'Traditional Liturgy';
+											const previewText = prayer.prayerText.replace(/\n+/g, ' ').trim();
+
+											return (
+												<Pressable
+													key={prayer.id}
+													onPress={() => {
+														if (isLocked) {
+															requirePremium('Traditional Liturgies & Historical Creeds');
+															return;
+														}
+														setSelectedPrayerForModal(prayer);
+														setIsLiturgiesModalVisible(true);
+													}}
+													style={{
+														paddingVertical: 14,
+														paddingHorizontal: 4,
+														borderBottomWidth: 1,
+														borderBottomColor: colors.border,
+													}}
+												>
+													<View
+														style={{
+															flexDirection: 'row',
+															alignItems: 'center',
+															justifyContent: 'space-between',
+															marginBottom: 4,
+														}}
+													>
+														<Text
+															style={{
+																fontSize: 16,
+																fontFamily: 'EBGaramond_700Bold',
+																color: colors.textPrimary,
+																flex: 1,
+																marginRight: 8,
+															}}
+															numberOfLines={1}
+														>
+															{prayer.title}
+														</Text>
+														<View
+															style={{
+																flexDirection: 'row',
+																alignItems: 'center',
+																gap: 4,
+																paddingHorizontal: 8,
+																paddingVertical: 2,
+																borderRadius: 6,
+																backgroundColor: isLocked
+																	? (isDark ? '#2e2415' : '#fef3c7')
+																	: (isDark ? '#1a2730' : '#eef2f6'),
+															}}
+														>
+															{isLocked && (
+																<Lock size={9} color={isDark ? '#f59e0b' : '#b45309'} />
+															)}
+															<Text
+																style={{
+																	fontSize: 10,
+																	fontFamily: 'Inter_600SemiBold',
+																	color: isLocked
+																		? (isDark ? '#f59e0b' : '#b45309')
+																		: colors.textMuted,
+																	textTransform: 'uppercase',
+																}}
+															>
+																{isLocked ? 'Sanctuary' : categoryLabel}
+															</Text>
+														</View>
+													</View>
+
+													<Text
+														numberOfLines={2}
+														style={{
+															fontSize: 13,
+															fontFamily: 'Inter_400Regular',
+															color: colors.textSecondary,
+															lineHeight: 18,
+															marginBottom: 6,
+														}}
+													>
+														{previewText}
+													</Text>
+
+													<View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+														{isLocked && (
+															<Lock size={12} color={isDark ? '#f59e0b' : '#b45309'} />
+														)}
+														<Text
+															style={{
+																fontSize: 12,
+																fontFamily: 'Inter_700Bold',
+																color: isLocked
+																	? (isDark ? '#f59e0b' : '#b45309')
+																	: colors.accent,
+															}}
+														>
+															{isLocked ? 'Unlock with Sanctuary' : 'Pray & Meditate →'}
+														</Text>
+													</View>
+												</Pressable>
+											);
+										})}
+									</View>
 								)}
 							</View>
 						)}
 
-						{/* TAB 3: NOTES */}
-						{activeTab === 'notes' && (
+						{/* ============================================================== */}
+						{/* PILLAR 03: SPIRITUAL JOURNAL (Reflections & Notes) */}
+						{/* ============================================================== */}
+						{activeTab === 'journal' && (
 							<View>
-								{filteredNotes.length === 0 ? (
-									<View style={{ alignItems: 'center', paddingVertical: 40 }}>
-										<FileText size={32} color={colors.textMuted} style={{ marginBottom: 10 }} />
+								{/* Header & Export Action */}
+								<View
+									style={{
+										flexDirection: 'row',
+										alignItems: 'center',
+										justifyContent: 'space-between',
+										marginBottom: 12,
+									}}
+								>
+									<Text
+										style={{
+											fontSize: 12,
+											fontFamily: 'Inter_700Bold',
+											color: colors.textSecondary,
+											letterSpacing: 0.8,
+											textTransform: 'uppercase',
+										}}
+									>
+										Verse Reflections ({filteredNotes.length})
+									</Text>
+
+									<Pressable
+										onPress={handleCopyAllReflections}
+										style={{
+											flexDirection: 'row',
+											alignItems: 'center',
+											gap: 4,
+											paddingHorizontal: 10,
+											paddingVertical: 5,
+											borderRadius: 8,
+											backgroundColor: colors.surfaceSubtle,
+										}}
+									>
+										<Share2 size={13} color={colors.textSecondary} />
 										<Text
 											style={{
-												fontSize: 15,
+												fontSize: 11,
 												fontFamily: 'Inter_600SemiBold',
+												color: colors.textSecondary,
+											}}
+										>
+											Export Notes
+										</Text>
+									</Pressable>
+								</View>
+
+								{/* Search Bar */}
+								<View
+									style={{
+										flexDirection: 'row',
+										alignItems: 'center',
+										backgroundColor: isDark ? '#141d24' : '#ffffff',
+										borderWidth: 1,
+										borderColor: isDark ? '#202e38' : '#e4dfd3',
+										borderRadius: 14,
+										paddingHorizontal: 12,
+										paddingVertical: 8,
+										marginBottom: 12,
+									}}
+								>
+									<Search size={16} color={colors.textMuted} style={{ marginRight: 8 }} />
+									<TextInput
+										value={searchQuery}
+										onChangeText={setSearchQuery}
+										placeholder='Search reflections or Scripture...'
+										placeholderTextColor={colors.textMuted}
+										style={{
+											flex: 1,
+											color: colors.textPrimary,
+											fontSize: 13,
+											fontFamily: 'Inter_400Regular',
+											padding: 0,
+										}}
+									/>
+									{searchQuery.length > 0 && (
+										<Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
+											<X size={15} color={colors.textMuted} />
+										</Pressable>
+									)}
+								</View>
+
+								{/* Journal Timeline List */}
+								{filteredNotes.length === 0 ? (
+									<View
+										style={{
+											alignItems: 'center',
+											paddingVertical: 36,
+											backgroundColor: colors.surface,
+											borderRadius: 16,
+											borderWidth: 1,
+											borderColor: colors.border,
+											paddingHorizontal: 20,
+										}}
+									>
+										<FileText size={32} color={colors.accent} style={{ marginBottom: 10 }} />
+										<Text
+											style={{
+												fontSize: 16,
+												fontFamily: 'Inter_700Bold',
 												color: colors.textPrimary,
 												marginBottom: 4,
 											}}
 										>
-											No verse notes yet
+											No Notes Written Yet
 										</Text>
 										<Text
 											style={{
@@ -1323,27 +2123,23 @@ export default function LibraryScreen() {
 												fontFamily: 'Inter_400Regular',
 												color: colors.textSecondary,
 												textAlign: 'center',
-												paddingHorizontal: 24,
+												lineHeight: 18,
 											}}
 										>
-											Add reflections and spiritual notes to bookmarked verses in the Reader to
-											see them gathered here.
+											While reading in the Scripture Reader, tap any verse to write your reflections and insights. They will gather here in your spiritual journal.
 										</Text>
 									</View>
 								) : (
 									filteredNotes.map((bm) => (
-										<Pressable
+										<View
 											key={bm.id}
-											onPress={() =>
-												handleOpenScripture(bm.bookName, bm.chapterNumber, bm.verseNumber)
-											}
 											style={{
 												padding: 14,
 												borderRadius: 16,
 												backgroundColor: colors.surface,
 												borderWidth: 1,
 												borderColor: colors.border,
-												marginBottom: 10,
+												marginBottom: 12,
 											}}
 										>
 											<View
@@ -1354,37 +2150,91 @@ export default function LibraryScreen() {
 													marginBottom: 6,
 												}}
 											>
-												<Text
-													style={{
-														fontSize: 14,
-														fontFamily: 'Inter_600SemiBold',
-														color: colors.accent,
-													}}
-												>
-													{bm.bookName} {bm.chapterNumber}:{bm.verseNumber}
-												</Text>
 												<Pressable
-													onPress={(e) => {
-														e.stopPropagation();
-														handleDeleteBookmark(bm);
-													}}
-													hitSlop={8}
+													onPress={() =>
+														handleOpenScripture(bm.bookName, bm.chapterNumber, bm.verseNumber)
+													}
 												>
-													<Trash2 size={14} color={colors.danger} />
+													<Text
+														style={{
+															fontSize: 14,
+															fontFamily: 'Inter_700Bold',
+															color: colors.accent,
+														}}
+													>
+														{bm.bookName} {bm.chapterNumber}:{bm.verseNumber}
+													</Text>
 												</Pressable>
+
+												<View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+													<Pressable
+														onPress={() => {
+															setEditingNoteBookmark(bm);
+															setNoteInput(bm.note || '');
+														}}
+														hitSlop={8}
+													>
+														<Text
+															style={{
+																fontSize: 12,
+																fontFamily: 'Inter_600SemiBold',
+																color: colors.textSecondary,
+															}}
+														>
+															Edit
+														</Text>
+													</Pressable>
+
+													<Pressable
+														onPress={() => {
+															setCardShareVerse(bm);
+															setIsCardShareVisible(true);
+														}}
+														hitSlop={8}
+													>
+														<Sparkles size={15} color={colors.accent} />
+													</Pressable>
+												</View>
 											</View>
 
-											<Text
+											{bm.verseText && (
+												<Text
+													numberOfLines={2}
+													style={{
+														fontSize: 12,
+														fontFamily: 'EBGaramond_400Regular_Italic',
+														color: colors.textMuted,
+														marginBottom: 8,
+													}}
+												>
+													"{bm.verseText}"
+												</Text>
+											)}
+
+											<View
 												style={{
-													fontSize: 13,
-													fontFamily: 'Inter_400Regular',
-													color: colors.textPrimary,
-													lineHeight: 19,
+													backgroundColor: colors.surfaceSubtle,
+													borderRadius: 10,
+													padding: 10,
+													marginBottom: 6,
 												}}
 											>
-												"{bm.note}"
+												<Text
+													style={{
+														fontSize: 13,
+														fontFamily: 'Inter_400Regular',
+														color: colors.textPrimary,
+														lineHeight: 19,
+													}}
+												>
+													{bm.note}
+												</Text>
+											</View>
+
+											<Text style={{ fontSize: 10, color: colors.textMuted }}>
+												{formatRelativeTime(bm.createdAt)}
 											</Text>
-										</Pressable>
+										</View>
 									))
 								)}
 							</View>
@@ -1393,203 +2243,247 @@ export default function LibraryScreen() {
 				</View>
 			)}
 
-			{/* 5. Bottom Sheet Modal: Edit / New Collection matching AL Quran App edit bookmark example.png */}
+			{/* ============================================================== */}
+			{/* MODALS & BOTTOM SHEETS */}
+			{/* ============================================================== */}
+
+			{/* 1. Personal Prayer Modal (Create / Edit / Celebrate Answered) */}
+			<PersonalPrayerModal
+				visible={isPersonalPrayerModalVisible}
+				mode={personalPrayerModalMode}
+				prayer={selectedPersonalPrayer}
+				onClose={() => {
+					setIsPersonalPrayerModalVisible(false);
+					setSelectedPersonalPrayer(null);
+				}}
+				onSaved={loadData}
+			/>
+
+			{/* 2. Sacred Verse Card Share Modal */}
+			<VerseCardShareModal
+				visible={isCardShareVisible}
+				bookmark={cardShareVerse}
+				onClose={() => {
+					setIsCardShareVisible(false);
+					setCardShareVerse(null);
+				}}
+			/>
+
+			{/* 3. New / Edit Collection Modal */}
 			<Modal
 				visible={isEditModalVisible}
 				transparent
 				animationType='slide'
-				onRequestClose={() => setIsEditModalVisible(false)}
+				statusBarTranslucent
+				onRequestClose={() => {
+					if (keyboardHeight > 0) {
+						Keyboard.dismiss();
+					} else {
+						setIsEditModalVisible(false);
+					}
+				}}
 			>
-				<Pressable
-					onPress={() => setIsEditModalVisible(false)}
+				<View
 					style={{
 						flex: 1,
 						backgroundColor: 'rgba(0,0,0,0.6)',
 						justifyContent: 'flex-end',
+						paddingBottom: effectiveKeyboardOffset,
 					}}
 				>
 					<Pressable
-						onPress={(e) => e.stopPropagation()}
+						style={{ flex: 1 }}
+						onPress={() => {
+							if (keyboardHeight > 0) {
+								Keyboard.dismiss();
+							} else {
+								setIsEditModalVisible(false);
+							}
+						}}
+					/>
+					<View
 						style={{
 							backgroundColor: isDark ? '#141d24' : '#ffffff',
 							borderTopLeftRadius: 28,
 							borderTopRightRadius: 28,
 							paddingHorizontal: 22,
 							paddingTop: 12,
-							paddingBottom: Math.max(20, insets.bottom + 12),
+							paddingBottom: Math.max(16, insets.bottom),
 							borderWidth: 1,
 							borderColor: isDark ? '#23323e' : '#e4dfd3',
+							maxHeight:
+								effectiveKeyboardOffset > 0
+									? Math.max(windowHeight - effectiveKeyboardOffset - insets.top - 16, 260)
+									: '88%',
 						}}
 					>
-						{/* Drag Handle */}
-						<View
-							style={{
-								width: 38,
-								height: 4,
-								borderRadius: 2,
-								backgroundColor: isDark ? '#3b4e5c' : '#d0cbbe',
-								alignSelf: 'center',
-								marginBottom: 16,
-							}}
-						/>
-
-						{/* Title */}
-						<Text
-							style={{
-								fontSize: 17,
-								fontFamily: 'Inter_600SemiBold',
-								color: colors.textPrimary,
-								textAlign: 'center',
-								marginBottom: 20,
-							}}
+						<ScrollView
+							keyboardShouldPersistTaps='handled'
+							showsVerticalScrollIndicator={false}
+							contentContainerStyle={{ paddingBottom: 16 }}
 						>
-							{editingCollection ? 'Edit Collection' : 'New Collection'}
-						</Text>
+							<View
+								style={{
+									width: 38,
+									height: 4,
+									borderRadius: 2,
+									backgroundColor: isDark ? '#3b4e5c' : '#d0cbbe',
+									alignSelf: 'center',
+									marginBottom: 16,
+								}}
+							/>
 
-						{/* Name Input */}
-						<TextInput
-							value={collectionName}
-							onChangeText={setCollectionName}
-							placeholder='Collection name (e.g. Psalms of Peace)'
-							placeholderTextColor={colors.textMuted}
-							style={{
-								borderRadius: 14,
-								borderWidth: 1,
-								borderColor: isDark ? '#2b3b48' : '#e0dbcf',
-								backgroundColor: isDark ? '#0d1318' : '#faf9f6',
-								color: colors.textPrimary,
-								fontSize: 15,
-								fontFamily: 'Inter_500Medium',
-								paddingHorizontal: 16,
-								paddingVertical: 14,
-								marginBottom: 20,
-							}}
-						/>
+							<Text
+								style={{
+									fontSize: 17,
+									fontFamily: 'Inter_600SemiBold',
+									color: colors.textPrimary,
+									textAlign: 'center',
+									marginBottom: 20,
+								}}
+							>
+								{editingCollection ? 'Edit Collection' : 'New Collection'}
+							</Text>
 
-						{/* Color Picker Section */}
-						<Text
-							style={{
-								fontSize: 13,
-								fontFamily: 'Inter_500Medium',
-								color: colors.textSecondary,
-								marginBottom: 12,
-							}}
-						>
-							Choose a color
-						</Text>
+							<TextInput
+								value={collectionName}
+								onChangeText={setCollectionName}
+								placeholder='Collection name (e.g. Psalms of Peace)'
+								placeholderTextColor={colors.textMuted}
+								style={{
+									borderRadius: 14,
+									borderWidth: 1,
+									borderColor: isDark ? '#2b3b48' : '#e0dbcf',
+									backgroundColor: isDark ? '#0d1318' : '#faf9f6',
+									color: colors.textPrimary,
+									fontSize: 15,
+									fontFamily: 'Inter_500Medium',
+									paddingHorizontal: 16,
+									paddingVertical: 14,
+									marginBottom: 20,
+								}}
+							/>
 
-						<View
-							style={{
-								flexDirection: 'row',
-								justifyContent: 'space-between',
-								marginBottom: 24,
-							}}
-						>
-							{COLLECTION_COLORS.map((color) => {
-								const isSelected = selectedColor === color;
-								return (
-									<Pressable
-										key={color}
-										onPress={() => setSelectedColor(color)}
-										style={{
-											width: 44,
-											height: 44,
-											borderRadius: 10,
-											backgroundColor: color,
-											alignItems: 'center',
-											justifyContent: 'center',
-										}}
-									>
-										{isSelected && <Check size={20} color='#ffffff' strokeWidth={3} />}
-									</Pressable>
-								);
-							})}
-						</View>
+							<Text
+								style={{
+									fontSize: 13,
+									fontFamily: 'Inter_500Medium',
+									color: colors.textSecondary,
+									marginBottom: 12,
+								}}
+							>
+								Choose a color
+							</Text>
 
-						{/* Delete Option (only when editing existing collection) */}
-						{editingCollection && (
-							<Pressable
-								onPress={handleDeleteCollection}
+							<View
 								style={{
 									flexDirection: 'row',
-									alignItems: 'center',
+									justifyContent: 'space-between',
 									marginBottom: 24,
-									paddingVertical: 4,
 								}}
 							>
-								<Trash2 size={18} color='#ef4444' style={{ marginRight: 10 }} />
-								<Text
-									style={{
-										fontSize: 14,
-										fontFamily: 'Inter_500Medium',
-										color: '#ef4444',
-									}}
-								>
-									Delete Collection
-								</Text>
-							</Pressable>
-						)}
+								{COLLECTION_COLORS.map((color) => {
+									const isSelected = selectedColor === color;
+									return (
+										<Pressable
+											key={color}
+											onPress={() => setSelectedColor(color)}
+											style={{
+												width: 44,
+												height: 44,
+												borderRadius: 10,
+												backgroundColor: color,
+												alignItems: 'center',
+												justifyContent: 'center',
+											}}
+										>
+											{isSelected && <Check size={20} color='#ffffff' strokeWidth={3} />}
+										</Pressable>
+									);
+								})}
+							</View>
 
-						{/* Bottom Buttons: Cancel & Save matching Al Quran */}
-						<View
-							style={{
-								flexDirection: 'row',
-								justifyContent: 'space-between',
-								alignItems: 'center',
-							}}
-						>
-							<Pressable
-								onPress={() => setIsEditModalVisible(false)}
-								style={{
-									flex: 1,
-									marginRight: 12,
-									paddingVertical: 14,
-									borderRadius: 24,
-									alignItems: 'center',
-									justifyContent: 'center',
-								}}
-							>
-								<Text
+							{editingCollection && (
+								<Pressable
+									onPress={handleDeleteCollection}
 									style={{
-										fontSize: 15,
-										fontFamily: 'Inter_600SemiBold',
-										color: colors.textSecondary,
+										flexDirection: 'row',
+										alignItems: 'center',
+										marginBottom: 24,
+										paddingVertical: 4,
 									}}
 								>
-									Cancel
-								</Text>
-							</Pressable>
+									<Trash2 size={18} color='#ef4444' style={{ marginRight: 10 }} />
+									<Text
+										style={{
+											fontSize: 14,
+											fontFamily: 'Inter_500Medium',
+											color: '#ef4444',
+										}}
+									>
+										Delete Collection
+									</Text>
+								</Pressable>
+							)}
 
-							<Pressable
-								onPress={handleSaveCollection}
+							<View
 								style={{
-									flex: 1.3,
-									paddingVertical: 14,
-									borderRadius: 24,
-									backgroundColor: '#3b82f6',
+									flexDirection: 'row',
+									justifyContent: 'space-between',
 									alignItems: 'center',
-									justifyContent: 'center',
-									shadowColor: '#3b82f6',
-									shadowOpacity: 0.3,
-									shadowRadius: 8,
 								}}
 							>
-								<Text
+								<Pressable
+									onPress={() => setIsEditModalVisible(false)}
 									style={{
-										fontSize: 15,
-										fontFamily: 'Inter_600SemiBold',
-										color: '#ffffff',
+										flex: 1,
+										marginRight: 12,
+										paddingVertical: 14,
+										borderRadius: 24,
+										alignItems: 'center',
+										justifyContent: 'center',
+										backgroundColor: isDark ? '#23323e' : '#f0ece1',
 									}}
 								>
-									Save
-								</Text>
-							</Pressable>
-						</View>
-					</Pressable>
-				</Pressable>
+									<Text
+										style={{
+											fontSize: 15,
+											fontFamily: 'Inter_600SemiBold',
+											color: colors.textSecondary,
+										}}
+									>
+										Cancel
+									</Text>
+								</Pressable>
+
+								<Pressable
+									onPress={handleSaveCollection}
+									style={{
+										flex: 1.3,
+										paddingVertical: 14,
+										borderRadius: 24,
+										backgroundColor: colors.accent,
+										alignItems: 'center',
+										justifyContent: 'center',
+									}}
+								>
+									<Text
+										style={{
+											fontSize: 15,
+											fontFamily: 'Inter_700Bold',
+											color: colors.accentText || '#000000',
+										}}
+									>
+										Save
+									</Text>
+								</Pressable>
+							</View>
+						</ScrollView>
+					</View>
+				</View>
 			</Modal>
 
-			{/* 6. Per-Verse Options Bottom Sheet matching Al Quran reference */}
+			{/* 4. Per-Verse Options Bottom Sheet */}
 			<Modal
 				visible={selectedVerseOptions !== null}
 				transparent
@@ -1681,7 +2575,39 @@ export default function LibraryScreen() {
 								</Text>
 							</Pressable>
 
-							{/* View / Edit Note */}
+							{/* Share as Sacred Art Card ✨ */}
+							<Pressable
+								onPress={() => {
+									if (!selectedVerseOptions) return;
+									const bm = selectedVerseOptions;
+									setSelectedVerseOptions(null);
+									setCardShareVerse(bm);
+									setIsCardShareVisible(true);
+								}}
+								style={{
+									flexDirection: 'row',
+									alignItems: 'center',
+									paddingVertical: 12,
+									paddingHorizontal: 12,
+									borderRadius: 12,
+									backgroundColor: colors.accentBg,
+									borderWidth: 1,
+									borderColor: colors.accent,
+								}}
+							>
+								<Sparkles size={18} color={colors.accent} style={{ marginRight: 12 }} />
+								<Text
+									style={{
+										fontSize: 15,
+										fontFamily: 'Inter_700Bold',
+										color: colors.accent,
+									}}
+								>
+									Share as Sacred Card ✨
+								</Text>
+							</Pressable>
+
+							{/* Add / Edit Note */}
 							<Pressable
 								onPress={() => {
 									if (!selectedVerseOptions) return;
@@ -1769,7 +2695,7 @@ export default function LibraryScreen() {
 								</Text>
 							</Pressable>
 
-							{/* Share Verse */}
+							{/* Share Verse Text */}
 							<Pressable
 								onPress={() => {
 									if (!selectedVerseOptions) return;
@@ -1793,7 +2719,7 @@ export default function LibraryScreen() {
 										color: colors.textPrimary,
 									}}
 								>
-									Share Verse
+									Share Verse Text
 								</Text>
 							</Pressable>
 
@@ -1830,7 +2756,7 @@ export default function LibraryScreen() {
 				</Pressable>
 			</Modal>
 
-			{/* 7. Sort Options Bottom Sheet matching Al Quran */}
+			{/* 5. Sort Options Bottom Sheet */}
 			<Modal
 				visible={isSortSheetVisible}
 				transparent
@@ -1943,32 +2869,59 @@ export default function LibraryScreen() {
 				</Pressable>
 			</Modal>
 
-			{/* 8. Note Editing Modal */}
+			{/* 6. Note Editing Modal */}
 			<Modal
 				visible={editingNoteBookmark !== null}
 				transparent
 				animationType='fade'
-				onRequestClose={() => setEditingNoteBookmark(null)}
+				statusBarTranslucent
+				onRequestClose={() => {
+					if (keyboardHeight > 0) {
+						Keyboard.dismiss();
+					} else {
+						setEditingNoteBookmark(null);
+					}
+				}}
 			>
-				<KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+				<View
+					style={{
+						flex: 1,
+						backgroundColor: 'rgba(0,0,0,0.6)',
+						justifyContent: 'center',
+						alignItems: 'center',
+						paddingHorizontal: 20,
+						paddingBottom: effectiveKeyboardOffset,
+					}}
+				>
 					<Pressable
-						onPress={() => setEditingNoteBookmark(null)}
+						style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}
+						onPress={() => {
+							if (keyboardHeight > 0) {
+								Keyboard.dismiss();
+							} else {
+								setEditingNoteBookmark(null);
+							}
+						}}
+					/>
+					<View
 						style={{
-							flex: 1,
-							backgroundColor: 'rgba(0,0,0,0.6)',
-							justifyContent: 'center',
-							paddingHorizontal: 20,
+							width: '100%',
+							maxWidth: 420,
+							maxHeight:
+								effectiveKeyboardOffset > 0
+									? Math.max(windowHeight - effectiveKeyboardOffset - insets.top - 16, 260)
+									: '85%',
+							backgroundColor: colors.surfaceElevated || colors.surface,
+							borderRadius: 20,
+							borderWidth: 1,
+							borderColor: colors.border,
+							padding: 20,
 						}}
 					>
-						<Pressable
-							onPress={(e) => e.stopPropagation()}
-							style={{
-								backgroundColor: colors.surfaceElevated || colors.surface,
-								borderRadius: 20,
-								borderWidth: 1,
-								borderColor: colors.border,
-								padding: 20,
-							}}
+						<ScrollView
+							keyboardShouldPersistTaps='handled'
+							showsVerticalScrollIndicator={false}
+							bounces={false}
 						>
 							<Text
 								style={{
@@ -1978,12 +2931,12 @@ export default function LibraryScreen() {
 									marginBottom: 4,
 								}}
 							>
-								Verse Note
+								Verse Reflection
 							</Text>
 							<Text
 								style={{
 									fontSize: 13,
-									fontFamily: 'Inter_500Medium',
+									fontFamily: 'Inter_700Bold',
 									color: colors.accent,
 									marginBottom: 12,
 								}}
@@ -2069,12 +3022,12 @@ export default function LibraryScreen() {
 									</Text>
 								</Pressable>
 							</View>
-						</Pressable>
-					</Pressable>
-				</KeyboardAvoidingView>
+						</ScrollView>
+					</View>
+				</View>
 			</Modal>
 
-			{/* 9. Re-edit Bookmark Collections Picker Sheet */}
+			{/* 7. Re-edit Bookmark Collections Picker Sheet */}
 			{isPickerVisible && (
 				<BookmarkPickerSheet
 					visible={isPickerVisible}
@@ -2101,12 +3054,12 @@ export default function LibraryScreen() {
 				/>
 			)}
 
-			{/* 10. Prayer Meditation Modal */}
+			{/* 8. Liturgies Prayer Meditation Modal */}
 			<PrayerMeditationModal
-				visible={isPrayerModalVisible}
+				visible={isLiturgiesModalVisible}
 				prayer={selectedPrayerForModal}
 				onClose={() => {
-					setIsPrayerModalVisible(false);
+					setIsLiturgiesModalVisible(false);
 					setSelectedPrayerForModal(null);
 				}}
 			/>

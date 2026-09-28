@@ -354,17 +354,30 @@
   - **Store Compliance & Billing Management (`src/app/(tabs)/settings.tsx`):** Added in-app "Restore Purchases" button with spinner feedback and direct "Manage Subscription" deep-link to Google Play / App Store account settings.
   - **Viral Growth & App Review Loops (`src/app/(tabs)/settings.tsx`):** Integrated native "Share Bible Unlock with a Friend", "Rate on Google Play", and support mailto links alongside Privacy Policy and Terms of Service.
   - **Developer Protocol Card:** Isolated debug triggers ("Reset Reading Progress" and "Simulate Free / Pro") strictly behind `__DEV__` with industrial warning borders.
+- [x] `TASK-059`: Library Screen Architectural Redesign & Spiritual Treasury (`DEC-042`):
+  - **3 Semantic Pillars (`src/app/(tabs)/library.tsx`):** Replaced legacy 4 tabs with 3 focused spiritual pillars (`01 SCRIPTURE`, `02 PRAYERS`, `03 JOURNAL`).
+  - **Sanctuary Vault Telemetry Strip (`src/app/(tabs)/library.tsx`):** Added `[ SANCTUARY VAULT ]` brutalist header and live counters (`SAVED`, `COLLECTIONS`, `PRAYERS`, `ANSWERED`).
+  - **Unconditional Top Resume Reading Hero (`src/app/(tabs)/library.tsx`):** Extracted Last Read auto-marker above all tabs for instant 1-tap reading resumption (Byron Sharp usability directive).
+  - **Personal Prayer Journal & Sutherland Praise Ritual (`src/lib/mmkv.ts`, `src/components/library/PersonalPrayerModal.tsx`):** Added `UserPrayer` model with CRUD MMKV storage, support for active petitions, and celebratory praise note prompt when marking prayers answered with golden badge styling.
+  - **Sacred Verse Art Card Generator (`src/components/library/VerseCardShareModal.tsx`):** Built 4:5 social verse art generator utilizing bundled WebP artwork, responsive typography, and Godin understated attribution (`BIBLE UNLOCK • bibleunlock.app`).
+  - **Hormozi Value Gating Calibration (`src/components/BookmarkPickerSheet.tsx`, `src/app/(tabs)/library.tsx`):** Expanded free-tier quota to 10 bookmarks and 5 active personal prayers to enable deep habit formation before prompting Sanctuary paywall.
+  - **Local Data Portability (`src/lib/backup.ts`):** Added prayers export and schema-validated restore to offline JSON backup engine.
+  - **Keyboard Occlusion Elimination Across Modals (`src/components/library/PersonalPrayerModal.tsx`, `src/app/(tabs)/library.tsx`):** Eliminated form hiding behind soft keyboard across New Prayer Request, Edit Prayer, Mark Answered testimony, New/Edit Collection, and Verse Note editing by replacing static alignment with dynamic keyboard offset tracking (`keyboardDidShow`/`keyboardDidHide`), `statusBarTranslucent`, `ScrollView` wrappers, constrained max-heights, and backdrop keyboard dismissal.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- 100% offline JSON export and restore verified.
-- App Store & Google Play compliance verified with in-app purchase restoration and subscription links.
-- Touch target minimum 44x44pt satisfied across all settings buttons and list actions.
-- Dual-theme verified in both Celestial Dark and Parchment Light.
+- 100% offline personal prayer journaling with MMKV Nitro storage.
+- Full backup export and restore compatibility including prayer items.
+- Byron Sharp Top Resume Reading Hero verified above all tabs.
+- Rory Sutherland Answered Prayers celebration flow verified.
+- Touch target minimum 44x44pt satisfied across all buttons and actions.
+- Dual-theme verified in Celestial Dark (`#0d120f`) and Parchment Light (`#f8f6f0`).
+- Keyboard avoidance verified across all creation and editing modals on Android and iOS.
 
 ## Session Handoff Notes
 
-- Settings page is transformed into a clean, 4-cluster grouped hub with full store compliance and data portability.
-- Android battery optimization modal prevents OEM background task killing.
-- All changes are verified with zero new third-party dependencies.
+- Library tab is elevated into an industrial-brutalist Spiritual Treasury and habit vault.
+- Personal prayer petitions and answered prayers praise archive fully operational offline.
+- Social verse art cards ready for sharing without third-party libraries.
+

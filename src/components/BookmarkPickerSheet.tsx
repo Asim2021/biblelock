@@ -159,14 +159,14 @@ const BookmarkPickerContent: React.FC<BookmarkPickerContentProps> = ({ verse, in
 			return;
 		}
 
-		// Check free tier limit (5 bookmarks max)
+		// Check free tier limit (10 bookmarks max per Hormozi Value Equation switching barrier calibration)
 		if (!isEditing && !isPremium) {
 			const allBookmarks = getBookmarks();
-			if (allBookmarks.length >= 5) {
+			if (allBookmarks.length >= 10) {
 				requirePremium('Unlimited bookmarks');
 				Alert.alert(
 					'Bookmark Limit Reached',
-					"You've saved 5 bookmarks on the Free Covenant Plan. Unlock Sanctuary to save unlimited verses.",
+					"You've saved 10 bookmarks on the Free Covenant Plan. Unlock Sanctuary to save unlimited verses.",
 				);
 				return;
 			}
