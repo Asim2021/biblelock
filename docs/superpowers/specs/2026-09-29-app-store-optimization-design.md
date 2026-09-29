@@ -27,7 +27,7 @@
 
 | Field | Max Limit | Exact Specification | Actual Count | Notes / Compliance |
 |---|---|---|---|---|
-| **App Name (Title)** | 30 chars | `Bible Unlock: Daily App Blocker` | 30 / 30 | Exact character cap. Contains brand + primary high-volume keywords. |
+| **App Name (Title)** | 30 chars | `Bible Unlock: Daily App Block` | 29 / 30 | Complies with 30-char limit. Contains brand + primary high-volume keywords. |
 | **Subtitle** | 30 chars | `Read Scripture to Unlock Apps` | 29 / 30 | Explains unique mechanism. Zero word overlap with Title. |
 | **Promotional Text** | 170 chars | `Stop doomscrolling. Start reading. Bible Unlock shields your distracting apps until you spend time in God’s Word. Build an unbreakable daily habit today.` | 151 / 170 | Editable at any time without new binary release. High emotional hook. |
 | **Primary Category** | — | `Productivity` | — | Target shelf for Screen Time & Focus tools. |
@@ -89,7 +89,7 @@ Support: support@bibleunlock.in
 
 | Field | Max Limit | Exact Specification | Actual Count | Notes / Compliance |
 |---|---|---|---|---|
-| **App Name (Title)** | 30 chars | `Bible Unlock: Daily App Blocker` | 30 / 30 | Complies with Play Console policies (no emojis, no ALL CAPS, no "best/free"). |
+| **App Name (Title)** | 30 chars | `Bible Unlock: Daily App Block` | 29 / 30 | Complies with Play Console policies (no emojis, no ALL CAPS, no "best/free"). |
 | **Short Description** | 80 chars | `Block distracting apps until you complete your daily Bible reading. Guard focus.` | 79 / 80 | Primary search snippet shown in search results and top of listing. |
 
 ### Google Play Full Description (4,000 Characters Max — Heavily Search-Indexed)
