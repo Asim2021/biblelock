@@ -69,13 +69,21 @@ If you update native modules, add native dependencies, or need to rebuild the AP
 
 ### Procedure B: Standard Expo Run Command
 
-From the `frontend` folder:
+From the project root:
 
 ```bash
-cd frontend
 npm run android
 # Or: npx expo run:android
 ```
+
+### Procedure C: Clean Release Build
+
+To assemble a release APK cleanly without stale build or native CMake cache issues:
+
+```powershell
+cd android; Remove-Item -Recurse -Force app/build, app/.cxx; .\gradlew clean; .\gradlew assembleRelease
+```
+*Generated APK location: `android/app/build/outputs/apk/release/app-release.apk`*
 
 ---
 
@@ -87,11 +95,19 @@ npm run android
 
 ### 2. CMake / Prefab Native Compilation Failure with Java 25
 - **Why it happens**: Gradle daemon running on Java 25 causes AGP / CMake to fail during `:react-native-nitro-modules:configureCMakeDebug` due to stderr warnings treated as errors.
-- **Solution**: Keep `org.gradle.java.home` pinned to JDK 21 in `frontend/android/gradle.properties` and do not allow Gradle to auto-provision Java 25.
+- **Solution**: Keep `org.gradle.java.home` pinned to JDK 21 in `android/gradle.properties` and do not allow Gradle to auto-provision Java 25.
 
 ### 3. Route Collision in Expo Router
 - **Why it happens**: Having both `src/app/index.tsx` and `src/app/(tabs)/index.tsx` causes Expo Router to attempt registering `/` twice, crashing the navigation tree in React Fabric.
 - **Solution**: The single canonical home screen is located at `src/app/(tabs)/index.tsx`. Do not add an un-nested `src/app/index.tsx`.
+
+### 4. Duplicate Resources or Stale CMake on Release Build (`mergeReleaseResources` Error)
+- **Why it happens**: When static assets change file extensions (e.g., converting `.jpg` to `.webp`), Gradle's generated release resource directory retains the old files. Android AAPT2 resource merger flags both as duplicate identifiers (`@drawable/...`). In addition, removing native packages can leave stale references inside `android/app/.cxx`, failing `gradlew clean`.
+- **Solution**: Purge `app/build` and `app/.cxx` then clean and assemble:
+  ```powershell
+  cd android; Remove-Item -Recurse -Force app/build, app/.cxx; .\gradlew clean; .\gradlew assembleRelease
+  ```
+  *(Or on bash/macOS/Linux: `cd android && rm -rf app/build app/.cxx && ./gradlew clean && ./gradlew assembleRelease`)*
 
 ---
 
