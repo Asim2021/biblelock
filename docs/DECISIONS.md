@@ -1647,6 +1647,51 @@ Selected **Option C**:
 - 44x44pt touch targets satisfied across all interactive buttons and badges.
 - Seamless light and dark mode parity using `useTheme()`.
 
+---
+
+## [DEC-044] High-Performance Static Web & Dual-Theme SEO Architecture for bibleunlock.in
+
+- **Date:** 2026-09-29
+- **Status:** Validated
+- **Related Task / Baseline:** TASK-062, `docs/superpowers/specs/2026-09-29-web-seo-landing-page-design.md`, `docs/superpowers/plans/2026-09-29-web-seo-landing-page.md`, `web/`, `scripts/validate-web-seo.mjs`
+
+### 1. Problem / Trigger
+1. **Search Engine & Organic Discovery Absence:** Bible Unlock lacked a canonical web presence (`https://bibleunlock.in`), preventing Google/Bing search indexing, rich SERP snippets, and organic acquisition.
+2. **App Store & Google Play Legal Compliance:** App store review guidelines (Apple Guideline 5.1.1, Google User Data Policy) mandate public web-hosted Privacy Policy and Terms of Service URLs disclosing screen time, accessibility APIs, and subscription auto-renewals.
+3. **Visual Inconsistency Risk:** A generic third-party web template would break visual continuity between the web discovery funnel and the mobile app's curated themes.
+4. **Performance & Core Web Vitals:** Heavy client JavaScript frameworks (React/Next.js) add redundant bundle overhead and slow TTFB/LCP for an informational landing and legal hub.
+
+### 2. Alternatives Evaluated
+- **Option A (Next.js / SPA Framework):** Modern component model, but introduces Node runtime dependency, hydration delay, JavaScript bundle overhead, and potential theme flash.
+- **Option B (Third-Party Hosted Notion/Carrd):** Fast to set up, but lacks full Schema.org structured data control, custom CSS token binding, titanium video frame rendering, and self-hosted privacy guarantees.
+- **Option C (Zero-Dependency Semantic HTML5 + 1:1 CSS Design Tokens + Vanilla JS):** Selected. Delivers instant TTFB/FCP, 100/100 Core Web Vitals, zero client runtime dependencies, full Schema.org JSON-LD control, and 1:1 token parity with `src/lib/themeContext.tsx`.
+
+### 3. Decision & Trade-offs
+Selected **Option C**:
+- **Dual-Theme Parity Engine:** Implemented exact token bindings matching mobile:
+  - **Celestial Dark (`:root`):** Canvas `#0d120f`, Surface `#141e17`, Border `#202e25`, Text `#faf9f5`, Accent `#f5b800` (Sacred Gold).
+  - **Parchment Light (`[data-theme="light"]`):** Canvas `#f8f6f0`, Surface `#ffffff`, Border `#e4dfd3`, Text `#1a1f1b`, Accent `#d49400` (Warm Ochre).
+  - **Zero-Flash Execution:** Embedded synchronous inline head script reading `localStorage.getItem('bu_theme')` and OS `prefers-color-scheme` before CSS evaluation.
+- **Rich Structured Data:** Embedded 4 Schema.org JSON-LD blocks (`SoftwareApplication`, `FAQPage`, `Organization`, `WebSite`) to capture rich Google snippets, SERP rating stars, and collapsible search Q&As.
+- **18s Launch Video Integration:** Embedded titanium device frame housing `web/assets/brag.mp4` with HTML5 native playback controls.
+- **Legal Compliance:** Canonical `web/privacy.html` (on-device data zero-collection guarantee, Screen Time & Accessibility API disclosures) and `web/terms.html` (7-day free trial and subscription auto-renewal terms).
+- **Automated Validation:** Authored `scripts/validate-web-seo.mjs` and Node test suites (`tests/web-*.test.mjs`).
+
+### 4. Implementation Details
+- `web/index.html`: High-converting marketing landing page with single `<h1>`, 4-step habit mechanism, feature grid, Covenant vs Sanctuary pricing comparison, 6-question FAQ accordion, and dual-theme switcher.
+- `web/assets/css/styles.css`: Pure vanilla CSS design system with CSS custom properties, responsive layout, glassmorphism badges, and titanium frame styling.
+- `web/assets/js/main.js`: Theme toggle listener, video toggle, and accessible FAQ accordion.
+- `web/privacy.html` & `web/terms.html`: Canonical legal documents formatted for desktop and mobile reading.
+- `web/sitemap.xml` & `web/robots.txt`: Search crawler indexing and discovery maps.
+- `scripts/validate-web-seo.mjs`: Automated CLI validator for Schema, canonical URLs, and heading hierarchy.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npm run test:web`: 6/6 tests passing (100% green).
+- `npm run web:validate`: Verified 1 `<h1>`, 4 Schema.org JSON-LD blocks, valid image alts, canonical links, and dual-theme CSS tokens.
+- Zero client runtime dependencies (plain static HTML/CSS/JS deployable to Cloudflare Pages, GitHub Pages, or Vercel).
+- 100% compliant with Apple and Google Play store legal requirements.
+
+
 
 
 

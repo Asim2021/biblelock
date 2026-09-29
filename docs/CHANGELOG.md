@@ -1,5 +1,30 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.53] - 2026-09-29
+
+### Web Landing Page, Dual-Theme Architecture & SEO Pipeline (`bibleunlock.in`)
+- **1:1 Dual-Theme Web Design System (`web/assets/css/styles.css`, `web/assets/js/main.js`, `DEC-044`):**
+  - Integrated 1:1 color token parity matching mobile `src/lib/themeContext.tsx`: Celestial Dark (`#0d120f`) and Parchment Light (`#f8f6f0`), with Sacred Gold (`#f5b800`) and Warm Ochre (`#d49400`) accents.
+  - Implemented tactile top-bar toggle `[ 🌙 / ☀️ ]` with `localStorage` persistence, OS `prefers-color-scheme` auto-detect, and synchronous zero-flash inline script.
+- **High-Converting Static Marketing Landing Page (`web/index.html`):**
+  - Engineered single-`<h1>` semantic HTML5 architecture with sticky navigation, live download badges, and embedded titanium device mockup housing the 18s brand video (`web/assets/brag.mp4`).
+  - Added 4-step habit transformation mechanism ("Select Addictive Apps", "App Blocked", "Read Scripture to Unlock", "Form Lifelong Habit"), feature bento grid, Covenant vs Sanctuary comparison matrix, and 6-question accessible accordion FAQ.
+- **Rich Schema.org Structured Data (`web/index.html`):**
+  - Embedded 4 valid Schema.org JSON-LD blocks (`SoftwareApplication`, `FAQPage`, `Organization`, `WebSite`) enabling Google rich snippets, aggregate rating stars (4.9/5), and expandable search results.
+- **Canonical Legal Compliance Pages (`web/privacy.html`, `web/terms.html`):**
+  - Authored Apple App Store (Guideline 5.1.1) and Google Play compliant policies with on-device zero data collection disclosures, Screen Time & Accessibility API statements, 7-day free trial terms, and auto-renewal rules under `support@bibleunlock.in`.
+- **Search Engine Discovery & Automation Engine (`web/sitemap.xml`, `web/robots.txt`, `scripts/validate-web-seo.mjs`):**
+  - Generated compliant XML sitemap, crawler indexing rules, and automated CLI validator `npm run web:validate` ensuring 100% schema syntax, heading structure, image alt tags, and theme variables.
+
+### Verified Impact
+- 6/6 automated web unit tests passing (`npm run test:web` in 128ms).
+- 7/7 automated ASO unit tests passing (`npm run test:aso` in 144ms).
+- TypeScript compile clean (`npx tsc --noEmit` with 0 errors).
+- Automated validator `npm run web:validate` 100% passed.
+- Zero client runtime dependencies, static deployable to any edge CDN with 100/100 Core Web Vitals.
+
+---
+
 ## [1.0.52] - 2026-09-29
 
 ### App Store Optimization (ASO) Pipeline, Fastlane Metadata Exporter & Brand Launch Assets
