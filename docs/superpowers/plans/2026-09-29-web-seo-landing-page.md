@@ -15,12 +15,15 @@
 - **Canonical Domain:** `https://bibleunlock.in` (all canonical tags, og:url, schema IDs, and sitemap entries must use `https://bibleunlock.in`).
 - **Support & Legal Email:** `support@bibleunlock.in`.
 - **Search Engine Guidelines:** Exactly one `<h1>` per page, descriptive image `alt` attributes, valid Schema.org JSON-LD format.
-- **Design Tokens:** Background Celestial Dark (`#070b09` to `#0d120f`), Accent Sacred Gold (`#f5b800`), Success Leaf Green (`#5db872`), Fonts `EB Garamond` (headlines/scripture) and `Inter` (HUD/UI/body).
+- **Design Tokens (1:1 with `src/lib/themeContext.tsx`):**
+  - **Celestial Dark (Default):** `--bg-canvas: #0d120f`, `--bg-surface: #141e17`, `--border-main: #202e25`, `--accent-gold: #f5b800`, `--color-success: #5db872`, `--text-primary: #faf9f5`, `--text-secondary: #78a898`.
+  - **Parchment Light:** `[data-theme="light"]` `--bg-canvas: #f8f6f0`, `--bg-surface: #ffffff`, `--border-main: #e4dfd3`, `--accent-gold: #d49400`, `--color-success: #2e8c45`, `--text-primary: #1a1f1b`.
+  - **Typography:** `EB Garamond` (headlines/scripture) and `Inter` (HUD/UI/body).
 - **Core Web Vitals:** Zero client-side framework bloat, non-blocking fonts (`display=swap`), responsive mobile-first layout.
 
 ---
 
-### Task 1: Web Assets Infrastructure & CSS Design Tokens
+### Task 1: Web Assets Infrastructure & Dual-Theme CSS Tokens
 
 **Files:**
 - Create: `web/assets/css/styles.css`
@@ -28,10 +31,10 @@
 - Test: `tests/web-assets.test.mjs`
 
 **Interfaces:**
-- Consumes: Brand palette tokens and video assets from `brag-output/` and `assets/`.
-- Produces: Responsive styling, video modal controls, and FAQ accordion interactivity.
+- Consumes: Brand palette tokens from `src/lib/themeContext.tsx` and video assets from `brag-output/` and `assets/`.
+- Produces: Responsive dual-theme styling, theme toggle listener, video modal controls, and FAQ accordion interactivity.
 
-- [ ] **Step 1: Write test for web assets and CSS variables**
+- [ ] **Step 1: Write test for web assets and dual-theme CSS variables**
 
 Create `tests/web-assets.test.mjs`:
 ```javascript
@@ -40,15 +43,17 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 
-test('Web assets exist and define core design tokens', () => {
+test('Web assets exist and define 1:1 dual-theme tokens', () => {
   assert.ok(fs.existsSync('web/assets/css/styles.css'), 'styles.css must exist');
   assert.ok(fs.existsSync('web/assets/js/main.js'), 'main.js must exist');
 
   const css = fs.readFileSync('web/assets/css/styles.css', 'utf8');
-  assert.ok(css.includes('--bg-celestial'), 'Defines background celestial variable');
+  assert.ok(css.includes('--bg-canvas'), 'Defines canvas background variable');
   assert.ok(css.includes('--accent-gold'), 'Defines gold accent variable');
-  assert.ok(css.includes('#070b09'), 'Uses celestial dark base');
-  assert.ok(css.includes('#f5b800'), 'Uses sacred gold accent');
+  assert.ok(css.includes('#0d120f'), 'Uses Celestial Dark base from themeContext.tsx');
+  assert.ok(css.includes('#f5b800'), 'Uses Sacred Gold accent from themeContext.tsx');
+  assert.ok(css.includes('#f8f6f0'), 'Uses Parchment Light base from themeContext.tsx');
+  assert.ok(css.includes('data-theme="light"'), 'Defines light theme override selector');
 });
 ```
 
@@ -60,8 +65,8 @@ Expected: FAIL with "styles.css must exist"
 - [ ] **Step 3: Implement `web/assets/css/styles.css`, `web/assets/js/main.js`, and copy media assets**
 
 Create `web/assets/css/styles.css` containing:
-- CSS variables (`--bg-celestial: #070b09`, `--accent-gold: #f5b800`, `--accent-green: #5db872`, etc.).
-- Responsive grid, modern card surfaces, phone mockup frame, typography scales, buttons, FAQ accordion styling, and legal page styles.
+- Complete dual-theme tokens (`:root` for Celestial Dark, `[data-theme="light"]` for Parchment Light).
+- Responsive grid, modern card surfaces, phone mockup frame, typography scales, buttons, FAQ accordion styling, theme toggle styling, and legal page styles.
 
 Create `web/assets/js/main.js` containing:
 - Lightweight FAQ accordion toggle (`details` fallback or animated height toggle).
