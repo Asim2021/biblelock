@@ -34,7 +34,7 @@
 - Consumes: Brand palette tokens from `src/lib/themeContext.tsx` and video assets from `brag-output/` and `assets/`.
 - Produces: Responsive dual-theme styling, theme toggle listener, video modal controls, and FAQ accordion interactivity.
 
-- [ ] **Step 1: Write test for web assets and dual-theme CSS variables**
+- [x] **Step 1: Write test for web assets and dual-theme CSS variables**
 
 Create `tests/web-assets.test.mjs`:
 ```javascript
@@ -57,12 +57,12 @@ test('Web assets exist and define 1:1 dual-theme tokens', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node --test tests/web-assets.test.mjs`
 Expected: FAIL with "styles.css must exist"
 
-- [ ] **Step 3: Implement `web/assets/css/styles.css`, `web/assets/js/main.js`, and copy media assets**
+- [x] **Step 3: Implement `web/assets/css/styles.css`, `web/assets/js/main.js`, and copy media assets**
 
 Create `web/assets/css/styles.css` containing:
 - Complete dual-theme tokens (`:root` for Celestial Dark, `[data-theme="light"]` for Parchment Light).
@@ -75,12 +75,12 @@ Create `web/assets/js/main.js` containing:
 
 Copy `brag-output/brag.mp4` to `web/assets/brag.mp4`, `brag-output/brag.jpg` to `web/assets/brag-poster.jpg`, and `assets/images/icon.png` to `web/assets/icon.png`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `node --test tests/web-assets.test.mjs`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web/assets/ tests/web-assets.test.mjs
@@ -99,7 +99,7 @@ git commit -m "feat(web): initialize web asset pipeline and celestial dark styli
 - Consumes: Spec sections 1, 2, 4.
 - Produces: Complete semantic landing page with embedded Schema.org JSON-LD scripts.
 
-- [ ] **Step 1: Write test for homepage SEO and Schema.org markup**
+- [x] **Step 1: Write test for homepage SEO and Schema.org markup**
 
 Create `tests/web-seo.test.mjs`:
 ```javascript
@@ -138,12 +138,12 @@ test('Homepage contains exact SEO meta tags and Schema.org JSON-LD', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node --test tests/web-seo.test.mjs`
 Expected: FAIL with "no such file or directory, open 'web/index.html'"
 
-- [ ] **Step 3: Implement `web/index.html`**
+- [x] **Step 3: Implement `web/index.html`**
 
 Create `web/index.html` with:
 - `<head>`: Canonical link, OpenGraph, Twitter Cards, Google Fonts (`EB Garamond` and `Inter`), 4 JSON-LD Schema scripts (`SoftwareApplication`, `FAQPage`, `Organization`, `WebSite`).
@@ -155,12 +155,12 @@ Create `web/index.html` with:
 - FAQ Accordion: 6 Google-indexed questions.
 - Footer: Terms (`/terms`), Privacy (`/privacy`), Support email, Copyright.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `node --test tests/web-seo.test.mjs`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web/index.html tests/web-seo.test.mjs
@@ -180,7 +180,7 @@ git commit -m "feat(web): build homepage with rich schema json-ld and conversion
 - Consumes: Spec section 5, Apple Guideline 5.1.1, Google Play User Data Policy.
 - Produces: Clean, accessible legal policies hosted at `https://bibleunlock.in/privacy` and `https://bibleunlock.in/terms`.
 
-- [ ] **Step 1: Write test for legal compliance pages**
+- [x] **Step 1: Write test for legal compliance pages**
 
 Create `tests/web-legal.test.mjs`:
 ```javascript
@@ -206,12 +206,12 @@ test('Terms of service satisfies subscription and trial disclosure criteria', ()
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node --test tests/web-legal.test.mjs`
 Expected: FAIL with "no such file or directory, open 'web/privacy.html'"
 
-- [ ] **Step 3: Implement `web/privacy.html` and `web/terms.html`**
+- [x] **Step 3: Implement `web/privacy.html` and `web/terms.html`**
 
 Create `web/privacy.html`:
 - Clean editorial reading layout in Celestial Dark.
@@ -222,12 +222,12 @@ Create `web/terms.html`:
 - Terms of service, auto-renewing subscription rules, 7-day free trial terms, cancellation procedures via Apple ID / Google Play Account Settings.
 - Canonical URL: `<link rel="canonical" href="https://bibleunlock.in/terms">`.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `node --test tests/web-legal.test.mjs`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web/privacy.html web/terms.html tests/web-legal.test.mjs
@@ -248,7 +248,7 @@ git commit -m "feat(web): add canonical privacy policy and terms of service page
 - Consumes: Spec section 3.
 - Produces: Valid XML sitemap, robots crawler instructions, and automated CI SEO verification script.
 
-- [ ] **Step 1: Write test for sitemap and crawler files**
+- [x] **Step 1: Write test for sitemap and crawler files**
 
 Create `tests/web-sitemap.test.mjs`:
 ```javascript
@@ -272,24 +272,24 @@ test('Robots.txt allows indexing and links sitemap', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node --test tests/web-sitemap.test.mjs`
 Expected: FAIL with "no such file or directory, open 'web/sitemap.xml'"
 
-- [ ] **Step 3: Implement `web/sitemap.xml`, `web/robots.txt`, and `scripts/validate-web-seo.mjs`**
+- [x] **Step 3: Implement `web/sitemap.xml`, `web/robots.txt`, and `scripts/validate-web-seo.mjs`**
 
 Implement:
 - `web/sitemap.xml`: Complete standard XML sitemap covering `/`, `/privacy`, and `/terms`.
 - `web/robots.txt`: Global allow with sitemap URL.
 - `scripts/validate-web-seo.mjs`: Node.js CLI script that validates all HTML files in `web/` for canonical links, single H1, valid JSON-LD schemas, image alt tags, and sitemap synchronization.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `node --test tests/web-sitemap.test.mjs`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add web/sitemap.xml web/robots.txt scripts/validate-web-seo.mjs tests/web-sitemap.test.mjs
@@ -304,7 +304,7 @@ git commit -m "feat(web): add sitemap.xml, robots.txt, and automated web seo val
 - Modify: `package.json` (add `"web:validate": "node scripts/validate-web-seo.mjs"`, `"test:web": "node --test tests/web-*.test.mjs"`)
 - Modify: `docs/STATUS.md`
 
-- [ ] **Step 1: Add web scripts to `package.json`**
+- [x] **Step 1: Add web scripts to `package.json`**
 
 Update `scripts` in `package.json`:
 ```json
@@ -312,16 +312,16 @@ Update `scripts` in `package.json`:
 "test:web": "node --test tests/web-*.test.mjs"
 ```
 
-- [ ] **Step 2: Run full web test suite and validator**
+- [x] **Step 2: Run full web test suite and validator**
 
 Run: `npm run test:web; npm run web:validate`
 Expected: All tests pass with zero errors.
 
-- [ ] **Step 3: Update `docs/STATUS.md`**
+- [x] **Step 3: Update `docs/STATUS.md`**
 
 Append `TASK-062` to `docs/STATUS.md` tracking web landing page and SEO deliverables.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add package.json docs/STATUS.md
