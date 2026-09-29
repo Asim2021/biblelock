@@ -42,7 +42,10 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "aso:validate": "node scripts/validate-aso-metadata.mjs",
+    "aso:export": "node scripts/export-store-metadata.mjs",
+    "test:aso": "node --test tests/aso-*.test.mjs tests/feature-graphic.test.mjs tests/store-export.test.mjs"
   },
   "private": true,
   "overrides": {

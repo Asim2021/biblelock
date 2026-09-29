@@ -31,7 +31,7 @@
 - Consumes: Raw store metadata objects defined in spec.
 - Produces: `validateAppleMetadata(data)`, `validateGoogleMetadata(data)`, and `exportFastlaneFiles(data, outDir)` CLI utility.
 
-- [ ] **Step 1: Write the failing test for metadata validation**
+- [x] **Step 1: Write the failing test for metadata validation**
 
 Create `tests/aso-metadata.test.mjs`:
 ```javascript
@@ -98,12 +98,12 @@ test('Google Play rejects forbidden promotional claims in title', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node --test tests/aso-metadata.test.mjs`
 Expected: FAIL with "Cannot find module '../scripts/validate-aso-metadata.mjs'"
 
-- [ ] **Step 3: Implement `scripts/validate-aso-metadata.mjs`**
+- [x] **Step 3: Implement `scripts/validate-aso-metadata.mjs`**
 
 Create `scripts/validate-aso-metadata.mjs`:
 ```javascript
@@ -181,12 +181,12 @@ export function validateGoogleMetadata(data) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `node --test tests/aso-metadata.test.mjs`
 Expected: PASS (all 4 tests passing)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/validate-aso-metadata.mjs tests/aso-metadata.test.mjs
@@ -207,7 +207,7 @@ git commit -m "feat(aso): add metadata validation engine with character and poli
 - Consumes: `store-assets/metadata/*.json`
 - Produces: `store-assets/metadata/fastlane/` directory trees for App Store Connect & Google Play Console.
 
-- [ ] **Step 1: Write test for metadata export**
+- [x] **Step 1: Write test for metadata export**
 
 Create `tests/store-export.test.mjs`:
 ```javascript
@@ -235,12 +235,12 @@ test('Exports Fastlane directory files with valid content', async () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node --test tests/store-export.test.mjs`
 Expected: FAIL with "Cannot find module '../scripts/export-store-metadata.mjs'"
 
-- [ ] **Step 3: Implement metadata JSON files and export script**
+- [x] **Step 3: Implement metadata JSON files and export script**
 
 Create `store-assets/metadata/apple.json`:
 ```json
@@ -318,12 +318,12 @@ if (process.argv[1] && process.argv[1].endsWith('export-store-metadata.mjs')) {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `node --test tests/store-export.test.mjs`
 Expected: PASS
 
-- [ ] **Step 5: Run export script to generate production fastlane files and commit**
+- [x] **Step 5: Run export script to generate production fastlane files and commit**
 
 ```bash
 node scripts/export-store-metadata.mjs
@@ -343,7 +343,7 @@ git commit -m "feat(aso): add structured store metadata and fastlane exporter"
 - Consumes: The 6-screen specification in `docs/superpowers/specs/2026-09-29-app-store-optimization-design.md`.
 - Produces: Responsive, pixel-accurate 1290x2796 (Apple 6.7") and 1080x2400 (Android) visual frame layouts.
 
-- [ ] **Step 1: Write test to verify storyboard HTML integrity**
+- [x] **Step 1: Write test to verify storyboard HTML integrity**
 
 Create `tests/aso-storyboard.test.mjs`:
 ```javascript
@@ -368,12 +368,12 @@ test('Screenshot storyboard contains all 6 required screens with exact captions'
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node --test tests/aso-storyboard.test.mjs`
 Expected: FAIL with "no such file or directory, open 'store-assets/screenshots/storyboard.html'"
 
-- [ ] **Step 3: Create `store-assets/screenshots/storyboard.html`**
+- [x] **Step 3: Create `store-assets/screenshots/storyboard.html`**
 
 Create `store-assets/screenshots/storyboard.html` with:
 - Google Fonts: `EB Garamond` and `Inter`.
@@ -387,12 +387,12 @@ Create `store-assets/screenshots/storyboard.html` with:
   5. 30-day activity heatmap with 14.5 hrs reclaimed metric.
   6. Library list with KJV, ESV, Reina Valera pills, Nicene Creed card, and Psalm 23.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `node --test tests/aso-storyboard.test.mjs`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add store-assets/screenshots/ tests/aso-storyboard.test.mjs
@@ -411,7 +411,7 @@ git commit -m "feat(aso): implement 6-screen high-res screenshot storyboard"
 - Consumes: Google Play 1024x500 specification.
 - Produces: Exact 1024x500 banner template with brand headline, badge, and 3D device visual.
 
-- [ ] **Step 1: Write test for feature graphic specification**
+- [x] **Step 1: Write test for feature graphic specification**
 
 Create `tests/feature-graphic.test.mjs`:
 ```javascript
@@ -430,12 +430,12 @@ test('Feature graphic has exact 1024x500 dimension styling and required copy', (
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `node --test tests/feature-graphic.test.mjs`
 Expected: FAIL with "no such file or directory"
 
-- [ ] **Step 3: Implement `store-assets/feature-graphic/feature-graphic.html`**
+- [x] **Step 3: Implement `store-assets/feature-graphic/feature-graphic.html`**
 
 Create the 1024x500 layout in `store-assets/feature-graphic/feature-graphic.html` matching Section 5 of the spec:
 - Fixed 1024px × 500px canvas.
@@ -448,12 +448,12 @@ Create the 1024x500 layout in `store-assets/feature-graphic/feature-graphic.html
 - Right block:
   - 3D phone mockup showing lock and radiant scripture rays.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `node --test tests/feature-graphic.test.mjs`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add store-assets/feature-graphic/ tests/feature-graphic.test.mjs
@@ -468,7 +468,7 @@ git commit -m "feat(aso): add 1024x500 google play feature graphic template"
 - Modify: `package.json` (add `"aso:validate": "node scripts/validate-aso-metadata.mjs"`, `"aso:export": "node scripts/export-store-metadata.mjs"`)
 - Modify: `docs/STATUS.md`
 
-- [ ] **Step 1: Update `package.json` with ASO utility commands**
+- [x] **Step 1: Update `package.json` with ASO utility commands**
 
 Add to scripts in `package.json`:
 ```json
@@ -477,16 +477,16 @@ Add to scripts in `package.json`:
 "test:aso": "node --test tests/aso-*.test.mjs tests/feature-graphic.test.mjs tests/store-export.test.mjs"
 ```
 
-- [ ] **Step 2: Run full ASO test suite**
+- [x] **Step 2: Run full ASO test suite**
 
 Run: `npm run test:aso`
 Expected: All tests pass with zero errors.
 
-- [ ] **Step 3: Update `docs/STATUS.md`**
+- [x] **Step 3: Update `docs/STATUS.md`**
 
 Append completed task entry in `docs/STATUS.md` recording Track 1 (ASO) implementation.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add package.json docs/STATUS.md

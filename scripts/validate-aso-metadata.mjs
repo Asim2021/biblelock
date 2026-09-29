@@ -70,3 +70,42 @@ export function validateGoogleMetadata(data) {
     errors
   };
 }
+
+if (process.argv[1] && (process.argv[1].endsWith('validate-aso-metadata.mjs') || process.argv[1].includes('validate-aso-metadata'))) {
+  import('node:fs').then(fs => {
+    try {
+      const appleJson = JSON.parse(fs.readFileSync('store-assets/metadata/apple.json', 'utf8'));
+      const googleJson = JSON.parse(fs.readFileSync('store-assets/metadata/google-play.json', 'utf8'));
+
+      const appleVal = validateAppleMetadata({
+        title: appleJson.name,
+        subtitle: appleJson.subtitle,
+        promotionalText: appleJson.promotional_text,
+        keywords: appleJson.keywords
+      });
+
+      const googleVal = validateGoogleMetadata({
+        title: googleJson.title,
+        shortDescription: googleJson.short_description,
+        fullDescription: googleJson.full_description || ''
+      });
+
+      if (!appleVal.isValid) {
+        console.error('❌ Apple ASO Validation FAILED:', appleVal.errors);
+        process.exit(1);
+      }
+      if (!googleVal.isValid) {
+        console.error('❌ Google Play ASO Validation FAILED:', googleVal.errors);
+        process.exit(1);
+      }
+
+      console.log('✅ ASO Metadata 100% Valid!');
+      console.log(`- Apple Title: ${appleVal.titleLength}/30 | Subtitle: ${appleVal.subtitleLength}/30 | Keywords: ${appleVal.keywordBytes}/100 bytes`);
+      console.log(`- Google Title: ${googleVal.titleLength}/30 | Short Desc: ${googleVal.shortDescLength}/80`);
+    } catch (err) {
+      console.error('Validation error:', err.message);
+      process.exit(1);
+    }
+  });
+}
+
