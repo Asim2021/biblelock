@@ -1002,13 +1002,13 @@ export default function PaywallScreen() {
 
 				{/* Legal and Compliance Links */}
 				<View className='flex-row items-center justify-center space-x-3 mt-1 mb-2'>
-					<Pressable onPress={() => openLink('https://bibleunlock.app/terms')} hitSlop={8}>
+					<Pressable onPress={() => openLink('https://bibleunlock.in/terms')} hitSlop={8}>
 						<Text style={{ color: colors.textSecondary }} className='text-xs font-sans-medium underline'>
 							Terms of Service
 						</Text>
 					</Pressable>
 					<Text style={{ color: colors.textMuted }}>•</Text>
-					<Pressable onPress={() => openLink('https://bibleunlock.app/privacy')} hitSlop={8}>
+					<Pressable onPress={() => openLink('https://bibleunlock.in/privacy')} hitSlop={8}>
 						<Text style={{ color: colors.textSecondary }} className='text-xs font-sans-medium underline'>
 							Privacy Policy
 						</Text>

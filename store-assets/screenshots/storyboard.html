@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bible Unlock — ASO 6-Screen Storyboard (1290x2796)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,500;0,600;0,700;1,400;1,600&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-celestial: #070b09;
+      --bg-card: #0d1410;
+      --bg-surface: #121c16;
+      --accent-gold: #f5b800;
+      --accent-gold-soft: rgba(245, 184, 0, 0.15);
+      --accent-green: #5db872;
+      --accent-green-soft: rgba(93, 184, 114, 0.15);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --phone-border: #232b26;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #030504;
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 40px 20px;
+    }
+
+    .gallery-header {
+      max-width: 1400px;
+      margin: 0 auto 40px auto;
+      text-align: center;
+    }
+
+    .gallery-header h1 {
+      font-family: 'Inter', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+
+    .gallery-header h1 span {
+      color: var(--accent-gold);
+    }
+
+    .gallery-header p {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    .storyboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 32px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Screen Card representing 1290x2796 (Aspect 1:2.167 or 9:19.5) */
+    .aso-screen-card {
+      background: radial-gradient(circle at 50% 10%, #101c15 0%, var(--bg-celestial) 80%);
+      border: 1px solid var(--border-subtle);
+      border-radius: 40px;
+      aspect-ratio: 1290 / 2796;
+      padding: 44px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    /* Top Copy Hook */
+    .aso-header-zone {
+      text-align: center;
+      width: 100%;
+      margin-bottom: 28px;
+      z-index: 2;
+    }
+
+    .aso-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent-gold);
+      background: var(--accent-gold-soft);
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(245, 184, 0, 0.3);
+      margin-bottom: 12px;
+    }
+
+    .aso-title {
+      font-size: 26px;
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      margin-bottom: 8px;
+    }
+
+    .aso-subtitle {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      line-height: 1.4;
+      max-width: 90%;
+      margin: 0 auto;
+    }
+
+    /* Phone Mockup Frame */
+    .phone-mockup {
+      flex: 1;
+      width: 100%;
+      background: #090e0b;
+      border: 5px solid var(--phone-border);
+      border-radius: 36px 36px 0 0;
+      border-bottom: none;
+      box-shadow: 0 -10px 40px rgba(0,0,0,0.8);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      width: 90px;
+      height: 22px;
+      background: #000000;
+      border-radius: 0 0 14px 14px;
+      margin: 0 auto 12px auto;
+    }
+
+    .phone-content {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Screen 1: The Grabber Lock Mockup */
+    .frosted-apps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      filter: blur(8px) opacity(0.25);
+      margin-top: 20px;
+    }
+
+    .app-icon-mock {
+      height: 60px;
+      border-radius: 16px;
+      background: #1c2620;
+    }
+
+    .lock-overlay-hud {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .gold-padlock {
+      width: 68px;
+      height: 68px;
+      background: linear-gradient(135deg, #ffd700, #f5b800);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 40px rgba(245, 184, 0, 0.4);
+      margin-bottom: 16px;
+    }
+
+    .hud-chip {
+      background: rgba(0,0,0,0.7);
+      border: 1px solid rgba(245, 184, 0, 0.4);
+      color: var(--accent-gold);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .hud-cta {
+      background: var(--accent-gold);
+      color: #000;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      width: 100%;
+    }
+
+    /* Screen 2: Bible Reader & Timer HUD */
+    .scripture-reader-card {
+      background: #0f1612;
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 18px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .scripture-text {
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 19px;
+      line-height: 1.45;
+      color: #f3f4f6;
+      font-style: italic;
+    }
+
+    .timer-hud-arc {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(245, 184, 0, 0.08);
+      border: 1px solid rgba(245, 184, 0, 0.3);
+      padding: 12px;
+      border-radius: 14px;
+    }
+
+    .arc-indicator {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 3px solid var(--accent-gold);
+      border-top-color: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 800;
+      color: var(--accent-gold);
+    }
+
+    /* Screen 3: Bible Scroll Visual Card */
+    .bible-scroll-feed {
+      background: radial-gradient(circle at 50% 30%, #1e3a2b, #090e0b);
+      border-radius: 22px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px;
+      box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .pill-peace {
+      background: rgba(245, 184, 0, 0.2);
+      color: var(--accent-gold);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      align-self: flex-start;
+    }
+
+    .scroll-quote {
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 21px;
+      font-weight: 600;
+      color: #ffffff;
+      line-height: 1.35;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    }
+
+    /* Screen 4: Streak Grace Defense */
+    .streak-display {
+      background: #0d1511;
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 20px;
+      text-align: center;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+    }
+
+    .streak-count {
+      font-size: 40px;
+      font-weight: 900;
+      color: var(--accent-gold);
+    }
+
+    .grace-shield-banner {
+      background: var(--accent-green-soft);
+      border: 1px solid var(--accent-green);
+      color: var(--accent-green);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 10px;
+      border-radius: 12px;
+    }
+
+    /* Screen 5: Telemetry & Analytics */
+    .telemetry-card {
+      background: #0d1410;
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 18px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-hero {
+      font-size: 28px;
+      font-weight: 900;
+      color: var(--accent-green);
+    }
+
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin: 12px 0;
+    }
+
+    .heat-cell {
+      height: 18px;
+      border-radius: 4px;
+      background: #18241d;
+    }
+
+    .heat-cell.active {
+      background: var(--accent-green);
+    }
+
+    .heat-cell.gold {
+      background: var(--accent-gold);
+    }
+
+    /* Screen 6: 92 Translations & Liturgies */
+    .translations-list {
+      background: #0d1410;
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .trans-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .trans-tag {
+      background: #19241e;
+      color: #e5e7eb;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .liturgy-item {
+      background: #121c16;
+      border-radius: 10px;
+      padding: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #d1d5db;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="gallery-header">
+    <h1>Bible Unlock <span>ASO Visual Storyboard</span></h1>
+    <p>6-Screen High-Resolution A-Pile Asset Architecture (1290 × 2796 px / 9:19.5 Apple & Android Frames)</p>
+  </div>
+
+  <div class="storyboard-grid">
+
+    <!-- Screen 1: The Grabber -->
+    <div class="aso-screen-card" id="screen-1">
+      <div class="aso-header-zone">
+        <div class="aso-badge">The Unique Mechanism</div>
+        <h2 class="aso-title">LOCKED UNTIL YOU READ 📖</h2>
+        <p class="aso-subtitle">Your Bible is the key that unlocks your phone.</p>
+      </div>
+      <div class="phone-mockup">
+        <div class="phone-notch"></div>
+        <div class="phone-content">
+          <div class="frosted-apps-grid">
+            <div class="app-icon-mock"></div>
+            <div class="app-icon-mock"></div>
+            <div class="app-icon-mock"></div>
+            <div class="app-icon-mock"></div>
+            <div class="app-icon-mock"></div>
+            <div class="app-icon-mock"></div>
+          </div>
+          <div class="lock-overlay-hud">
+            <div class="gold-padlock">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="#000"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+            </div>
+            <div class="hud-chip">SHIELD ACTIVE // 10 MIN SCRIPTURE GOAL</div>
+            <div class="hud-cta">READ TO UNLOCK</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 2: The Core Habit Mechanic -->
+    <div class="aso-screen-card" id="screen-2">
+      <div class="aso-header-zone">
+        <div class="aso-badge">Daily Spiritual Discipline</div>
+        <h2 class="aso-title">CHOOSE SCRIPTURE OVER SCROLLING</h2>
+        <p class="aso-subtitle">Set custom reading goals from 5 to 120 minutes.</p>
+      </div>
+      <div class="phone-mockup">
+        <div class="phone-notch"></div>
+        <div class="phone-content">
+          <div class="scripture-reader-card">
+            <div>
+              <div style="font-size: 11px; color: var(--accent-gold); font-weight: 700; margin-bottom: 8px;">MATTHEW 11:28 (KJV)</div>
+              <p class="scripture-text">“Come unto me, all ye that labour and are heavy laden, and I will give you rest. Take my yoke upon you, and learn of me...”</p>
+            </div>
+            <div class="timer-hud-arc">
+              <div class="arc-indicator">07m</div>
+              <div>
+                <div style="font-size: 12px; font-weight: 700; color: #fff;">07:42 REMAINING</div>
+                <div style="font-size: 10px; color: var(--text-muted);">Apps unlock at completion</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 3: The Purple Cow (336 Cards) -->
+    <div class="aso-screen-card" id="screen-3">
+      <div class="aso-header-zone">
+        <div class="aso-badge">The Bible Scroll Feed</div>
+        <h2 class="aso-title">336 VISUAL SCRIPTURE CARDS</h2>
+        <p class="aso-subtitle">Swipe through sacred art & mood-curated verses.</p>
+      </div>
+      <div class="phone-mockup">
+        <div class="phone-notch"></div>
+        <div class="phone-content">
+          <div class="bible-scroll-feed">
+            <div class="pill-peace">🕊️ Peace & Strength</div>
+            <p class="scroll-quote">“Peace I leave with you; my peace I give you. I do not give to you as the world gives.”</p>
+            <div style="font-size: 12px; font-weight: 700; color: var(--accent-gold);">JOHN 14:27</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 4: Streak Grace Defense -->
+    <div class="aso-screen-card" id="screen-4">
+      <div class="aso-header-zone">
+        <div class="aso-badge">Momentum Protection</div>
+        <h2 class="aso-title">NEVER LOSE YOUR MOMENTUM</h2>
+        <p class="aso-subtitle">Streak Grace Day protection shields your consistency.</p>
+      </div>
+      <div class="phone-mockup">
+        <div class="phone-notch"></div>
+        <div class="phone-content">
+          <div class="streak-display">
+            <div>
+              <div style="font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Current Streak</div>
+              <div class="streak-count">14 DAYS 🔥</div>
+            </div>
+            <div class="grace-shield-banner">
+              🛡️ 1 MONTHLY GRACE DAY READY
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted);">Zero guilt. Real habit defense.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 5: Telemetry & Analytics -->
+    <div class="aso-screen-card" id="screen-5">
+      <div class="aso-header-zone">
+        <div class="aso-badge">Habit Heatmaps</div>
+        <h2 class="aso-title">RECLAIM 180+ HOURS PER YEAR</h2>
+        <p class="aso-subtitle">30-day focus heatmaps and spiritual telemetry.</p>
+      </div>
+      <div class="phone-mockup">
+        <div class="phone-notch"></div>
+        <div class="phone-content">
+          <div class="telemetry-card">
+            <div>
+              <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Reclaimed Focus</div>
+              <div class="metric-hero">14.5 HRS</div>
+              <div style="font-size: 11px; color: var(--accent-green);">Reclaimed this month</div>
+            </div>
+            <div>
+              <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;">30-DAY HABIT TELEMETRY</div>
+              <div class="heatmap-grid">
+                <div class="heat-cell active"></div><div class="heat-cell gold"></div><div class="heat-cell active"></div><div class="heat-cell active"></div><div class="heat-cell gold"></div><div class="heat-cell active"></div><div class="heat-cell"></div>
+                <div class="heat-cell active"></div><div class="heat-cell active"></div><div class="heat-cell gold"></div><div class="heat-cell active"></div><div class="heat-cell active"></div><div class="heat-cell active"></div><div class="heat-cell active"></div>
+                <div class="heat-cell active"></div><div class="heat-cell active"></div><div class="heat-cell"></div><div class="heat-cell active"></div><div class="heat-cell gold"></div><div class="heat-cell active"></div><div class="heat-cell active"></div>
+                <div class="heat-cell active"></div><div class="heat-cell gold"></div><div class="heat-cell active"></div><div class="heat-cell active"></div><div class="heat-cell active"></div><div class="heat-cell active"></div><div class="heat-cell gold"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Screen 6: 92 Translations & Liturgies -->
+    <div class="aso-screen-card" id="screen-6">
+      <div class="aso-header-zone">
+        <div class="aso-badge">Global Treasury</div>
+        <h2 class="aso-title">92 TRANSLATIONS & HISTORIC PRAYERS</h2>
+        <p class="aso-subtitle">Read in your preferred version with traditional liturgies.</p>
+      </div>
+      <div class="phone-mockup">
+        <div class="phone-notch"></div>
+        <div class="phone-content">
+          <div class="translations-list">
+            <div style="font-size: 11px; font-weight: 700; color: var(--accent-gold);">SUPPORTED TRANSLATIONS</div>
+            <div class="trans-tags">
+              <span class="trans-tag">KJV</span>
+              <span class="trans-tag">ESV</span>
+              <span class="trans-tag">NIV</span>
+              <span class="trans-tag">CSB</span>
+              <span class="trans-tag">NLT</span>
+              <span class="trans-tag">Reina Valera</span>
+            </div>
+            <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin-top: 6px;">HISTORIC TREASURY</div>
+            <div class="liturgy-item">Morning Prayer of St. Patrick</div>
+            <div class="liturgy-item">The Nicene Creed (325 AD)</div>
+            <div class="liturgy-item">Psalm 23 (The Shepherd Psalm)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
