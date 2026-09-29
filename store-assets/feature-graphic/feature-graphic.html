@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bible Unlock — Google Play Feature Graphic (1024x500)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #030504;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Fixed 1024x500 Feature Graphic Canvas */
+    .feature-graphic-canvas {
+      width: 1024px;
+      height: 500px;
+      background: radial-gradient(circle at 75% 50%, #17281f 0%, #070b09 70%, #040705 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      padding: 0 72px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* Sacred Geometric Grid Lines Background */
+    .sacred-grid {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(circle, rgba(245, 184, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 40px 40px, 40px 40px, 40px 40px;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    /* Left Copy Block */
+    .copy-block {
+      z-index: 2;
+      max-width: 520px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .brand-logo-shield {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #ffd700, #f5b800);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(245, 184, 0, 0.4);
+    }
+
+    .brand-name {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: #ffffff;
+      text-transform: uppercase;
+    }
+
+    .main-headline {
+      font-size: 48px;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -1px;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .sub-headline {
+      font-size: 48px;
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -1px;
+      color: #f5b800;
+      margin-bottom: 28px;
+    }
+
+    .category-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(245, 184, 0, 0.12);
+      border: 1px solid rgba(245, 184, 0, 0.35);
+      color: #f5b800;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      border-radius: 999px;
+    }
+
+    /* Right Visual Mockup */
+    .mockup-container {
+      position: absolute;
+      right: 48px;
+      top: 50%;
+      transform: translateY(-50%) perspective(1000px) rotateY(-12deg) rotateX(4deg);
+      z-index: 2;
+    }
+
+    .phone-body {
+      width: 320px;
+      height: 440px;
+      background: #090e0b;
+      border: 6px solid #232c26;
+      border-radius: 36px;
+      box-shadow: -20px 20px 50px rgba(0, 0, 0, 0.9), 0 0 40px rgba(245, 184, 0, 0.15);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .phone-gold-padlock {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #ffe066, #f5b800);
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 50px rgba(245, 184, 0, 0.5);
+      margin-bottom: 20px;
+    }
+
+    .phone-status-hud {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(245, 184, 0, 0.4);
+      color: #f5b800;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .phone-sub {
+      color: #9ca3af;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Radiant God Rays Behind Mockup */
+    .radiant-rays {
+      position: absolute;
+      right: 120px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(245, 184, 0, 0.15) 0%, transparent 70%);
+      filter: blur(40px);
+      z-index: 1;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="feature-graphic-canvas">
+    <div class="sacred-grid"></div>
+    <div class="radiant-rays"></div>
+
+    <!-- Left Content -->
+    <div class="copy-block">
+      <div class="brand-row">
+        <div class="brand-logo-shield">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="#000"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+        </div>
+        <div class="brand-name">BIBLE UNLOCK</div>
+      </div>
+
+      <h1 class="main-headline">Block Distractions.</h1>
+      <h2 class="sub-headline">Unlock With Scripture.</h2>
+
+      <div class="category-pill">
+        🛡️ The App Blocker For Christians
+      </div>
+    </div>
+
+    <!-- Right 3D Visual -->
+    <div class="mockup-container">
+      <div class="phone-body">
+        <div class="phone-gold-padlock">
+          <svg width="42" height="42" viewBox="0 0 24 24" fill="#000"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+        </div>
+        <div class="phone-status-hud">SHIELD ACTIVE</div>
+        <div class="phone-sub">Complete daily Bible reading to unshield apps</div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>
