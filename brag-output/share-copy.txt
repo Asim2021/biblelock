@@ -1,0 +1,54 @@
+# Bible Unlock Launch Copy & Captions
+
+## 1. X / Twitter (Video Post)
+Screen time limits fail because a 4-digit PIN is too easy to bypass when willpower is zero.
+
+So we built Bible Unlock: to open Instagram or Reddit, you don't enter a passcode. You read a verse of Scripture.
+
+Turn endless scrolling into sacred moments. 🕊️✨
+
+👉 Download & start free: https://bibleunlock.in
+
+---
+
+## 2. LinkedIn / Build-in-Public
+Most screen-time blockers fight human nature with brute force—and fail. You get a pop-up, hit "Ignore for 15 minutes", and keep doomscrolling.
+
+We took a completely different angle with Bible Unlock:
+Instead of punishing digital habits, we redeem them.
+
+Before your distracting apps open, Bible Unlock presents a thoughtfully curated verse of Scripture. You reflect, read, and reset your attention before deciding whether to proceed.
+
+Key principles we built around:
+1. Friction that inspires rather than frustrates.
+2. 100% on-device privacy (Screen Time API & FamilyControls).
+3. Beautiful, distraction-free typography with zero ads.
+
+Launched today on iOS and Android: https://bibleunlock.in
+
+---
+
+## 3. Reddit (r/Christianity / r/OpenChristian / r/productivity)
+**Title:** I built an app that replaces screen time passcodes with Scripture reading
+
+Hey everyone,
+
+Like many of you, my screen time on social apps (Reddit, YouTube, Instagram) was getting out of hand. Typical app blockers never worked for me because clicking "15 more minutes" or typing a numeric passcode is purely subconscious.
+
+I wanted something that interrupted the dopamine loop with something that actually grounds me. 
+
+So I built **Bible Unlock** (https://bibleunlock.in). Whenever you tap a blocked app, instead of a sterile lock screen, you get a beautiful verse of Scripture. You read it to unlock your session.
+
+- Clean typography (KJV, ESV, NIV, etc.)
+- 100% private, on-device blocking
+- No guilt, no shame—just gentle mindfulness
+
+Would love any thoughts and feedback from the community!
+
+---
+
+## 4. Product Hunt / App Directory Pitch
+**Name:** Bible Unlock
+**Tagline:** Read Scripture to unlock your distracting apps.
+**Short Description:** Bible Unlock replaces addictive doomscrolling with daily spiritual growth. Block tempting apps until you reflect on a verse of Scripture.
+**Website:** https://bibleunlock.in
