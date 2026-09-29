@@ -174,14 +174,33 @@ web/
 
 ## 4. Visual Design System & Conversion Architecture
 
-### 4.1 Colorway & Typography Tokens
-- **Background:** Celestial Dark (`#070b09` to `#0d120f`)
-- **Card Surface:** Translucent deep pine (`rgba(16, 26, 20, 0.75)`) with 1px gold border (`rgba(245, 184, 0, 0.2)`)
-- **Accent Primary:** Radiant Sacred Gold (`#f5b800`)
-- **Accent Success:** Emerald Muted Green (`#5db872`)
-- **Typography:**
-  - Headlines & Scripture: `EB Garamond` (Google Fonts, `display=swap`)
-  - UI Labels, Technical HUD & Body: `Inter` (Google Fonts, `display=swap`)
+### 4.1 Dual-Theme Colorway & Typography Tokens (1:1 with `src/lib/themeContext.tsx`)
+
+The website implements the app's dual-theme design system using CSS variables controlled via `data-theme="dark"` (default) and `data-theme="light"`, with system `prefers-color-scheme` detection and `localStorage` persistence:
+
+| Token Name | CSS Variable | Celestial Dark (Default) | Parchment Light |
+|---|---|---|---|
+| **Background** | `--bg-canvas` | `#0d120f` (Celestial Pine) | `#f8f6f0` (Parchment Cream) |
+| **Card / Surface** | `--bg-surface` | `#141e17` | `#ffffff` |
+| **Surface Subtle** | `--bg-surface-subtle` | `#18231c` | `#f0ede4` |
+| **Surface Elevated** | `--bg-surface-elevated` | `#1a261f` | `#ffffff` |
+| **Border** | `--border-main` | `#202e25` | `#e4dfd3` |
+| **Border Subtle** | `--border-subtle` | `#1c2820` | `#ebe7de` |
+| **Text Primary** | `--text-primary` | `#faf9f5` | `#1a1f1b` |
+| **Text Secondary** | `--text-secondary` | `#78a898` | `#5a6d62` |
+| **Text Muted** | `--text-muted` | `#5c7a6e` | `#88988d` |
+| **Accent Primary** | `--accent-gold` | `#f5b800` (Sacred Gold) | `#d49400` (Deep Amber Gold) |
+| **Accent Background** | `--accent-bg` | `#22251a` | `#fef7e6` |
+| **Success** | `--color-success` | `#5db872` (Emerald Green) | `#2e8c45` |
+| **Success Background** | `--success-bg` | `#18261e` | `#edf8f0` |
+
+- **Typography System:**
+  - Headlines, Pull Quotes & Scripture: `EB Garamond` (Google Fonts, weights 400, 600, 700, italics, `display=swap`)
+  - UI Labels, Technical Badges, Navigation & Body: `Inter` (Google Fonts, weights 400, 500, 600, 700, 800, `display=swap`)
+- **Theme Toggle Interaction:**
+  - Header features a tactile `[ 🌙 / ☀️ ]` theme button.
+  - Clicking toggles between `dark` and `light` themes, updates `document.documentElement.setAttribute('data-theme', theme)`, and persists preference to `localStorage.getItem('bu_theme')`.
+  - Inline head script executes synchronously to prevent light/dark theme flash on initial page load.
 
 ### 4.2 Page Sections on `index.html`
 1. **Header / Navigation:**

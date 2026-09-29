@@ -45,7 +45,9 @@
     "lint": "expo lint",
     "aso:validate": "node scripts/validate-aso-metadata.mjs",
     "aso:export": "node scripts/export-store-metadata.mjs",
-    "test:aso": "node --test tests/aso-*.test.mjs tests/feature-graphic.test.mjs tests/store-export.test.mjs"
+    "test:aso": "node --test tests/aso-*.test.mjs tests/feature-graphic.test.mjs tests/store-export.test.mjs",
+    "web:validate": "node scripts/validate-web-seo.mjs",
+    "test:web": "node --test tests/web-*.test.mjs"
   },
   "private": true,
   "overrides": {
