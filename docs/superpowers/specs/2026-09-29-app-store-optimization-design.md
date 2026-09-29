@@ -78,9 +78,9 @@ KEY CAPABILITIES
 SUBSCRIPTION & TRIAL TERMS
 Bible Unlock offers a 7-day free trial on the Annual Sanctuary plan ($29.99/year, ~$2.49/month), alongside flexible monthly and one-time lifetime options. Payment is charged to your Apple ID account upon confirmation. Subscriptions automatically renew unless canceled in App Store Account Settings at least 24 hours before the trial or current period ends.
 
-Terms of Service: https://bibleunlock.app/terms
-Privacy Policy: https://bibleunlock.app/privacy
-Support: support@bibleunlock.app
+Terms of Service: https://bibleunlock.in/terms
+Privacy Policy: https://bibleunlock.in/privacy
+Support: support@bibleunlock.in
 ```
 
 ---
@@ -126,9 +126,9 @@ FREE COVENANT VS. SANCTUARY PRO
 
 Reclaim your attention. Guard your peace. Download Bible Unlock today and make God's Word the first priority of your day.
 
-Privacy Policy: https://bibleunlock.app/privacy
-Terms of Service: https://bibleunlock.app/terms
-Developer Contact: support@bibleunlock.app
+Privacy Policy: https://bibleunlock.in/privacy
+Terms of Service: https://bibleunlock.in/terms
+Developer Contact: support@bibleunlock.in
 ```
 
 ---
