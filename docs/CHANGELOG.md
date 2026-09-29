@@ -1,5 +1,31 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.52] - 2026-09-29
+
+### App Store Optimization (ASO) Pipeline, Fastlane Metadata Exporter & Brand Launch Assets
+- **Brand Launch Video & Multi-Platform Copy (`brag-output/`, `/brag`):**
+  - Authored and rendered 18.0s 1080p 30fps brand launch video (`brag-output/brag.mp4`) with synchronized music, dynamic GSAP scene transitions, and phone mockup.
+  - Extracted poster frame (`brag-output/brag.jpg`) and authored launch copy across X/Twitter, LinkedIn, Reddit, and Product Hunt (`brag-output/share-copy.txt`).
+- **ASO Metadata Validation Engine (`scripts/validate-aso-metadata.mjs`, `tests/aso-metadata.test.mjs`, `TASK-061`):**
+  - Built strict compliance validator checking Apple (29/30c Title, 29/30c Subtitle, 151/170c Promo, 98/100-byte keyword field with 0 duplicate words) and Google Play (29/30c Title, 80/80c Short Desc, 4000c Full Desc) character caps and policy restrictions.
+- **Automated Fastlane Exporter (`scripts/export-store-metadata.mjs`, `store-assets/metadata/`):**
+  - Created machine-readable JSON sources (`apple.json`, `google-play.json`) and automated exporter populating Fastlane directory structures (`ios/en-US/`, `android/en-US/`) for automated CI/CD and store console uploads.
+- **6-Screen High-Resolution Visual Storyboard (`store-assets/screenshots/storyboard.html`, `tests/aso-storyboard.test.mjs`):**
+  - Authored pixel-accurate 1290x2796 (9:19.5 aspect ratio) screenshot frames representing the complete "A-pile" visual hierarchy: The Grabber, Core Habit Mechanic, Bible Scroll 336 Cards, Streak Grace Defense, Reclaim 180+ Hours Heatmap, and 92 Translations & Liturgical Treasury.
+- **Google Play 1024x500 Feature Graphic (`store-assets/feature-graphic/feature-graphic.html`, `tests/feature-graphic.test.mjs`):**
+  - Implemented compliant 1024x500 banner canvas with Celestial Dark gradient, sacred geometric grid lines, brand typography ("Block Distractions. Unlock With Scripture."), and 3D device lock mockup.
+- **Domain Normalization (`bibleunlock.in`):**
+  - Aligned all legal, support, marketing, and paywall links across the app, metadata, and assets to canonical domain `https://bibleunlock.in` and `support@bibleunlock.in`.
+
+### Verified Impact
+- 7/7 automated ASO tests passing (`npm run test:aso` in 164ms).
+- Zero keyword redundancy between Title, Subtitle, and 98-byte Apple keyword field.
+- 100% compliant with Apple App Store Connect and Google Play Console length caps and policy rules.
+- Fastlane export verified for both iOS and Android metadata targets.
+- 18.0s brand launch video compiled and rendered in 1080p with poster frame.
+
+---
+
 ## [1.0.51] - 2026-09-28
 
 ### Stats Screen Overhaul: Circular Progress Gauge, Freedom Reclaimed Telemetry & 12-Tier Spiritual Badges
