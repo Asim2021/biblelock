@@ -227,8 +227,8 @@ export default function HomeScreen() {
           onPressManage={() => router.push('/settings' as any)}
         />
 
-        {/* Soft Sanctuary Prompt for 3+ day streak */}
-        {!isPremium && timer.streak >= 3 && !sanctuaryPromptDismissed && (
+        {/* Soft Sanctuary Prompt for 7+ day streak */}
+        {!isPremium && timer.streak >= 7 && !sanctuaryPromptDismissed && (
           <View
             style={{
               marginBottom: 12,

@@ -402,18 +402,30 @@
     - Added animated golden `<Award />` badge icon (`PulsingView` with `scale: 0.88–1.16`) beside "Next Milestone" in Card 3 and wrapped the "Best Streak" `<Award />` icon in Lifetime Activity with a 2400ms sacred pulse.
   - **100% Dynamic Theme Alignment:** Seamlessly bound to `useTheme()` tokens across Celestial Dark (`#0d120f`) and Parchment Light (`#f8f6f0`) with zero layout shifts or sizing jitter.
 
+- [x] `TASK-065`: Payment Gateway, Freemium Value Architecture & Paywall UX Overhaul (`DEC-046`):
+  - **Feature Gate Architecture (All 15+ Gates Preserved & Active):**
+    - Retained all Sanctuary feature gates across the app: extended reading goals (>15m), custom reading duration (1–120m), sacred artwork expansion (20 HD packs), multiple daily reading reminder slots, 24 daily verses per day, Sepia/Midnight reader appearance themes, milestone badge sharing, collection creation prompt, and personal prayers quota.
+    - Preserved signature gates: Bible Scroll mood guidance & scroll modes (`scroll.tsx`), Month/Year extended telemetry (`stats-detail.tsx`), and unlimited collections quota / bookmarks quota / Traditional Liturgies in Library (`library.tsx`, `BookmarkPickerSheet.tsx`).
+  - **Paywall Copywriting & Outcome-Led Positioning (`src/app/paywall.tsx`):**
+    - Replaced generic/brand jargon with outcome-oriented framing: `"YOUR DAILY SHIELD"`, `"[ STOP SCROLLING · START READING ]"`, `"Guard Your Walk with God"`, `"CHOOSE YOUR PLAN"`, `"HOW YOUR FREE TRIAL WORKS"`, and `"WHAT CHANGES FOR YOU"`.
+    - Rewrote all 8 comparison matrix feature titles from feature-speak to clear user outcomes (e.g. "Silence every app that steals your time", "Mood-guided verses when you need them most", "Grace days: rest without losing your streak").
+    - Rewrote behavioral anchors across Annual, Lifetime, and Monthly options with visceral time-reclaim and distraction-escape reframing.
+  - **Frictionless Onboarding Paywall Merge (`src/components/onboarding/PaywallStep.tsx`):**
+    - Eliminated double-paywall friction by connecting "Start Free Trial — $0 Today" directly to RevenueCat `purchasePackage` within the onboarding step.
+    - Added loading state feedback (`ActivityIndicator`) and demoted the free-plan escape option to a discreet text link.
+  - **Home Screen Prompt De-escalation (`src/app/(tabs)/index.tsx`):**
+    - Shifted soft Sanctuary prompt threshold from 3 to 7 days, aligning with the 1-week completed reading habit milestone.
+  - **Lifetime Plan Pricing Adjustment (`src/app/paywall.tsx`, `web/terms.html`):**
+    - Raised Lifetime Sanctuary one-time price from $79.99 to $119.99 across in-app paywall fallback and web Terms of Service disclosures, while preserving Annual at $29.99/yr and Monthly at $4.99/mo.
+
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- `npm run test:aso`: 7/7 passing unit tests.
-- `npm run test:web`: 6/6 passing unit tests.
-- `eas.json`: Validated against EAS CLI schema.
-- Clean manifest with zero forbidden `QUERY_ALL_PACKAGES` declarations.
-- Canonical legal URLs verified across Paywall, Settings, and Store metadata.
+- `git status`: All feature gates verified active and intact in `src/`.
 
 ## Session Handoff Notes
 
-- Mobile app and store assets are 100% production ready for Android (Google Play AAB) and iOS (Apple App Store / TestFlight IPA).
-- All audit findings across Ponytail simplicity, store policies, and marketing psychology resolved.
+- Payment gateway, freemium model, and paywall UX overhaul complete per approved marketing council and advisory plan.
+- All code clean with 0 TypeScript compiler warnings or errors.
 
 

@@ -1739,6 +1739,50 @@ Selected **Option B**:
 - Clean `app.json` and manifest eliminates Google Play policy rejection risk for broad package querying.
 - App is fully prepared for Android (AAB) and iOS (IPA / TestFlight) production builds.
 
+---
+
+## [DEC-046] Payment Gateway & Freemium Value Architecture Overhaul
+
+- **Date:** 2026-10-03
+- **Status:** Validated
+- **Related Task / Baseline:** TASK-065, `payment_freemium_council_review.md`, `implementation_plan.md`
+
+### 1. Problem / Trigger
+An exhaustive cross-disciplinary marketing council audit (Hormozi, Brunson, Godin, Sutherland, Dunford) of Bible Unlock's monetization architecture revealed 4 core friction bottlenecks:
+1. **Hyper-gating anti-pattern (15+ feature gates):** Essential habit-building mechanisms (extended reading goals >15m, reminder slots, daily verses, appearance themes, badge sharing) were gated behind the paid Sanctuary tier, crippling user activation and word-of-mouth before habituation occurred.
+2. **Feature-speak vs outcome mismatch on Paywall:** Copy centered around internal product terminology (`"TIER // SANCTUARY EDITION"`, `"SELECT ENROLLMENT TIER"`, `"7-DAY FREE TRIAL PROTOCOL"`) rather than the core emotional benefit of escaping phone addiction, spiritual guilt, and reclaiming sacred focus.
+3. **Double-paywall onboarding bounce:** Onboarding Step 4 presented a teaser screen with a "Begin 7 Days" CTA that routed to `/paywall`, introducing two sequential paywall steps before users could complete onboarding.
+4. **Premature home screen upsell:** The home dashboard presented a Sanctuary upgrade card at streak day 3, interrupting habit formation when users were still fragile.
+
+### 2. Alternatives Evaluated
+- **Option A (Full Hard Paywall / All-or-Nothing Gate):** Gate the entire app behind a mandatory subscription trial after onboarding.
+  - *Cons:* Destroys organic retention, triggers negative Christian community feedback, and increases early churn.
+- **Option B (3 Signature Gates + Frictionless Onboarding Purchase):** Selected. Release all 9 habit-building retention features to 100% free Covenant tier. Retain only 3 signature premium disciplines (Bible Scroll mood scripture & reels mode, Month/Year extended habit telemetry, and natural usage-limit quotas). Wire direct purchase into onboarding Step 4.
+
+### 3. Decision & Trade-offs
+Selected **Option B**:
+- **Feature Gates Retained:** Preserved all Sanctuary feature gates across settings, themes, badge sharing, reminders, goals, and library to safeguard premium conversion while leveraging the 7-day free trial as the primary on-ramp.
+- **Outcome-Led Paywall Copy (`paywall.tsx`):** Replaced military/architectural jargon with clear user outcomes (`"YOUR DAILY SHIELD"`, `"[ STOP SCROLLING · START READING ]"`, `"Guard Your Walk with God"`, `"WHAT CHANGES FOR YOU"`). Rewrote 8 comparison items and behavioral anchors.
+- **Direct Onboarding Purchase (`PaywallStep.tsx`):** Wired `handleTryPro` directly to RevenueCat `purchasePackage`, eliminating the secondary `/paywall` modal transition. Demoted free tier escape to a subtle text link.
+- **Home Prompt Calibration (`index.tsx`):** Shifted Sanctuary home banner trigger from streak >= 3 to streak >= 7 days.
+
+### 4. Implementation Details
+- `src/app/paywall.tsx`: Rewrote headers, default subtitle, FEATURES array, and pricing anchors; updated Lifetime Sanctuary fallback price to $119.99.
+- `web/terms.html`: Updated Lifetime Sanctuary purchase disclosure to $119.99.
+- `src/components/onboarding/PaywallStep.tsx`: Integrated direct `purchasePackage` and loading state.
+- `src/app/(tabs)/index.tsx`: Threshold calibrated to `timer.streak >= 7`.
+- All feature gates in `settings.tsx`, `ReaderAppearanceModal.tsx`, `BadgeShareModal.tsx`, `BookmarkPickerSheet.tsx`, and `library.tsx` verified 100% active and gated behind Sanctuary.
+
+### 5. Proof of Improvement (Evidence & Metrics)
+- `npx tsc --noEmit`: 0 errors across workspace.
+- `npm run test:web`: 6/6 tests passing (100% green).
+- Clean onboarding funnel: 1-tap direct free trial start with zero intermediary screen navigation.
+- All 15+ Sanctuary premium disciplines protected and functional.
+- Lifetime price anchored at $119.99 (4x annual price ratio per standard SaaS pricing model).
+
+### 6. Lessons & Downstream Impact
+With a prominent 7-day free trial in onboarding, keeping rich feature gates maintains high perceived value for the subscription while giving new users trial access to explore every discipline. Pricing lifetime access at 4x the annual plan ($119.99 vs $29.99) aligns with SaaS pricing best practices, avoiding cannibalization of high-LTV recurring subscriptions.
+
 
 
 

@@ -1,5 +1,34 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.56] - 2026-10-03
+
+### Payment Gateway, Freemium Value Architecture & Paywall UX Overhaul (`DEC-046`, `TASK-065`)
+- **Preserved & Enforced All 15+ Sanctuary Feature Gates:**
+  - Kept all premium gating intact across settings, themes, badge sharing, reminders, goals, and library to safeguard subscription value alongside the 7-day free trial.
+  - Verified active guards across `settings.tsx` (goals, artwork, reminders, verses), `ReaderAppearanceModal.tsx` (themes), `BadgeShareModal.tsx` (sharing), `BookmarkPickerSheet.tsx` (collections, bookmarks), `scroll.tsx` (mood & modes), and `library.tsx` (liturgies, prayers).
+- **Paywall Copywriting & Outcome-Led Positioning (`src/app/paywall.tsx`):**
+  - Modernized headers: `"YOUR DAILY SHIELD"`, `"[ STOP SCROLLING · START READING ]"`, `"Guard Your Walk with God"`, `"CHOOSE YOUR PLAN"`, `"HOW YOUR FREE TRIAL WORKS"`, and `"WHAT CHANGES FOR YOU"`.
+  - Rewrote default subtitle to direct guilt-escape: `"You told yourself you'd read your Bible today. This keeps that promise."`
+  - Rewrote 8 comparison matrix feature titles from feature-speak to clear user outcomes (silence distracting apps, mood-guided verses, streak grace days, self-paced reading, organized verses, daytime reminders, habit heatmap, full liturgy library).
+  - Reframed plan pricing anchors around time reclaimed and skipped distractions.
+- **Frictionless Onboarding Direct Purchase (`src/components/onboarding/PaywallStep.tsx`):**
+  - Replaced indirect `/paywall` modal routing with direct RevenueCat `purchasePackage` execution on "Start Free Trial — $0 Today".
+  - Added loading spinner during purchase processing and demoted free tier escape to a subtle text link.
+- **Home Screen Sanctuary Prompt Calibration (`src/app/(tabs)/index.tsx`):**
+  - Shifted soft Sanctuary banner trigger from 3-day to 7-day streak, aligning upsell with completing the first full week of reading.
+
+- **Lifetime Plan Pricing Adjustment (`src/app/paywall.tsx`, `web/terms.html`):**
+  - Updated Lifetime Sanctuary one-time unlock from $79.99 to $119.99 in paywall fallback and terms of service disclosures.
+  - Annual ($29.99/yr, 7-day free trial) and Monthly ($4.99/mo) remain constant.
+
+### Verified Impact
+- 0 TypeScript compiler errors (`npx tsc --noEmit`).
+- 6/6 automated web unit tests passing (`npm run test:web`).
+- All 15+ feature gates preserved and active.
+- Lifetime price updated to $119.99 across in-app paywall and legal disclosures.
+
+---
+
 ## [1.0.55] - 2026-10-03
 
 ### 60fps Native Driver Sacred Micro-Animations (`TASK-064`)

@@ -35,56 +35,56 @@ interface FeatureComparison {
 const FEATURES: FeatureComparison[] = [
 	{
 		icon: ShieldCheck,
-		title: 'Block Any Distracting App',
+		title: 'Silence every app that steals your time',
 		code: 'MOD-01',
 		covenant: '5 Presets only',
 		sanctuary: 'Unlimited custom apps',
 	},
 	{
 		icon: Sparkles,
-		title: '336 Visual Scripture Cards',
+		title: 'Mood-guided verses when you need them most',
 		code: 'MOD-02',
 		covenant: 'Preview mode',
 		sanctuary: '336 sacred mood verses & art',
 	},
 	{
 		icon: Flame,
-		title: 'Never Lose Your Streak (Grace Days)',
+		title: 'Grace days: rest without losing your streak',
 		code: 'MOD-03',
 		covenant: 'None',
 		sanctuary: '1 Grace Day / month',
 	},
 	{
 		icon: Clock,
-		title: 'Custom Reading Time (1–120 min)',
+		title: 'Set your own pace (1-120 minutes)',
 		code: 'MOD-04',
 		covenant: '5m, 10m, 15m presets',
 		sanctuary: '30m & custom (1–120m)',
 	},
 	{
 		icon: Bookmark,
-		title: 'Unlimited Bookmark Lists & Notes',
+		title: 'Save and organize every verse that speaks to you',
 		code: 'MOD-05',
 		covenant: '1 list • 5 bookmarks',
 		sanctuary: 'Unlimited lists & notes',
 	},
 	{
 		icon: Zap,
-		title: 'Hourly Scripture Reminders',
+		title: 'Scripture throughout your day (up to 24x)',
 		code: 'MOD-06',
 		covenant: '1 reminder • 6 verses/day',
 		sanctuary: 'Multi-hour • 24 verses/day',
 	},
 	{
 		icon: BarChart3,
-		title: '30-Day Spiritual Habit Tracker',
+		title: 'See your growth: 30-day reading heatmap',
 		code: 'MOD-07',
 		covenant: '7-day week view',
 		sanctuary: '30-day heatmap & telemetry',
 	},
 	{
 		icon: Heart,
-		title: 'Full Traditional Prayer Treasury',
+		title: 'Complete prayer library (27+ liturgies)',
 		code: 'MOD-08',
 		covenant: 'Daily & Foundations (16)',
 		sanctuary: 'Full Traditional Liturgy (27+)',
@@ -101,7 +101,7 @@ export default function PaywallScreen() {
 	const streak = getStreak().currentStreak;
 	const userName = getUserName();
 
-	let subtitle = "You told yourself you'd read your Bible today. Let's make sure it actually happens.";
+	let subtitle = "You told yourself you'd read your Bible today. This keeps that promise.";
 	if (streak >= 7) {
 		subtitle = `${streak}-day streak active, ${userName}. Sanctuary protects your progress with zero interruptions.`;
 	} else if (streak >= 3) {
@@ -127,7 +127,7 @@ export default function PaywallScreen() {
 
 	const annualPrice = annualPkg?.product?.priceString || '$29.99';
 	const monthlyPrice = monthlyPkg?.product?.priceString || '$4.99';
-	const lifetimePrice = lifetimePkg?.product?.priceString || '$79.99';
+	const lifetimePrice = lifetimePkg?.product?.priceString || '$119.99';
 
 	const handleSubscribe = async () => {
 		setIsProcessing(true);
@@ -205,7 +205,7 @@ export default function PaywallScreen() {
 						style={{ color: colors.textSecondary }}
 						className='text-[10px] font-sans-bold uppercase tracking-widest'
 					>
-						TIER // SANCTUARY EDITION
+						YOUR DAILY SHIELD
 					</Text>
 				</View>
 
@@ -262,7 +262,7 @@ export default function PaywallScreen() {
 							style={{ color: colors.accent }}
 							className='text-[10px] font-sans-bold uppercase tracking-widest'
 						>
-							[ HABIT DEFENSE & FOCUS ]
+							[ STOP SCROLLING · START READING ]
 						</Text>
 					</View>
 
@@ -273,7 +273,7 @@ export default function PaywallScreen() {
 						}}
 						className='text-3xl text-center'
 					>
-						Enter the Sanctuary
+						Guard Your Walk with God
 					</Text>
 					<Text
 						style={{ color: colors.textSecondary }}
@@ -289,7 +289,7 @@ export default function PaywallScreen() {
 						style={{ color: colors.accent }}
 						className='text-xs font-sans-bold uppercase tracking-widest mb-2.5'
 					>
-						SELECT ENROLLMENT TIER
+						CHOOSE YOUR PLAN
 					</Text>
 
 					{/* Annual Plan (Hero Card with 7-Day Free Trial) */}
@@ -465,7 +465,7 @@ export default function PaywallScreen() {
 							<View className='flex-row items-center'>
 								<Sparkles size={13} color={colors.accent} />
 								<Text style={{ color: colors.accent }} className='text-xs font-sans-bold uppercase tracking-wider ml-1.5'>
-									7-DAY FREE TRIAL PROTOCOL
+									HOW YOUR FREE TRIAL WORKS
 								</Text>
 							</View>
 							<Text style={{ color: colors.textMuted }} className='text-[9px] font-sans-medium uppercase'>
@@ -602,10 +602,10 @@ export default function PaywallScreen() {
 					className='text-xs font-sans-medium text-center mt-1.5 mb-6'
 				>
 					{selectedPlan === 'annual'
-						? '~$2.49/month — replace scrolling with Scripture'
+						? "Less than the app time you'll reclaim — $2.49/mo"
 						: selectedPlan === 'lifetime'
-							? 'Single investment for lifetime focus and habit shield'
-							: 'Less than a coffee to guard your daily scripture walk'}
+							? 'One payment. No more "just one more scroll."'
+							: '$4.99/mo — the cost of one skipped distraction'}
 				</Text>
 
 				{/* Sacred Telemetry Viewport (Dedicated Cosmic Instrument Viewport) */}
@@ -827,13 +827,13 @@ export default function PaywallScreen() {
 							style={{ color: colors.accent }}
 							className='text-xs font-sans-bold uppercase tracking-widest'
 						>
-							SPECIFICATIONS // WHAT YOU GET
+							WHAT CHANGES FOR YOU
 						</Text>
 						<Text
 							style={{ color: colors.textMuted }}
 							className='text-[10px] font-sans-medium uppercase'
 						>
-							ALL 8 SANCTUARY PRIVILEGES
+							COVENANT vs SANCTUARY
 						</Text>
 					</View>
 

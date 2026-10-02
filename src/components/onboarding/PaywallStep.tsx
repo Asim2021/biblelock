@@ -1,10 +1,9 @@
-import React from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
 import Svg, { Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
 import { Sparkles, ShieldCheck, Flame, Clock, Bookmark, Zap, Check } from 'lucide-react-native';
 import { SCROLL_BACKGROUNDS } from '../../../assets/scroll-backgrounds';
-import { usePurchases } from '../../lib/purchases';
+import { usePurchases, isRevenueCatConfigured } from '../../lib/purchases';
 
 interface PaywallStepProps {
 	onBack: () => void;
@@ -21,12 +20,37 @@ const PRO_FEATURES = [
 ];
 
 export const PaywallStep: React.FC<PaywallStepProps> = ({ onBack, onNext }) => {
-	const router = useRouter();
-	const { isPremium } = usePurchases();
+	const { isPremium, offerings, purchasePackage } = usePurchases();
+	const [isProcessing, setIsProcessing] = useState(false);
 
-	const handleTryPro = () => {
-		// Open paywall modal without advancing step underneath
-		router.push('/paywall' as any);
+	const handleTryPro = async () => {
+		setIsProcessing(true);
+		const currentPackages = offerings?.current?.availablePackages || [];
+		const annualPkg =
+			offerings?.current?.annual ||
+			currentPackages.find(
+				(p) => p.identifier.toLowerCase().includes('annual') || (p.packageType as string) === 'ANNUAL',
+			) ||
+			currentPackages[0];
+
+		let success = false;
+		if (annualPkg) {
+			success = await purchasePackage(annualPkg);
+		} else {
+			if (__DEV__ || !isRevenueCatConfigured()) {
+				success = await purchasePackage({ identifier: 'annual' } as any);
+			} else {
+				Alert.alert(
+					'Product Unavailable',
+					'Unable to connect to store products. Please check your internet connection or try again shortly.',
+				);
+			}
+		}
+
+		setIsProcessing(false);
+		if (success) {
+			onNext();
+		}
 	};
 
 	return (
@@ -164,16 +188,22 @@ export const PaywallStep: React.FC<PaywallStepProps> = ({ onBack, onNext }) => {
 						<>
 							<Pressable
 								onPress={handleTryPro}
+								disabled={isProcessing}
 								className='w-full py-4.5 rounded-2xl bg-[#f5b800] items-center justify-center active:opacity-90 shadow-lg mb-3'
 							>
-								<Text className='text-lg font-sans-bold text-[#141413]'>Begin 7 Days in the Sanctuary (Free)</Text>
+								{isProcessing ? (
+									<ActivityIndicator size='small' color='#141413' />
+								) : (
+									<Text className='text-lg font-sans-bold text-[#141413]'>Start Free Trial — $0 Today</Text>
+								)}
 							</Pressable>
 
 							<Pressable
 								onPress={onNext}
-								className='w-full py-4.5 rounded-2xl bg-[#163f33] border border-[#2b6955] items-center justify-center active:opacity-80'
+								disabled={isProcessing}
+								className='w-full py-2 items-center justify-center active:opacity-70'
 							>
-								<Text className='text-base font-sans-semibold text-[#8eb8a8]'>
+								<Text className='text-xs font-sans-medium text-[#8eb8a8] underline'>
 									Continue on the Free Covenant Plan
 								</Text>
 							</Pressable>
