@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, ScrollView, Modal, AppState, AppStateStatus } from 'react-native';
+import { View, Text, Pressable, ScrollView, Modal, AppState, AppStateStatus, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Shield, ShieldCheck, Check, X, Lock, AlertTriangle, Bell, ExternalLink } from 'lucide-react-native';
 import * as Notifications from 'expo-notifications';
@@ -15,7 +15,7 @@ export const PermissionStep: React.FC<PermissionStepProps> = ({ onBack, onComple
 	const [hasPermission, setHasPermission] = useState(false);
 	const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
-	// Check permission on mount and when app regains focus from Android Settings
+	// Check permission on mount and when app regains focus from Android Settings / iOS Screen Time
 	const checkPermission = async () => {
 		const granted = await AppBlocker.hasPermissions();
 		setHasPermission(granted);
@@ -39,6 +39,7 @@ export const PermissionStep: React.FC<PermissionStepProps> = ({ onBack, onComple
 	const handleOpenSettings = async () => {
 		setShowPrivacyModal(false);
 		await AppBlocker.requestPermissions();
+		await checkPermission();
 	};
 
 	const handleFinish = async () => {
@@ -49,6 +50,8 @@ export const PermissionStep: React.FC<PermissionStepProps> = ({ onBack, onComple
 		await AppBlocker.shieldApps();
 		onComplete();
 	};
+
+	const isIOS = Platform.OS === 'ios';
 
 	return (
 		<View
@@ -76,8 +79,9 @@ export const PermissionStep: React.FC<PermissionStepProps> = ({ onBack, onComple
 				</Text>
 
 				<Text className='text-base font-sans text-[#78a898] mb-4 leading-relaxed'>
-					To gently pause distractions while you meet with Jesus, Android requires accessibility permission.
-					Your personal data stays 100% private on your device.
+					{isIOS
+						? 'To gently pause distractions while you meet with Jesus, Apple requires Screen Time authorization. Your personal data stays 100% private on your device.'
+						: 'To gently pause distractions while you meet with Jesus, Android requires accessibility permission. Your personal data stays 100% private on your device.'}
 				</Text>
 
 				{/* Accessibility Status Card */}
@@ -140,15 +144,31 @@ export const PermissionStep: React.FC<PermissionStepProps> = ({ onBack, onComple
 							<View className='flex-row mb-2'>
 								<Text className='text-xs font-sans-bold text-[#f5b800] mr-2'>2.</Text>
 								<Text className='text-xs font-sans text-[#c8ded6] flex-1 leading-relaxed'>
-									Look for <Text className='font-sans-bold text-white'>"Bible Unlock Shield"</Text>{' '}
-									under Installed Apps or Downloaded Apps.
+									{isIOS ? (
+										<>
+											When prompted by Apple, tap <Text className='font-sans-bold text-white'>"Continue"</Text> to grant Screen Time permission.
+										</>
+									) : (
+										<>
+											Look for <Text className='font-sans-bold text-white'>"Bible Unlock Shield"</Text>{' '}
+											under Installed Apps or Downloaded Apps.
+										</>
+									)}
 								</Text>
 							</View>
 							<View className='flex-row'>
 								<Text className='text-xs font-sans-bold text-[#f5b800] mr-2'>3.</Text>
 								<Text className='text-xs font-sans text-[#c8ded6] flex-1 leading-relaxed'>
-									Toggle it <Text className='font-sans-bold text-[#5db872]'>ON</Text> and return to
-									this app.
+									{isIOS ? (
+										<>
+											Allow Bible Unlock to <Text className='font-sans-bold text-[#5db872]'>shield selected apps</Text> during your quiet time.
+										</>
+									) : (
+										<>
+											Toggle it <Text className='font-sans-bold text-[#5db872]'>ON</Text> and return to
+											this app.
+										</>
+									)}
 								</Text>
 							</View>
 						</View>
@@ -186,7 +206,7 @@ export const PermissionStep: React.FC<PermissionStepProps> = ({ onBack, onComple
 				</Pressable>
 			</View>
 
-			{/* Why We Need Accessibility Privacy Modal (Safe Area Aware) */}
+			{/* Why We Need Accessibility / Screen Time Privacy Modal (Safe Area Aware) */}
 			<Modal visible={showPrivacyModal} transparent animationType='slide'>
 				<View className='flex-1 bg-black/80 justify-end'>
 					<View
@@ -202,7 +222,7 @@ export const PermissionStep: React.FC<PermissionStepProps> = ({ onBack, onComple
 									className='text-2xl font-serif-bold text-[#faf9f5] text-center tracking-tight'
 									style={{ fontFamily: 'EBGaramond_700Bold' }}
 								>
-									Why We Need Accessibility
+									{isIOS ? 'Why We Need Screen Time' : 'Why We Need Accessibility'}
 								</Text>
 							</View>
 
@@ -210,8 +230,9 @@ export const PermissionStep: React.FC<PermissionStepProps> = ({ onBack, onComple
 								How we use this permission:
 							</Text>
 							<Text className='text-xs font-sans text-[#c8ded6] leading-relaxed mb-3'>
-								Bible Unlock uses the Accessibility Service solely to protect your daily quiet time with
-								Jesus by:
+								{isIOS
+									? 'Bible Unlock uses Apple Screen Time / Family Controls solely to protect your daily quiet time with Jesus by:'
+									: 'Bible Unlock uses the Accessibility Service solely to protect your daily quiet time with Jesus by:'}
 							</Text>
 
 							<View className='space-y-3 mb-6'>

@@ -12,7 +12,7 @@ export async function shareVerseAsImage(viewRef: React.RefObject<any>): Promise<
     });
     await Share.share({
       url: uri,
-      message: 'Shared from Bible Unlock — bibleunlock.app',
+      message: 'Shared from Bible Unlock — bibleunlock.in',
     });
   } catch (error: any) {
     if (error?.message !== 'User did not share') {

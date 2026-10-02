@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { View, Text, Pressable } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import {
@@ -149,6 +150,63 @@ export default function RootLayout() {
         <ThemedNavigationWrapper />
       </AppThemeProvider>
     </SafeAreaProvider>
+  );
+}
+
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: '#0d120f',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 26,
+          fontFamily: 'EBGaramond_700Bold',
+          color: '#f5b800',
+          marginBottom: 12,
+          textAlign: 'center',
+        }}
+      >
+        Peace Be With You
+      </Text>
+      <Text
+        style={{
+          fontSize: 14,
+          fontFamily: 'Inter_400Regular',
+          color: '#c8ded6',
+          textAlign: 'center',
+          marginBottom: 28,
+          lineHeight: 22,
+          maxWidth: 320,
+        }}
+      >
+        An unexpected interruption occurred. Let's return to your quiet time in God's Word.
+      </Text>
+      <Pressable
+        onPress={retry}
+        style={{
+          backgroundColor: '#f5b800',
+          paddingHorizontal: 28,
+          paddingVertical: 14,
+          borderRadius: 14,
+          shadowColor: '#f5b800',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 4,
+        }}
+      >
+        <Text style={{ color: '#141413', fontFamily: 'Inter_700Bold', fontSize: 16 }}>
+          Resume Bible Walk
+        </Text>
+      </Pressable>
+    </View>
   );
 }
 

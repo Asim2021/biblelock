@@ -1,0 +1,2 @@
+-keep class com.bibleunlock.blocker.** { *; }
+-keepclassmembers class com.bibleunlock.blocker.** { *; }

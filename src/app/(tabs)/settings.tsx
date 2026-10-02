@@ -441,7 +441,7 @@ export default function SettingsScreen() {
 			await Share.share({
 				title: 'Bible Unlock: Guard Your Peace',
 				message:
-					'Reclaim your screen time and draw closer to God every day with Bible Unlock: https://bibleunlock.app',
+					'Reclaim your screen time and draw closer to God every day with Bible Unlock: https://bibleunlock.in',
 			});
 		} catch (e) {
 			console.warn('[Share] App share error:', e);
@@ -454,20 +454,20 @@ export default function SettingsScreen() {
 				? 'market://details?id=com.bibleunlock.app'
 				: 'https://apps.apple.com/app/id6470000000';
 		Linking.openURL(url).catch(() => {
-			Linking.openURL('https://bibleunlock.app');
+			Linking.openURL('https://bibleunlock.in');
 		});
 	};
 
 	const handleContactSupport = () => {
-		Linking.openURL('mailto:support@bibleunlock.app?subject=Bible%20Unlock%20Support%20%26%20Feedback');
+		Linking.openURL('mailto:support@bibleunlock.in?subject=Bible%20Unlock%20Support%20%26%20Feedback');
 	};
 
 	const handleOpenPrivacy = () => {
-		Linking.openURL('https://bibleunlock.app/privacy');
+		Linking.openURL('https://bibleunlock.in/privacy');
 	};
 
 	const handleOpenTerms = () => {
-		Linking.openURL('https://bibleunlock.app/terms');
+		Linking.openURL('https://bibleunlock.in/terms');
 	};
 
 	const handleToggleSimulatePlan = () => {

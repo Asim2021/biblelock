@@ -49,12 +49,12 @@ export function VerseCardShareModal({
 				});
 				await Share.share({
 					url: uri,
-					message: `"${bookmark.verseText}" — ${bookmark.bookName} ${bookmark.chapterNumber}:${bookmark.verseNumber}\nhttps://bibleunlock.app`,
+					message: `"${bookmark.verseText}" — ${bookmark.bookName} ${bookmark.chapterNumber}:${bookmark.verseNumber}\nhttps://bibleunlock.in`,
 				});
 			} else {
 				// Fallback to text share
 				await Share.share({
-					message: `"${bookmark.verseText}" — ${bookmark.bookName} ${bookmark.chapterNumber}:${bookmark.verseNumber}\nhttps://bibleunlock.app`,
+					message: `"${bookmark.verseText}" — ${bookmark.bookName} ${bookmark.chapterNumber}:${bookmark.verseNumber}\nhttps://bibleunlock.in`,
 				});
 			}
 			onClose();
@@ -63,7 +63,7 @@ export function VerseCardShareModal({
 				// Fallback to plain text on image error
 				try {
 					await Share.share({
-						message: `"${bookmark.verseText}" — ${bookmark.bookName} ${bookmark.chapterNumber}:${bookmark.verseNumber}\nhttps://bibleunlock.app`,
+						message: `"${bookmark.verseText}" — ${bookmark.bookName} ${bookmark.chapterNumber}:${bookmark.verseNumber}\nhttps://bibleunlock.in`,
 					});
 					onClose();
 				} catch {
@@ -302,7 +302,7 @@ export function VerseCardShareModal({
 												textTransform: 'uppercase',
 											}}
 										>
-											BIBLE UNLOCK • BIBLEUNLOCK.APP
+											BIBLE UNLOCK • BIBLEUNLOCK.IN
 										</Text>
 									</View>
 								</View>

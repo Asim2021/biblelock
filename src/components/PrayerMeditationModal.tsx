@@ -63,7 +63,7 @@ export const PrayerMeditationModal: React.FC<PrayerMeditationModalProps> = ({
 
   const handleShare = async () => {
     try {
-      const message = `"${prayer.title}"\n\n${prayer.prayerText}\n\nPrayed with Bible Unlock:\nhttps://bibleunlock.app`;
+      const message = `"${prayer.title}"\n\n${prayer.prayerText}\n\nPrayed with Bible Unlock:\nhttps://bibleunlock.in`;
       await Share.share({
         title: prayer.title,
         message,

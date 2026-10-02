@@ -61,7 +61,7 @@ export function DailyDevotionalCard({
 
   const handleShareVerse = async () => {
     try {
-      const shareMessage = `"${verse.text}"\n\n— ${verse.bookName} ${verse.chapter}:${verse.verseNum} (${translation})\n\nBuild your daily habit with Bible Unlock:\nhttps://bibleunlock.app`;
+      const shareMessage = `"${verse.text}"\n\n— ${verse.bookName} ${verse.chapter}:${verse.verseNum} (${translation})\n\nBuild your daily habit with Bible Unlock:\nhttps://bibleunlock.in`;
       await Share.share({
         message: shareMessage,
         title: `${verse.bookName} ${verse.chapter}:${verse.verseNum}`,
@@ -73,7 +73,7 @@ export function DailyDevotionalCard({
 
   const handleSharePrayer = async () => {
     try {
-      const shareMessage = `"${prayer.title}"\n\n${prayer.prayerText}\n\nPrayed with Bible Unlock:\nhttps://bibleunlock.app`;
+      const shareMessage = `"${prayer.title}"\n\n${prayer.prayerText}\n\nPrayed with Bible Unlock:\nhttps://bibleunlock.in`;
       await Share.share({
         message: shareMessage,
         title: prayer.title,

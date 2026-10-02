@@ -1,5 +1,35 @@
 # Project Changelog & Verified Outcomes
 
+## [1.0.54] - 2026-10-02
+
+### Cross-Platform Production Readiness, Store Compliance & Resilience Architecture (`DEC-045`, `TASK-063`)
+- **Google Play Compliance & Broad Package Query Removal (`app.json`, `modules/android-blocker/AndroidManifest.xml`):**
+  - Purged high-risk `android.permission.QUERY_ALL_PACKAGES` permission from root `app.json` and native module manifest.
+  - Leveraged `<queries>` element with `Intent.ACTION_MAIN` and `CATEGORY_LAUNCHER`, querying all user-facing launchable apps without triggering Google Play policy declaration rejections.
+- **iOS Family Controls & App Store Metadata (`app.json`):**
+  - Configured `versionCode: 1` and `buildNumber: "1"` for store deployment tracking.
+  - Added `ITSAppUsesNonExemptEncryption: false` to streamline App Store Connect export compliance.
+  - Explicitly configured `com.apple.developer.family-controls` entitlement and `group.com.bibleunlock.app` App Group bindings.
+- **EAS Build Architecture (`eas.json`):**
+  - Authored standard EAS Build configuration defining internal development client, APK preview distribution, and production AAB (Google Play) / IPA (Apple App Store) profiles.
+- **Global Error Boundary & App Resilience (`src/app/_layout.tsx`):**
+  - Exported themed `ErrorBoundary` offering reverent retry mechanics and preventing unhandled runtime exceptions from crashing to OS launcher.
+- **Platform-Aware Onboarding Setup (`src/components/onboarding/PermissionStep.tsx`):**
+  - Replaced Android-only copy with dynamic `Platform.OS` branching: iOS users receive Apple Screen Time authorization guidance while Android users receive the prominent Accessibility Service disclosure.
+- **Canonical Legal Domain Alignment (`src/app/paywall.tsx`, `settings.tsx`, `store-assets/metadata/`):**
+  - Unified all legal and support URLs to canonical `https://bibleunlock.in` and `support@bibleunlock.in` across Paywall, Settings, Share Sheets, Store JSONs (`apple.json`, `google-play.json`), and re-exported Fastlane metadata.
+- **R8 / ProGuard Keep Rules (`modules/android-blocker/android/consumer-rules.pro`, `android/app/proguard-rules.pro`):**
+  - Configured consumer ProGuard rules keeping `com.bibleunlock.blocker.**` classes and members, ensuring release AAB compilation does not strip accessibility service or native JNI bindings.
+
+### Verified Impact
+- 0 TypeScript errors across entire workspace (`npx tsc --noEmit`).
+- 7/7 automated ASO unit tests passing (`npm run test:aso`).
+- 6/6 automated web unit tests passing (`npm run test:web`).
+- Fastlane store metadata exported cleanly with canonical URLs.
+- App and store assets are 100% production ready for Android and iOS submission.
+
+---
+
 ## [1.0.53] - 2026-09-29
 
 ### Web Landing Page, Dual-Theme Architecture & SEO Pipeline (`bibleunlock.in`)

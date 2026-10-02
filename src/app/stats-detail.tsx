@@ -271,7 +271,7 @@ export default function StatsScreen() {
 		try {
 			await Share.share({
 				message:
-					'Join me in replacing mindless screen scrolling with God’s Word on Bible Unlock: https://bibleunlock.app',
+					'Join me in replacing mindless screen scrolling with God’s Word on Bible Unlock: https://bibleunlock.in',
 			});
 		} catch {
 			// dismissed

@@ -109,7 +109,7 @@ export const ScrollVerseCard = React.memo(
 
           {/* Watermark for shared exports & bottom aesthetics */}
           <View style={[styles.watermarkContainer, { bottom: Math.max(bottomInset + 6, 14) }]}>
-            <Text style={styles.watermarkText}>BIBLE UNLOCK • BIBLEUNLOCK.APP</Text>
+            <Text style={styles.watermarkText}>BIBLE UNLOCK • BIBLEUNLOCK.IN</Text>
           </View>
         </View>
       );

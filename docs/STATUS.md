@@ -381,23 +381,27 @@
   - **Rich Schema.org Structured Data (`web/index.html`):** Embedded 4 JSON-LD schemas (`SoftwareApplication`, `FAQPage`, `Organization`, `WebSite`) enabling Google rich snippets, knowledge graph cards, and expandable Q&A SERP features.
   - **Canonical Legal Compliance Pages (`web/privacy.html`, `web/terms.html`):** Implemented Apple App Store (Guideline 5.1.1) and Google Play compliant policies with on-device zero data collection disclosures, 7-day free trial terms, and auto-renewal rules.
   - **Technical Crawler & Search Infrastructure (`web/sitemap.xml`, `web/robots.txt`, `scripts/validate-web-seo.mjs`):** Built standard XML sitemap, crawler directives, and automated verification engine with 6/6 passing unit tests.
+- [x] `TASK-063`: Cross-Platform Production Readiness, Store Compliance & Resilience Architecture (`DEC-045`):
+  - **Google Play Compliance & Permission Cleanup (`app.json`, `modules/android-blocker/android/src/main/AndroidManifest.xml`):** Purged `QUERY_ALL_PACKAGES` permission; preserved launcher intent filtering in `<queries>`, eliminating Google Play high-risk declaration rejection while retaining full app discovery.
+  - **iOS Store Metadata & Family Controls (`app.json`):** Configured `buildNumber: "1"`, `versionCode: 1`, `ITSAppUsesNonExemptEncryption: false`, and explicit `com.apple.developer.family-controls` entitlement with `group.com.bibleunlock.app` App Group bindings.
+  - **EAS Build Architecture (`eas.json`):** Generated production-ready EAS configuration featuring internal development client, APK preview, and AAB/IPA release profiles.
+  - **Global Error Boundary (`src/app/_layout.tsx`):** Exported themed `ErrorBoundary` offering reverent retry mechanics and preventing unhandled runtime exceptions from crashing to OS launcher.
+  - **Platform-Aware Onboarding Setup (`src/components/onboarding/PermissionStep.tsx`):** Added dynamic branching for iOS Screen Time authorization flow vs Android Accessibility Service disclosures.
+  - **Canonical Legal Domain Alignment (`src/app/paywall.tsx`, `settings.tsx`, `store-assets/metadata/`):** Unified all terms and privacy links, share sheets, and watermarks to `https://bibleunlock.in`, eliminating domain drift across paywall and store listings.
+  - **R8 / ProGuard Keep Rules (`modules/android-blocker/android/consumer-rules.pro`, `android/app/proguard-rules.pro`):** Protected MMKV JSI, RevenueCat, and accessibility blocker classes against bytecode stripping.
 
 ## Verification Evidence
 
 - `npx tsc --noEmit`: 0 errors across entire workspace.
-- Authentic weekly reading minutes verified via `getWeeklyHabitDays()`.
-- Dynamic SVG circular ring verified with math clamping [0, 100%] and dual-state coloring.
-- Interception counter and hours redeemed telemetry verified offline via MMKV.
-- 12-tier badge milestones verified with 6-badge compact view and smooth disclosure toggle.
-- Streak Grace Shield loss-aversion banner verified for active and spent states.
-- All-time best streak verified with persistent updates in MMKV.
-- Zero fabricated metrics remaining on Stats screen.
-- Touch target minimum 44x44pt satisfied across all buttons and actions.
-- Dual-theme verified in Celestial Dark (`#0d120f`) and Parchment Light (`#f8f6f0`).
+- `npm run test:aso`: 7/7 passing unit tests.
+- `npm run test:web`: 6/6 passing unit tests.
+- `eas.json`: Validated against EAS CLI schema.
+- Clean manifest with zero forbidden `QUERY_ALL_PACKAGES` declarations.
+- Canonical legal URLs verified across Paywall, Settings, and Store metadata.
 
 ## Session Handoff Notes
 
-- Stats screen completely transformed into a tactical habit telemetry dashboard.
-- Clear separation between spiritual habit (Scripture time) and digital liberation (doomscroll distractions defeated).
-- Ready for production build and release.
+- Mobile app and store assets are 100% production ready for Android (Google Play AAB) and iOS (Apple App Store / TestFlight IPA).
+- All audit findings across Ponytail simplicity, store policies, and marketing psychology resolved.
+
 

@@ -273,7 +273,7 @@ export default function LibraryScreen() {
 	};
 
 	const handleShareVerse = async (bm: Bookmark) => {
-		const text = `"${bm.verseText}" — ${bm.bookName} ${bm.chapterNumber}:${bm.verseNumber}\nhttps://bibleunlock.app`;
+		const text = `"${bm.verseText}" — ${bm.bookName} ${bm.chapterNumber}:${bm.verseNumber}\nhttps://bibleunlock.in`;
 		try {
 			await Share.share({ message: text });
 		} catch {}

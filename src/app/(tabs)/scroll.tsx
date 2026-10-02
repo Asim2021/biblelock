@@ -483,7 +483,7 @@ export default function ScrollScreen() {
     if (!currentVerseItem) return;
     const citation = `${currentVerseItem.bookName} ${currentVerseItem.chapter}:${currentVerseItem.verse}`;
     const badge = getTranslationBadge(translation);
-    const text = `"${currentVerseItem.text.trim()}" — ${citation} (${badge})\nhttps://bibleunlock.app`;
+    const text = `"${currentVerseItem.text.trim()}" — ${citation} (${badge})\nhttps://bibleunlock.in`;
 
     try {
       Vibration.vibrate(20);

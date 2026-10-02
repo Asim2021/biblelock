@@ -31,7 +31,7 @@ export const BadgeShareModal: React.FC<BadgeShareModalProps> = ({
     }
     try {
       await Share.share({
-        message: `✝️ I just earned the "${badge.title}" badge on Bible Unlock with a ${streak}-day reading streak! Replace mindless scrolling with daily Scripture: https://bibleunlock.app`,
+        message: `✝️ I just earned the "${badge.title}" badge on Bible Unlock with a ${streak}-day reading streak! Replace mindless scrolling with daily Scripture: https://bibleunlock.in`,
       });
     } catch (e) {
       console.warn('Share error:', e);
