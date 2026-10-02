@@ -8,6 +8,7 @@
     "scheme": "bibleunlock",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "appleTeamId": "XXXXXXXXXX",
       "supportsTablet": true,
       "bundleIdentifier": "com.bibleunlock.app",
       "buildNumber": "1",

@@ -3,6 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { ChevronDown, ChevronUp, Lock } from 'lucide-react-native';
 import { BadgeItem } from '../types/onboarding';
 import { useTheme } from '../lib/themeContext';
+import { PulsingView } from './ui/PulsingView';
 
 interface BadgesGridProps {
   badges: BadgeItem[];
@@ -67,7 +68,36 @@ export const BadgesGrid: React.FC<BadgesGridProps> = ({ badges, onSelectBadge })
                 <Lock size={10} color={colors.textMuted} />
               </View>
             )}
-            <Text style={{ fontSize: 26, marginBottom: 6 }}>{b.icon}</Text>
+            {/* Badge Icon with Radiant Golden Halo for Unlocked State */}
+            <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', marginBottom: 4 }}>
+              {b.unlocked && (
+                <PulsingView
+                  active={true}
+                  minScale={0.88}
+                  maxScale={1.16}
+                  minOpacity={0.15}
+                  maxOpacity={0.4}
+                  duration={2400}
+                  style={{
+                    position: 'absolute',
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: colors.accent,
+                  }}
+                />
+              )}
+              <PulsingView
+                active={b.unlocked}
+                minScale={0.92}
+                maxScale={1.1}
+                minOpacity={0.85}
+                maxOpacity={1.0}
+                duration={2600}
+              >
+                <Text style={{ fontSize: 26 }}>{b.icon}</Text>
+              </PulsingView>
+            </View>
             <Text
               numberOfLines={2}
               style={{

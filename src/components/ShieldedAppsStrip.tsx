@@ -3,6 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { ShieldCheck, ShieldAlert, Pause, Play, Lock, ChevronRight } from 'lucide-react-native';
 import { AppIcon } from './AppIcon';
 import { useTheme } from '../lib/themeContext';
+import { PulsingView } from './ui/PulsingView';
 
 export interface ShieldedAppsStripProps {
   isShielded: boolean;
@@ -61,7 +62,9 @@ export const ShieldedAppsStrip: React.FC<ShieldedAppsStripProps> = ({
                 borderColor: colors.accent,
               }}
             >
-              <Pause size={12} color={colors.accent} style={{ marginRight: 5 }} />
+              <PulsingView minScale={0.88} maxScale={1.12} minOpacity={0.75} maxOpacity={1.0} duration={1800} style={{ marginRight: 5 }}>
+                <Pause size={12} color={colors.accent} />
+              </PulsingView>
               <Text
                 style={{
                   fontSize: 11,
@@ -86,7 +89,9 @@ export const ShieldedAppsStrip: React.FC<ShieldedAppsStripProps> = ({
                 backgroundColor: isDark ? '#18261e' : '#edf8f0',
               }}
             >
-              <ShieldCheck size={12} color={colors.success} style={{ marginRight: 5 }} />
+              <PulsingView minScale={0.9} maxScale={1.14} minOpacity={0.8} maxOpacity={1.0} duration={2600} style={{ marginRight: 5 }}>
+                <ShieldCheck size={12} color={colors.success} />
+              </PulsingView>
               <Text
                 style={{
                   fontSize: 11,

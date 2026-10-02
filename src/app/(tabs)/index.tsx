@@ -38,6 +38,7 @@ import { DailyDevotionalCard } from '../../components/DailyDevotionalCard';
 import { PauseBlockingModal } from '../../components/PauseBlockingModal';
 import { HabitDay, ImpactStats } from '../../types/onboarding';
 import { useTheme } from '../../lib/themeContext';
+import { PulsingView } from '../../components/ui/PulsingView';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -243,7 +244,9 @@ export default function HomeScreen() {
           >
             <View style={{ flex: 1, marginRight: 12 }}>
               <View className="flex-row items-center mb-1">
-                <Flame size={14} color={colors.accent} style={{ marginRight: 6 }} />
+                <PulsingView minScale={0.9} maxScale={1.16} minOpacity={0.8} maxOpacity={1.0} duration={2200} style={{ marginRight: 6 }}>
+                  <Flame size={14} color={colors.accent} />
+                </PulsingView>
                 <Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
                   {timer.streak}-Day Streak Active
                 </Text>
@@ -378,14 +381,26 @@ export default function HomeScreen() {
               marginBottom: 18,
             }}
           >
-            <View
+            <PulsingView
+              minOpacity={0.8}
+              maxOpacity={1.0}
+              minScale={1.0}
+              maxScale={1.0}
+              duration={2400}
               style={{
                 height: '100%',
-                backgroundColor: colors.accent,
-                borderRadius: 5,
                 width: `${Math.round(timer.progress * 100)}%`,
               }}
-            />
+            >
+              <View
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: colors.accent,
+                  borderRadius: 5,
+                }}
+              />
+            </PulsingView>
           </View>
 
           {/* Dual Action Buttons: Read Chapter vs Visual Scroll */}

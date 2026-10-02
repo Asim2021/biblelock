@@ -5,6 +5,7 @@ import { Check, ChevronRight, Flame, Shield } from 'lucide-react-native';
 import { HabitDay } from '../types/onboarding';
 import { useTheme } from '../lib/themeContext';
 import { getGraceDayStatus } from '../lib/mmkv';
+import { PulsingView } from './ui/PulsingView';
 
 interface WeeklyStreakTrackerProps {
   history: HabitDay[];
@@ -53,7 +54,9 @@ export const WeeklyStreakTracker: React.FC<WeeklyStreakTrackerProps> = ({
           {/* Left: Flame & Streak Count */}
           <View style={{ flex: 1, paddingRight: 10 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Flame size={20} color="#ff7b42" style={{ marginRight: 6 }} />
+              <PulsingView minScale={0.92} maxScale={1.14} minOpacity={0.82} maxOpacity={1.0} duration={2400}>
+                <Flame size={20} color="#ff7b42" style={{ marginRight: 6 }} />
+              </PulsingView>
               <Text
                 style={{
                   fontSize: 17,
@@ -187,14 +190,22 @@ export const WeeklyStreakTracker: React.FC<WeeklyStreakTrackerProps> = ({
                   {isCompleted ? (
                     <Check size={15} color={colors.success} strokeWidth={3} />
                   ) : isToday ? (
-                    <View
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: colors.accent,
-                      }}
-                    />
+                    <PulsingView
+                      minScale={0.75}
+                      maxScale={1.35}
+                      minOpacity={0.6}
+                      maxOpacity={1.0}
+                      duration={1800}
+                    >
+                      <View
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: colors.accent,
+                        }}
+                      />
+                    </PulsingView>
                   ) : null}
                 </View>
 

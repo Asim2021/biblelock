@@ -28,6 +28,7 @@ import { CircularProgressRing } from '../components/stats/CircularProgressRing';
 import { FreedomReclaimedCard } from '../components/stats/FreedomReclaimedCard';
 import { BadgeItem, ImpactStats, HabitDay, YearMonthData } from '../types/onboarding';
 import { useTheme } from '../lib/themeContext';
+import { PulsingView } from '../components/ui/PulsingView';
 
 export default function StatsScreen() {
 	const router = useRouter();
@@ -503,7 +504,9 @@ export default function StatsScreen() {
 								);
 							})}
 						</View>
-						<Flame size={16} color='#ff7b42' />
+						<PulsingView minScale={0.92} maxScale={1.16} minOpacity={0.82} maxOpacity={1.0} duration={2200}>
+							<Flame size={16} color='#ff7b42' />
+						</PulsingView>
 					</View>
 
 					{/* VIEW 1: WEEK */}
@@ -564,15 +567,17 @@ export default function StatsScreen() {
 
 										{/* Active day underline marker */}
 										{isToday ? (
-											<View
-												style={{
-													width: 20,
-													height: 2,
-													backgroundColor: colors.accent,
-													borderRadius: 1,
-													marginTop: 6,
-												}}
-											/>
+											<PulsingView minOpacity={0.45} maxOpacity={1.0} minScale={0.9} maxScale={1.1} duration={2000}>
+												<View
+													style={{
+														width: 20,
+														height: 2,
+														backgroundColor: colors.accent,
+														borderRadius: 1,
+														marginTop: 6,
+													}}
+												/>
+											</PulsingView>
 										) : (
 											<View
 												style={{
@@ -1108,9 +1113,14 @@ export default function StatsScreen() {
 						</View>
 
 						<View className='items-end'>
-							<Text style={{ fontSize: 16, fontFamily: 'Inter_700Bold', color: colors.accent }}>
-								{nextMilestone}d
-							</Text>
+							<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+								<PulsingView minScale={0.88} maxScale={1.16} minOpacity={0.8} maxOpacity={1.0} duration={2200} style={{ marginRight: 4 }}>
+									<Award size={15} color={colors.accent} />
+								</PulsingView>
+								<Text style={{ fontSize: 16, fontFamily: 'Inter_700Bold', color: colors.accent }}>
+									{nextMilestone}d
+								</Text>
+							</View>
 							<Text style={{ fontSize: 10, color: colors.textSecondary }}>Next Milestone</Text>
 						</View>
 					</View>
@@ -1125,14 +1135,26 @@ export default function StatsScreen() {
 							overflow: 'hidden',
 						}}
 					>
-						<View
+						<PulsingView
+							minOpacity={0.8}
+							maxOpacity={1.0}
+							minScale={1.0}
+							maxScale={1.0}
+							duration={2400}
 							style={{
 								height: '100%',
-								backgroundColor: colors.accent,
-								borderRadius: 4,
 								width: `${Math.round(milestoneProgress * 100)}%`,
 							}}
-						/>
+						>
+							<View
+								style={{
+									width: '100%',
+									height: '100%',
+									backgroundColor: colors.accent,
+									borderRadius: 4,
+								}}
+							/>
+						</PulsingView>
 					</View>
 				</View>
 
@@ -1284,19 +1306,21 @@ export default function StatsScreen() {
 								alignItems: 'center',
 							}}
 						>
-							<View
-								style={{
-									width: 36,
-									height: 36,
-									borderRadius: 10,
-									backgroundColor: colors.surfaceSubtle,
-									alignItems: 'center',
-									justifyContent: 'center',
-									marginBottom: 8,
-								}}
-							>
-								<Award size={18} color={colors.accent} />
-							</View>
+							<PulsingView minScale={0.9} maxScale={1.14} minOpacity={0.82} maxOpacity={1.0} duration={2400}>
+								<View
+									style={{
+										width: 36,
+										height: 36,
+										borderRadius: 10,
+										backgroundColor: colors.surfaceSubtle,
+										alignItems: 'center',
+										justifyContent: 'center',
+										marginBottom: 8,
+									}}
+								>
+									<Award size={18} color={colors.accent} />
+								</View>
+							</PulsingView>
 							<Text style={{ fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.textPrimary }}>
 								{bestStreak}d
 							</Text>

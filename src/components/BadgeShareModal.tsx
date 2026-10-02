@@ -5,6 +5,7 @@ import { Share2 } from 'lucide-react-native';
 import { BadgeItem } from '../types/onboarding';
 import { useFeatureGate } from '../lib/useFeatureGate';
 import { useTheme } from '../lib/themeContext';
+import { PulsingView } from './ui/PulsingView';
 
 interface BadgeShareModalProps {
   badge: BadgeItem | null;
@@ -65,21 +66,48 @@ export const BadgeShareModal: React.FC<BadgeShareModalProps> = ({
             elevation: 10,
           }}
         >
-          {/* Top Badge Icon */}
-          <View
-            style={{
-              width: 88,
-              height: 88,
-              borderRadius: 44,
-              backgroundColor: colors.accentBg,
-              borderWidth: 2,
-              borderColor: colors.accent,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 16,
-            }}
-          >
-            <Text style={{ fontSize: 44 }}>{badge.icon}</Text>
+          {/* Top Badge Icon with Radiant Halo */}
+          <View style={{ width: 96, height: 96, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+            {badge.unlocked && (
+              <PulsingView
+                active={true}
+                minScale={0.88}
+                maxScale={1.16}
+                minOpacity={0.15}
+                maxOpacity={0.35}
+                duration={2200}
+                style={{
+                  position: 'absolute',
+                  width: 92,
+                  height: 92,
+                  borderRadius: 46,
+                  backgroundColor: colors.accent,
+                }}
+              />
+            )}
+            <PulsingView
+              active={badge.unlocked}
+              minScale={0.93}
+              maxScale={1.07}
+              minOpacity={0.88}
+              maxOpacity={1.0}
+              duration={2200}
+            >
+              <View
+                style={{
+                  width: 88,
+                  height: 88,
+                  borderRadius: 44,
+                  backgroundColor: colors.accentBg,
+                  borderWidth: 2,
+                  borderColor: colors.accent,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 44 }}>{badge.icon}</Text>
+              </View>
+            </PulsingView>
           </View>
 
           <Text

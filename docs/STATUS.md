@@ -389,6 +389,18 @@
   - **Platform-Aware Onboarding Setup (`src/components/onboarding/PermissionStep.tsx`):** Added dynamic branching for iOS Screen Time authorization flow vs Android Accessibility Service disclosures.
   - **Canonical Legal Domain Alignment (`src/app/paywall.tsx`, `settings.tsx`, `store-assets/metadata/`):** Unified all terms and privacy links, share sheets, and watermarks to `https://bibleunlock.in`, eliminating domain drift across paywall and store listings.
   - **R8 / ProGuard Keep Rules (`modules/android-blocker/android/consumer-rules.pro`, `android/app/proguard-rules.pro`):** Protected MMKV JSI, RevenueCat, and accessibility blocker classes against bytecode stripping.
+- [x] `TASK-064`: 60fps Native Driver Sacred Micro-Animations (Zero-Layout-Shift):
+  - **Reusable Native Driver Primitive (`src/components/ui/PulsingView.tsx`):** Built performance-optimized looped breathing component modulating `opacity` (0.75–1.0) and `transform: scale` (0.95–1.05) with sinusoidal easing and configurable duration. 100% native driver hardware accelerated (`useNativeDriver: true`) executing solely on RenderThread/GPU with zero JS thread overhead and automatic unmount cleanup.
+  - **Circular Progress Ring Vitality (`src/components/stats/CircularProgressRing.tsx`):** Integrated sacred breathing aura into the center feedback content (`Flame` / progress percentage / `Check` goal-met icon) without altering SVG ring dimensions or layout bounds.
+  - **Stats Detail Screen Micro-Animations (`src/app/stats-detail.tsx`):** Wrapped streak header `Flame` in an organic 2200ms breathing animation, added a live breathing beacon indicator to today's active day marker in the 7-day schedule matrix, and added an ambient golden breathing fill to the active milestone progress bar.
+  - **Home Screen & Shield Status Engagement (`src/components/WeeklyStreakTracker.tsx`, `src/components/ShieldedAppsStrip.tsx`, `src/app/(tabs)/index.tsx`):**
+    - Animated the orange `Flame` icon and today's active habit dot beacon (`scale: 0.75` to `1.35`, `opacity: 0.6` to `1.0`) in `WeeklyStreakTracker.tsx`.
+    - Added breathing green beacon indicator to the active `ShieldCheck` status in `ShieldedAppsStrip.tsx`.
+    - Animated the "Time to Read" daily goal progress bar fill and Sanctuary prompt flame in `index.tsx`.
+  - **Spiritual Milestone Badges & Award Icons Animation (`src/components/BadgesGrid.tsx`, `src/components/BadgeShareModal.tsx`, `src/app/stats-detail.tsx`):**
+    - Built radiant golden breathing halos (`PulsingView` with `scale: 0.88–1.16`, `opacity: 0.15–0.40`) centered behind unlocked milestone emoji icons in `BadgesGrid.tsx` and the 88x88 hero badge in `BadgeShareModal.tsx`, leaving locked badges calm and static with zero compute overhead.
+    - Added animated golden `<Award />` badge icon (`PulsingView` with `scale: 0.88–1.16`) beside "Next Milestone" in Card 3 and wrapped the "Best Streak" `<Award />` icon in Lifetime Activity with a 2400ms sacred pulse.
+  - **100% Dynamic Theme Alignment:** Seamlessly bound to `useTheme()` tokens across Celestial Dark (`#0d120f`) and Parchment Light (`#f8f6f0`) with zero layout shifts or sizing jitter.
 
 ## Verification Evidence
 

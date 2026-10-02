@@ -3,6 +3,7 @@ import { View, Text } from 'react-native';
 import Svg, { Circle, G } from 'react-native-svg';
 import { Check, Flame } from 'lucide-react-native';
 import { useTheme } from '../../lib/themeContext';
+import { PulsingView } from '../ui/PulsingView';
 
 interface CircularProgressRingProps {
   size?: number;
@@ -70,17 +71,26 @@ export const CircularProgressRing: React.FC<CircularProgressRingProps> = React.m
           justifyContent: 'center',
         }}
       >
-        {isGoalMet ? (
-          <Check size={26} color={colors.success} strokeWidth={2.8} />
-        ) : progress > 0 ? (
-          <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: colors.accent }}>
-              {percentText}%
-            </Text>
-          </View>
-        ) : (
-          <Flame size={22} color={colors.textMuted} />
-        )}
+        <PulsingView
+          active={true}
+          duration={isGoalMet ? 2000 : 2600}
+          minScale={0.94}
+          maxScale={1.06}
+          minOpacity={0.82}
+          maxOpacity={1.0}
+        >
+          {isGoalMet ? (
+            <Check size={26} color={colors.success} strokeWidth={2.8} />
+          ) : progress > 0 ? (
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{ fontSize: 13, fontFamily: 'Inter_700Bold', color: colors.accent }}>
+                {percentText}%
+              </Text>
+            </View>
+          ) : (
+            <Flame size={22} color={colors.accent} />
+          )}
+        </PulsingView>
       </View>
     </View>
   );
