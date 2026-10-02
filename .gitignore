@@ -63,4 +63,6 @@ example
 # generated native folders
 /ios
 /android
-
+.caches/
+.memory/
+.superpowers
