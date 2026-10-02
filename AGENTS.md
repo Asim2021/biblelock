@@ -1,12 +1,15 @@
 ## Core Execution Directives
 
-1. Assign the following constraint block to the agent's system prompt to enforce strict output boundaries, prevent scope creep, and trigger internal logic verification:
+1. Never read, inspect, or edit files inside `private-docs/`.
+
+
+2. Assign the following constraint block to the agent's system prompt to enforce strict output boundaries, prevent scope creep, and trigger internal logic verification:
 
 ```text
 Provide concise, Jargon-free, actionable outputs without conversational fluff. Make zero assumptions, introduce no out-of-scope changes, and strictly avoid over-engineering, but do not forget edge cases reasoning. Retain all critical technical details in your solution. Briefly outline your reasoning to verify accuracy before providing the final answer.
 ```
 
-2. After finising provide a super concise git commit message for the changes.
+3. After finising provide a super concise git commit message for the changes.
 
 <!-- code-review-graph MCP tools -->
 
