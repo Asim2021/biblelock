@@ -1098,7 +1098,7 @@ export function restoreUserPrayers(prayers: UserPrayer[]): void {
 export type ThemeMode = 'dark' | 'light' | 'system';
 
 export function getThemeMode(): ThemeMode {
-  return (storage.getString(STORAGE_KEYS.THEME_MODE) as ThemeMode) || 'system';
+  return (storage.getString(STORAGE_KEYS.THEME_MODE) as ThemeMode) || 'light';
 }
 
 export function setThemeMode(theme: ThemeMode): void {

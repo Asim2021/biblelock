@@ -77,10 +77,10 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
-  themeMode: 'system',
+  themeMode: 'light',
   setThemeMode: () => {},
-  colors: darkColors,
-  isDark: true,
+  colors: lightColors,
+  isDark: false,
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
